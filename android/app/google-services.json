@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "759788532035",
+    "project_id": "tokan-57582",
+    "storage_bucket": "tokan-57582.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:759788532035:android:32190107d1f95e08977ff6",
+        "android_client_info": {
+          "package_name": "com.tokan.tokan"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "759788532035-fp5t4jnc9s15jescgondctb10o6cv2u3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tokan.tokan",
+            "certificate_hash": "da0f10fc09e002c4a8f033df833f17ecc5dafe16"
+          }
+        },
+        {
+          "client_id": "759788532035-0ldf55qin08fgs5t4rqg5uim7thrusmr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBYTDmerhK_sPVc99B5ac9M5TRzQ_2EuHA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "759788532035-0ldf55qin08fgs5t4rqg5uim7thrusmr.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "759788532035-3ii4765n4vfvrlep29707hdj2rtigsuc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.tokan.tokan"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

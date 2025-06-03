@@ -1,0 +1,59 @@
+name: tokan
+description: a caribbean legacy
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=2.18.0 <3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # Firebase
+  firebase_core: ^3.13.0
+  firebase_auth: ^5.5.3
+  cloud_firestore: ^5.6.7
+  firebase_messaging: ^15.2.5
+  firebase_storage: ^12.4.5
+  firebase_database: ^11.3.5
+  flutter_secure_storage: ^8.0.0
+  record: ^6.0.0
+  emoji_picker_flutter: ^4.3.0
+  flutter_local_notifications: ^19.2.1
+  image_picker: ^1.1.2
+
+  # plugins
+  csv: ^6.0.0
+  share_plus: ^11.0.0
+  path_provider: ^2.1.5
+
+
+
+
+
+  # Fichiers, graphiques, notifications
+  file_picker: ^10.1.5
+  flutter_svg: ^2.1.0
+  fluttertoast: ^8.2.12
+
+  # State management & storage
+  provider: ^6.1.4
+  shared_preferences: ^2.5.3
+
+  # Sequoia – calendrier, tâches, etc.
+  table_calendar: ^3.2.0
+  intl: any
+  video_player: ^2.9.5
+  video_player_win: ^3.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/tokan.svg
