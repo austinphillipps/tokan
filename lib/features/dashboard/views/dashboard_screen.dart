@@ -70,25 +70,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
             if (statWidgets.isEmpty)
               const Center(child: Text('Aucun widget à afficher.'))
             else
-            // 2. Grille à 2 colonnes occupant toute la hauteur disponible
               Expanded(
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 1.5,
-                  children: statWidgets.map((w) {
-                    return Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    int crossAxisCount;
+                    if (constraints.maxWidth < 600) {
+                      crossAxisCount = 1;
+                    } else if (constraints.maxWidth < 900) {
+                      crossAxisCount = 2;
+                    } else {
+                      crossAxisCount = 3;
+                    }
+
+                    return GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 1.2,
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: w,
-                      ),
+                      itemCount: statWidgets.length,
+                      itemBuilder: (context, index) {
+                        final w = statWidgets[index];
+                        return Card(
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: w,
+                          ),
+                        );
+                      },
                     );
-                  }).toList(),
+                  },
                 ),
               ),
           ],
