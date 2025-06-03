@@ -113,12 +113,14 @@ style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
 }
 
 return ListView.builder(
-padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-itemCount: _projectsData.length,
-itemBuilder: (context, index) {
-final pd = _projectsData[index];
-return _buildProjectCard(pd, context);
-},
+  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+  itemCount: _projectsData.length,
+  shrinkWrap: true,
+  physics: const NeverScrollableScrollPhysics(),
+  itemBuilder: (context, index) {
+    final pd = _projectsData[index];
+    return _buildProjectCard(pd, context);
+  },
 );
 }
 
