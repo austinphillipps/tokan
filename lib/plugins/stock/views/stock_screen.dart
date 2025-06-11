@@ -15,6 +15,7 @@ import 'stock_movement_dialog.dart';
 import 'movement_history_screen.dart';
 import 'inventory_count_screen.dart';
 import 'inventory_history_screen.dart';
+import '../../../main.dart'; // Pour AppColors
 
 class StockScreen extends StatefulWidget {
   const StockScreen({Key? key}) : super(key: key);
@@ -66,14 +67,18 @@ class _StockScreenState extends State<StockScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final Color primaryColor = theme.colorScheme.primary;
-    final Color onPrimary = theme.colorScheme.onPrimary;
-    final Color backgroundColor = theme.scaffoldBackgroundColor;
     final Color onBackground = theme.colorScheme.onBackground;
+
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: backgroundColor,
-        title: Text('Gestion de stock', style: TextStyle(color: onPrimary)),
+        backgroundColor: AppColors.glassHeader,
+        elevation: 0,
+        title: Text(
+          'Gestion de stock',
+          style: TextStyle(color: onBackground),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.inventory_2),
@@ -118,19 +123,19 @@ class _StockScreenState extends State<StockScreen> {
         children: [
           // Barre de recherche
           Container(
-            color: primaryColor,
+            color: AppColors.glassHeader,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _searchCtrl,
-                    style: TextStyle(color: onPrimary),
-                    cursorColor: onPrimary,
+                    style: TextStyle(color: onBackground),
+                    cursorColor: onBackground,
                     decoration: InputDecoration(
                       hintText: 'Rechercher produit...',
-                      hintStyle: TextStyle(color: onPrimary.withOpacity(0.7)),
-                      prefixIcon: Icon(Icons.search, color: onPrimary),
+                      hintStyle: TextStyle(color: onBackground.withOpacity(0.7)),
+                      prefixIcon: Icon(Icons.search, color: onBackground),
                       filled: true,
                       fillColor: theme.brightness == Brightness.dark
                           ? Colors.white10
@@ -147,7 +152,7 @@ class _StockScreenState extends State<StockScreen> {
                 ),
                 const SizedBox(width: 12),
                 IconButton(
-                  icon: Icon(Icons.filter_list, color: onPrimary),
+                  icon: Icon(Icons.filter_list, color: onBackground),
                   tooltip: 'Filtres avancés',
                   onPressed: () {
                     showModalBottomSheet(
@@ -181,11 +186,12 @@ class _StockScreenState extends State<StockScreen> {
 
           const SizedBox(height: 8),
 
-          // DataTable des produits
+          // DataTable des produits (plein écran)
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SizedBox(
+              width: double.infinity,
               child: Card(
+                margin: EdgeInsets.zero,
                 color: theme.cardColor,
                 elevation: 2,
                 shape: RoundedRectangleBorder(
@@ -216,102 +222,105 @@ class _StockScreenState extends State<StockScreen> {
 
                     return SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        headingRowColor:
-                        MaterialStateProperty.all(primaryColor.withOpacity(0.1)),
-                        dataRowColor: MaterialStateProperty.resolveWith((states) =>
-                        theme.brightness == Brightness.dark
-                            ? Colors.white10
-                            : Colors.grey[50]),
-                        headingTextStyle: TextStyle(
-                          color: primaryColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        columns: const [
-                          DataColumn(label: Text('Produit')),
-                          DataColumn(label: Text('Réf.')),
-                          DataColumn(label: Text('Qte en stock')),
-                          DataColumn(label: Text('Seuil alerte')),
-                          DataColumn(label: Text('Dernière MAJ')),
-                          DataColumn(label: Text('Actions')),
-                        ],
-                        rows: filtered.map((prod) {
-                          Color? rowColor;
-                          if (prod.quantityInStock == 0) {
-                            rowColor = Colors.red.shade50;
-                          } else if (prod.quantityInStock <= prod.reorderThreshold) {
-                            rowColor = Colors.orange.shade50;
-                          }
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(minWidth: screenWidth),
+                        child: DataTable(
+                          headingRowColor: MaterialStateProperty.all(
+                              AppColors.glassHeader.withOpacity(0.5)),
+                          dataRowColor: MaterialStateProperty.resolveWith((states) =>
+                          theme.brightness == Brightness.dark
+                              ? Colors.white10
+                              : Colors.grey[50]),
+                          headingTextStyle: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          columns: const [
+                            DataColumn(label: Text('Produit')),
+                            DataColumn(label: Text('Réf.')),
+                            DataColumn(label: Text('Qte en stock')),
+                            DataColumn(label: Text('Seuil alerte')),
+                            DataColumn(label: Text('Dernière MAJ')),
+                            DataColumn(label: Text('Actions')),
+                          ],
+                          rows: filtered.map((prod) {
+                            Color? rowColor;
+                            if (prod.quantityInStock == 0) {
+                              rowColor = Colors.red.shade50;
+                            } else if (prod.quantityInStock <= prod.reorderThreshold) {
+                              rowColor = Colors.orange.shade50;
+                            }
 
-                          return DataRow(
-                            color: MaterialStateProperty.all(rowColor),
-                            cells: [
-                              DataCell(Text(prod.name,
-                                  style: TextStyle(color: onBackground))),
-                              DataCell(Text(prod.sku,
-                                  style: TextStyle(color: onBackground))),
-                              DataCell(Text(prod.quantityInStock.toString(),
-                                  style: TextStyle(color: onBackground))),
-                              DataCell(Text(prod.reorderThreshold.toString(),
-                                  style: TextStyle(color: onBackground))),
-                              DataCell(Text(
-                                prod.dateUpdated != null
-                                    ? '${prod.dateUpdated!.day}/${prod.dateUpdated!.month}/${prod.dateUpdated!.year}'
-                                    : '-',
-                                style: TextStyle(color: onBackground),
-                              )),
-                              DataCell(Row(
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.swap_vert, size: 20),
-                                    tooltip: 'Mouvement',
-                                    color: primaryColor,
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (_) =>
-                                            StockMovementDialog(product: prod),
-                                      );
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.history, size: 20),
-                                    tooltip: 'Historique',
-                                    color: primaryColor,
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
+                            return DataRow(
+                              color: MaterialStateProperty.all(rowColor),
+                              cells: [
+                                DataCell(Text(prod.name,
+                                    style: TextStyle(color: onBackground))),
+                                DataCell(Text(prod.sku,
+                                    style: TextStyle(color: onBackground))),
+                                DataCell(Text(prod.quantityInStock.toString(),
+                                    style: TextStyle(color: onBackground))),
+                                DataCell(Text(prod.reorderThreshold.toString(),
+                                    style: TextStyle(color: onBackground))),
+                                DataCell(Text(
+                                  prod.dateUpdated != null
+                                      ? '${prod.dateUpdated!.day}/${prod.dateUpdated!.month}/${prod.dateUpdated!.year}'
+                                      : '-',
+                                  style: TextStyle(color: onBackground),
+                                )),
+                                DataCell(Row(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.swap_vert, size: 20),
+                                      tooltip: 'Mouvement',
+                                      color: primaryColor,
+                                      onPressed: () {
+                                        showDialog(
+                                          context: context,
                                           builder: (_) =>
-                                              MovementHistoryScreen(product: prod),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.edit, size: 20),
-                                    tooltip: 'Modifier',
-                                    color: primaryColor,
-                                    onPressed: () {
-                                      _showAddProductDialog(context,
-                                          existingProduct: prod);
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete, size: 20),
-                                    tooltip: 'Supprimer',
-                                    color: Colors.redAccent,
-                                    onPressed: () {
-                                      context
-                                          .read<StockProvider>()
-                                          .deleteProduct(prod.id);
-                                    },
-                                  ),
-                                ],
-                              )),
-                            ],
-                          );
-                        }).toList(),
+                                              StockMovementDialog(product: prod),
+                                        );
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.history, size: 20),
+                                      tooltip: 'Historique',
+                                      color: primaryColor,
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                MovementHistoryScreen(product: prod),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, size: 20),
+                                      tooltip: 'Modifier',
+                                      color: primaryColor,
+                                      onPressed: () {
+                                        _showAddProductDialog(context,
+                                            existingProduct: prod);
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete, size: 20),
+                                      tooltip: 'Supprimer',
+                                      color: Colors.redAccent,
+                                      onPressed: () {
+                                        context
+                                            .read<StockProvider>()
+                                            .deleteProduct(prod.id);
+                                      },
+                                    ),
+                                  ],
+                                )),
+                              ],
+                            );
+                          }).toList(),
+                        ),
                       ),
                     );
                   },
@@ -346,8 +355,7 @@ class _StockScreenState extends State<StockScreen> {
         text: existingProduct != null ? existingProduct.unitPrice.toString() : '');
     final _costPriceCtrl = TextEditingController(
         text: existingProduct != null ? existingProduct.costPrice.toString() : '');
-    final _unitOfMeasureCtrl =
-    TextEditingController(text: existingProduct?.unitOfMeasure ?? '');
+    final _unitOfMeasureCtrl = TextEditingController(text: existingProduct?.unitOfMeasure ?? '');
     final _imageUrlCtrl = TextEditingController(text: existingProduct?.imageUrl ?? '');
     final _quantityCtrl = TextEditingController(
         text: existingProduct != null ? existingProduct.quantityInStock.toString() : '');
@@ -431,20 +439,26 @@ class _StockScreenState extends State<StockScreen> {
                               firstDate: DateTime(2000),
                               lastDate: DateTime(2100),
                               builder: (ctx, child) {
-                                final pickerTheme = theme.brightness == Brightness.dark
+                                final pickerTheme =
+                                theme.brightness == Brightness.dark
                                     ? theme.copyWith(
                                   colorScheme: ColorScheme.dark(
                                     primary: primaryColor,
-                                    onPrimary: theme.colorScheme.onPrimary,
-                                    onSurface: theme.colorScheme.onBackground,
+                                    onPrimary:
+                                    theme.colorScheme.onPrimary,
+                                    onSurface:
+                                    theme.colorScheme.onBackground,
                                   ),
-                                  dialogBackgroundColor: theme.dialogBackgroundColor,
+                                  dialogBackgroundColor:
+                                  theme.dialogBackgroundColor,
                                 )
                                     : theme.copyWith(
                                   colorScheme: ColorScheme.light(
                                     primary: primaryColor,
-                                    onPrimary: theme.colorScheme.onPrimary,
-                                    onSurface: theme.colorScheme.onBackground,
+                                    onPrimary:
+                                    theme.colorScheme.onPrimary,
+                                    onSurface:
+                                    theme.colorScheme.onBackground,
                                   ),
                                 );
                                 return Theme(data: pickerTheme, child: child!);
@@ -469,7 +483,8 @@ class _StockScreenState extends State<StockScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  style: TextButton.styleFrom(foregroundColor: theme.colorScheme.secondary),
+                  style: TextButton.styleFrom(
+                      foregroundColor: theme.colorScheme.secondary),
                   child: const Text('Annuler'),
                 ),
                 ElevatedButton(
@@ -489,11 +504,16 @@ class _StockScreenState extends State<StockScreen> {
                       costPrice: double.tryParse(_costPriceCtrl.text) ?? 0.0,
                       unitOfMeasure: _unitOfMeasureCtrl.text.trim(),
                       imageUrl: _imageUrlCtrl.text.trim(),
-                      quantityInStock: int.tryParse(_quantityCtrl.text) ?? 0,
-                      reorderThreshold: int.tryParse(_reorderThresholdCtrl.text) ?? 0,
-                      reorderQuantity: int.tryParse(_reorderQuantityCtrl.text) ?? 0,
-                      minimumStock: int.tryParse(_minimumStockCtrl.text) ?? 0,
-                      maximumStock: int.tryParse(_maximumStockCtrl.text) ?? 0,
+                      quantityInStock:
+                      int.tryParse(_quantityCtrl.text) ?? 0,
+                      reorderThreshold:
+                      int.tryParse(_reorderThresholdCtrl.text) ?? 0,
+                      reorderQuantity:
+                      int.tryParse(_reorderQuantityCtrl.text) ?? 0,
+                      minimumStock:
+                      int.tryParse(_minimumStockCtrl.text) ?? 0,
+                      maximumStock:
+                      int.tryParse(_maximumStockCtrl.text) ?? 0,
                       dateCreated: existingProduct?.dateCreated ?? now,
                       dateUpdated: now,
                       expiryDate: _expiryDate,
@@ -507,10 +527,12 @@ class _StockScreenState extends State<StockScreen> {
 
                     Navigator.of(context).pop();
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor),
                   child: Text(
                     existingProduct == null ? 'Ajouter' : 'Enregistrer',
-                    style: TextStyle(color: theme.colorScheme.onPrimary),
+                    style:
+                    TextStyle(color: theme.colorScheme.onPrimary),
                   ),
                 ),
               ],

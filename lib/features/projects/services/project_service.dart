@@ -12,8 +12,9 @@ class ProjectService {
   Future<String> createProject(Project project) async {
     final currentUser = FirebaseAuth.instance.currentUser;
     final ownerId = currentUser?.uid ?? '';
-    final data = project.toMap()
-      ..['ownerId'] = ownerId;
+    final data = project.toMap()..['ownerId'] = ownerId;
+    // Initialise la liste des plugins activés vide
+    data['plugins'] = <String>[];
     final docRef = await _projectsRef.add(data);
     return docRef.id;
   }
@@ -26,28 +27,54 @@ class ProjectService {
       return;
     }
     // Projet existant : on met à jour
-    final data = project.toMap()
-      ..['ownerId'] = project.ownerId;
+    final data = project.toMap()..['ownerId'] = project.ownerId;
+    // 'plugins' contenu par toMap()
     await _projectsRef.doc(project.id).update(data);
   }
 
+  /// Supprime un projet.
   Future<void> deleteProject(String projectId) async {
     await _projectsRef.doc(projectId).delete();
   }
 
+  /// Flux des projets accessibles à l'utilisateur (propriétaire ou collaborateur).
   Stream<List<Project>> getProjectsStream() {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     return _projectsRef.snapshots().map((snap) {
       return snap.docs
-          .map((d) => Project.fromMap(d.data() as Map<String, dynamic>, d.id))
+          .map((d) =>
+          Project.fromMap(d.data() as Map<String, dynamic>, d.id))
           .where((proj) {
         if (uid == null) return false;
         final isOwner = proj.ownerId == uid;
         final isCollaborator =
         proj.collaborators.any((c) => c.uid == uid);
         return isOwner || isCollaborator;
-      })
-          .toList();
+      }).toList();
     });
+  }
+
+  /// Récupère la liste des IDs de plugins activés pour le projet donné.
+  Future<List<String>> getActivatedPlugins(String projectId) async {
+    final doc = await _projectsRef.doc(projectId).get();
+    if (!doc.exists) return [];
+    final data = doc.data() as Map<String, dynamic>;
+    final list = data['plugins'] as List<dynamic>? ?? [];
+    return list.map((e) => e.toString()).toList();
+  }
+
+  /// Active ou désactive un plugin pour le projet donné.
+  Future<void> setPluginActivation(
+      String projectId, String pluginId, bool enabled) async {
+    final docRef = _projectsRef.doc(projectId);
+    if (enabled) {
+      await docRef.update({
+        'plugins': FieldValue.arrayUnion([pluginId])
+      });
+    } else {
+      await docRef.update({
+        'plugins': FieldValue.arrayRemove([pluginId])
+      });
+    }
   }
 }

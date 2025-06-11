@@ -17,11 +17,12 @@ class ProjectsScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    // Fond général : utilise scaffoldBackgroundColor du thème
+    // Fond général : on peut laisser transparent si un background en verre est utilisé plus haut
     final backgroundColor = theme.scaffoldBackgroundColor;
 
     // Couleur du titre
-    final titleColor = theme.textTheme.headlineLarge?.color ?? theme.colorScheme.onBackground;
+    final titleColor =
+        theme.textTheme.headlineLarge?.color ?? theme.colorScheme.onBackground;
 
     // Largeur de l’écran, calculs de grille
     const spacing = 16.0;
@@ -58,11 +59,15 @@ class ProjectsScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 32),
                 child: Column(
                   children: [
-                    Text(
-                      'Mes Projets',
-                      style: theme.textTheme.headlineLarge?.copyWith(
-                        color: titleColor,
-                        fontWeight: FontWeight.bold,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      child: Text(
+                        'Mes Projets',
+                        style: theme.textTheme.headlineLarge?.copyWith(
+                          color: titleColor,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 48),
@@ -132,8 +137,8 @@ class ProjectsScreen extends StatelessWidget {
         isDark ? AppColors.darkGreyBackground : theme.colorScheme.surface,
         title: Text(
           'Nouveau projet',
-          style: theme.textTheme.titleLarge
-              ?.copyWith(color: theme.colorScheme.onBackground),
+          style:
+          theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.onBackground),
         ),
         content: Form(
           key: formKey,
@@ -142,8 +147,7 @@ class ProjectsScreen extends StatelessWidget {
             decoration: InputDecoration(
               labelText: 'Nom du projet',
               hintText: 'Entrez un nom',
-              labelStyle:
-              TextStyle(color: theme.colorScheme.onBackground),
+              labelStyle: TextStyle(color: theme.colorScheme.onBackground),
               enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(
                   color: theme.colorScheme.onBackground.withOpacity(0.3),
@@ -214,8 +218,8 @@ class ProjectsScreen extends StatelessWidget {
         isDark ? AppColors.darkGreyBackground : theme.colorScheme.surface,
         title: Text(
           'Supprimer ce projet ?',
-          style: theme.textTheme.titleLarge
-              ?.copyWith(color: theme.colorScheme.onBackground),
+          style:
+          theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.onBackground),
         ),
         content: Text(
           'Voulez-vous vraiment supprimer « ${project.name} » ?',

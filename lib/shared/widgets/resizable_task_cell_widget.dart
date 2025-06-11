@@ -3,7 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../../features/calendar/widgets/calendar_task_widget.dart';
+import '../../main.dart'; // Pour AppColors
 
+/// Widget interactif pour redimensionner et déplacer une tâche dans le calendrier.
+/// Gère le redimensionnement par le haut/bas et le déplacement vertical.
 class ResizableTaskCell extends StatefulWidget {
   final CalendarTask task;
   final double top;
@@ -42,8 +45,8 @@ class ResizableTaskCell extends StatefulWidget {
 
 class _ResizableTaskCellState extends State<ResizableTaskCell> {
   static const double _handleHeight = 12.0;
-  static const int _snapGrid = 15;     // min
-  static const int _minDuration = 30;  // min
+  static const int _snapGrid = 15;     // minutes
+  static const int _minDuration = 30;  // minutes
 
   late double _top, _height;
   late DateTime _startTime, _endTime;
@@ -79,6 +82,7 @@ class _ResizableTaskCellState extends State<ResizableTaskCell> {
     _endTime = widget.task.end;
   }
 
+  /// Arrondit à l’intervalle de grille (_snapGrid minutes).
   DateTime _roundToGrid(DateTime dt) {
     final snap = (dt.minute / _snapGrid).round() * _snapGrid;
     final h = dt.hour + (snap >= 60 ? 1 : 0);
@@ -86,9 +90,11 @@ class _ResizableTaskCellState extends State<ResizableTaskCell> {
     return DateTime(dt.year, dt.month, dt.day, h, m);
   }
 
+  /// Renvoie le delta en minutes arrondi à la grille.
   int _snapDelta(double rawMinutes) =>
       (rawMinutes / _snapGrid).round() * _snapGrid;
 
+  /// Contraint une DateTime entre minAllowedStart et maxAllowedEnd.
   DateTime _clamp(DateTime dt) {
     var c = dt;
     if (widget.minAllowedStart != null && c.isBefore(widget.minAllowedStart!)) {
@@ -100,73 +106,111 @@ class _ResizableTaskCellState extends State<ResizableTaskCell> {
     return c;
   }
 
+  /// Mise à jour en cours de drag (redimensionnement ou déplacement vertical).
   void _updateDrag() {
-    final snapped = _snapDelta(_dragDelta / widget.cellHeight * 60);
+    final snappedMinutes = _snapDelta(_dragDelta / widget.cellHeight * 60);
+
     if (_dragSide == 'top') {
-      var ns = _baseStartTime.add(Duration(minutes: snapped));
-      ns = _clamp(_roundToGrid(ns));
-      if (_baseEndTime.difference(ns).inMinutes < _minDuration) {
-        ns = _roundToGrid(
-            _baseEndTime.subtract(const Duration(minutes: _minDuration)));
+      // Redimensionnement par le haut
+      var newStart = _baseStartTime.add(Duration(minutes: snappedMinutes));
+      newStart = _clamp(_roundToGrid(newStart));
+      if (_baseEndTime.difference(newStart).inMinutes < _minDuration) {
+        newStart = _roundToGrid(
+          _baseEndTime.subtract(const Duration(minutes: _minDuration)),
+        );
       }
-      final dH = ns.difference(_baseStartTime).inMinutes / 60 * widget.cellHeight;
+      final deltaHeight = newStart.difference(_baseStartTime).inMinutes /
+          60 *
+          widget.cellHeight;
+      if (!mounted) return;
       setState(() {
-        _startTime = ns;
-        _height = _baseHeight - dH;
-        _top = _baseTop + dH;
+        _startTime = newStart;
+        _height = _baseHeight - deltaHeight;
+        _top = _baseTop + deltaHeight;
       });
     } else if (_dragSide == 'bottom') {
-      var ne = _baseEndTime.add(Duration(minutes: snapped));
-      ne = _clamp(_roundToGrid(ne));
-      if (ne.difference(_baseStartTime).inMinutes < _minDuration) {
-        ne = _roundToGrid(
-            _baseStartTime.add(const Duration(minutes: _minDuration)));
+      // Redimensionnement par le bas
+      var newEnd = _baseEndTime.add(Duration(minutes: snappedMinutes));
+      newEnd = _clamp(_roundToGrid(newEnd));
+      if (newEnd.difference(_baseStartTime).inMinutes < _minDuration) {
+        newEnd = _roundToGrid(
+          _baseStartTime.add(const Duration(minutes: _minDuration)),
+        );
       }
-      final dH = ne.difference(_baseEndTime).inMinutes / 60 * widget.cellHeight;
+      final deltaHeight = newEnd.difference(_baseEndTime).inMinutes /
+          60 *
+          widget.cellHeight;
+      if (!mounted) return;
       setState(() {
-        _endTime = ne;
-        _height = _baseHeight + dH;
+        _endTime = newEnd;
+        _height = _baseHeight + deltaHeight;
       });
     } else if (_isDraggingVertically) {
-      final dur = _baseEndTime.difference(_baseStartTime).inMinutes;
-      var ns = _baseStartTime.add(Duration(minutes: snapped));
-      ns = _clamp(_roundToGrid(ns));
-      final maxS = widget.maxAllowedEnd?.subtract(Duration(minutes: dur));
-      if (maxS != null && ns.isAfter(maxS)) ns = _roundToGrid(maxS);
-      var ne = ns.add(Duration(minutes: dur));
-      ne = _clamp(_roundToGrid(ne));
-      if (widget.maxAllowedEnd != null && ne.isAfter(widget.maxAllowedEnd!)) {
-        ne = _roundToGrid(widget.maxAllowedEnd!);
-        ns = ne.subtract(Duration(minutes: dur));
+      // Déplacement vertical de la tâche
+      final durationMins = _baseEndTime.difference(_baseStartTime).inMinutes;
+      var newStart = _baseStartTime.add(Duration(minutes: snappedMinutes));
+      newStart = _clamp(_roundToGrid(newStart));
+
+      final maxStart =
+      widget.maxAllowedEnd?.subtract(Duration(minutes: durationMins));
+      if (maxStart != null && newStart.isAfter(maxStart)) {
+        newStart = _roundToGrid(maxStart);
       }
-      final dH = ns.difference(_baseStartTime).inMinutes / 60 * widget.cellHeight;
+
+      var newEnd = newStart.add(Duration(minutes: durationMins));
+      newEnd = _clamp(_roundToGrid(newEnd));
+
+      if (widget.maxAllowedEnd != null && newEnd.isAfter(widget.maxAllowedEnd!)) {
+        newEnd = _roundToGrid(widget.maxAllowedEnd!);
+        newStart = newEnd.subtract(Duration(minutes: durationMins));
+      }
+
+      final deltaTop = newStart.difference(_baseStartTime).inMinutes /
+          60 *
+          widget.cellHeight;
+      if (!mounted) return;
       setState(() {
-        _startTime = ns;
-        _endTime = ne;
-        _top = _baseTop + dH;
+        _startTime = newStart;
+        _endTime = newEnd;
+        _top = _baseTop + deltaTop;
       });
     }
 
+    // Contraintes visuelles : ne pas sortir du conteneur
     if (_top < 0) {
       _top = 0;
-      _startTime = DateTime(_startTime.year, _startTime.month, _startTime.day, 0, 0);
+      _startTime =
+          DateTime(_startTime.year, _startTime.month, _startTime.day, 0, 0);
       _height = widget.maxHeight;
     }
     final bottom = _top + _height;
     if (bottom > widget.maxHeight) {
       _height = widget.maxHeight - _top;
-      final em = (bottom / widget.cellHeight * 60).round();
+      final endMinutes = (bottom / widget.cellHeight * 60).round();
       _endTime = DateTime(
-          _endTime.year, _endTime.month, _endTime.day, em ~/ 60, em % 60);
+        _endTime.year,
+        _endTime.month,
+        _endTime.day,
+        endMinutes ~/ 60,
+        endMinutes % 60,
+      );
     }
     if (_height < widget.cellHeight / 2) {
       _height = widget.cellHeight / 2;
-      final em = _startTime.hour * 60 + _startTime.minute + _minDuration;
-      _endTime = DateTime(_startTime.year, _startTime.month, _startTime.day,
-          em ~/ 60, em % 60);
+      final endMinutes = _startTime.hour * 60 +
+          _startTime.minute +
+          _minDuration;
+      _endTime = DateTime(
+        _startTime.year,
+        _startTime.month,
+        _startTime.day,
+        endMinutes ~/ 60,
+        endMinutes % 60,
+      );
     }
   }
 
+  /// Informe le parent que le drag (redimensionnement ou déplacement) est terminé.
   void _notifyParentEndDrag() {
     widget.onTaskResized(
       CalendarTask(
@@ -174,15 +218,13 @@ class _ResizableTaskCellState extends State<ResizableTaskCell> {
         start: _startTime,
         end: _endTime,
         title: widget.task.title,
-        columnIndex: widget.column,
-        totalColumns: widget.totalColumns,
-        topPx: _top,
-        heightPx: _height,
+        projectColor: widget.task.projectColor,
       ),
     );
   }
 
   void _onResizeStart(String side) {
+    if (!mounted) return;
     setState(() {
       _dragSide = side;
       _dragDelta = 0;
@@ -195,10 +237,17 @@ class _ResizableTaskCellState extends State<ResizableTaskCell> {
 
   Widget _buildCell({bool shadow = false}) {
     final isResizing = _dragSide != null;
+
+    // Couleur du projet ou fallback
+    final bgColor = widget.task.projectColor ?? AppColors.blue;
+
     return GestureDetector(
       onDoubleTap: () {
+        // Double-tap réinitialise à 0h15
+        if (!mounted) return;
         setState(() {
-          _startTime = DateTime(_startTime.year, _startTime.month, _startTime.day, 0, 0);
+          _startTime =
+              DateTime(_startTime.year, _startTime.month, _startTime.day, 0, 0);
           _endTime = _startTime.add(const Duration(minutes: _snapGrid));
         });
         _notifyParentEndDrag();
@@ -209,7 +258,7 @@ class _ResizableTaskCellState extends State<ResizableTaskCell> {
         width: widget.availableWidth,
         height: _height,
         decoration: BoxDecoration(
-          color: Colors.blueAccent,
+          color: bgColor,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: isResizing ? Colors.orangeAccent : Colors.transparent,
@@ -221,11 +270,13 @@ class _ResizableTaskCellState extends State<ResizableTaskCell> {
         ),
         child: Stack(
           children: [
+            // Contenu principal : titre + plage horaire
             Positioned.fill(
               child: GestureDetector(
                 behavior: HitTestBehavior.translucent,
                 onTap: () => widget.onTap(widget.task),
                 onVerticalDragStart: (_) {
+                  if (!mounted) return;
                   setState(() {
                     _isDraggingVertically = true;
                     _dragSide = null;
@@ -243,18 +294,20 @@ class _ResizableTaskCellState extends State<ResizableTaskCell> {
                 },
                 onVerticalDragEnd: (_) {
                   _notifyParentEndDrag();
+                  if (!mounted) return;
                   setState(() => _isDraggingVertically = false);
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                   child: Wrap(
-                    spacing: 8.0,      // espace horizontal
-                    runSpacing: 4.0,    // espace vertical quand ça wrap
+                    spacing: 8.0,   // espace horizontal
+                    runSpacing: 4.0, // espace vertical quand ça wrap
                     alignment: WrapAlignment.spaceBetween,
-
                     children: [
                       Text(
-                        toBeginningOfSentenceCase(widget.task.title) ?? widget.task.title,
+                        toBeginningOfSentenceCase(widget.task.title) ??
+                            widget.task.title,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 13,
@@ -263,7 +316,8 @@ class _ResizableTaskCellState extends State<ResizableTaskCell> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        "${DateFormat.Hm().format(_roundToGrid(_startTime))} - ${DateFormat.Hm().format(_roundToGrid(_endTime))}",
+                        "${DateFormat.Hm().format(_roundToGrid(_startTime))} - "
+                            "${DateFormat.Hm().format(_roundToGrid(_endTime))}",
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 12,
@@ -274,6 +328,8 @@ class _ResizableTaskCellState extends State<ResizableTaskCell> {
                 ),
               ),
             ),
+
+            // Poignées de redimensionnement (haut et bas)
             for (var side in ['top', 'bottom'])
               Positioned(
                 top: side == 'top' ? 0 : null,
@@ -295,6 +351,7 @@ class _ResizableTaskCellState extends State<ResizableTaskCell> {
                     },
                     onPanEnd: (_) {
                       _notifyParentEndDrag();
+                      if (!mounted) return;
                       setState(() => _dragSide = null);
                     },
                     child: Center(
@@ -329,15 +386,33 @@ class _ResizableTaskCellState extends State<ResizableTaskCell> {
           child: Opacity(opacity: 0.7, child: _buildCell(shadow: true)),
         ),
         childWhenDragging: Opacity(opacity: 0.2, child: _buildCell()),
-        onDragStarted: () => setState(() => _isDragging = true),
-        onDragUpdate: (d) => _autoScrollIfNeeded(context, d.globalPosition),
-        onDragEnd: (_) => setState(() => _isDragging = false),
-        onDraggableCanceled: (_, __) => setState(() => _isDragging = false),
-        onDragCompleted: () => setState(() => _isDragging = false),
+        onDragStarted: () {
+          if (!mounted) return;
+          setState(() => _isDragging = true);
+        },
+        onDragUpdate: (details) {
+          // Gère un éventuel scroll auto (non implémenté ici)
+          _autoScrollIfNeeded(context, details.globalPosition);
+        },
+        onDragEnd: (_) {
+          if (!mounted) return;
+          setState(() => _isDragging = false);
+        },
+        onDraggableCanceled: (_, __) {
+          if (!mounted) return;
+          setState(() => _isDragging = false);
+        },
+        onDragCompleted: () {
+          if (!mounted) return;
+          setState(() => _isDragging = false);
+        },
         child: MouseRegion(cursor: SystemMouseCursors.grab, child: _buildCell()),
       ),
     );
   }
 
-  void _autoScrollIfNeeded(BuildContext ctx, Offset global) {}
+  /// Placeholder pour scroll automatique si nécessaire (non implémenté).
+  void _autoScrollIfNeeded(BuildContext ctx, Offset global) {
+    // Par défaut, on n'implémente pas de scroll auto.
+  }
 }

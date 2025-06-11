@@ -1,9 +1,8 @@
-// lib/features/tasks/widgets/task_detail_panel_widget.dart
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../features/tasks/models/custom_task_model.dart';
 import '../../features/tasks/widgets/sub_task_list_widget.dart';
 import '../../features/chat/widgets/comment_section_widget.dart';
@@ -50,6 +49,10 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
 
+  /// Réplication / récurrence
+  late String _recurrence;
+  late bool _recurrenceIncludePast;
+
   /// Sélection du responsable
   String? selectedResponsableId;
   String? selectedResponsableName;
@@ -71,8 +74,7 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
   @override
   void initState() {
     super.initState();
-    // Initialiser la pile avec la tâche passée en argument
-    taskStack = [widget.task.copy()];
+    taskStack = [widget.task.copyWith()];
     indexStack = [];
     _loadCurrentTask();
     _fetchProjetsExistants();
@@ -83,10 +85,9 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
   @override
   void didUpdateWidget(covariant TaskDetailPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Si la tâche d’entrée change (clic sur une autre tâche), on réinitialise tout
     if (oldWidget.task.id != widget.task.id) {
       setState(() {
-        taskStack = [widget.task.copy()];
+        taskStack = [widget.task.copyWith()];
         indexStack = [];
         _loadCurrentTask();
         _loadSelectedResponsableName();
@@ -94,7 +95,6 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
     }
   }
 
-  /// Charge les champs à partir de la tâche courante (sommet de la pile)
   void _loadCurrentTask() {
     final t = taskStack.last;
     nameController = TextEditingController(text: t.name);
@@ -119,9 +119,11 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
     endMinuteController = TextEditingController(
       text: _endTime != null ? _endTime!.minute.toString().padLeft(2, '0') : '',
     );
+
+    _recurrence = t.recurrenceType ?? 'none';
+    _recurrenceIncludePast = t.recurrenceIncludePast ?? false;
   }
 
-  /// Charge le nom du responsable depuis Firestore, si déjà sélectionné
   Future<void> _loadSelectedResponsableName() async {
     if (selectedResponsableId == null || selectedResponsableId!.isEmpty) return;
     final doc = await FirebaseFirestore.instance
@@ -135,7 +137,6 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
     }
   }
 
-  /// Récupère la liste d’« amis » (collaborateurs acceptés) pour alimenter le dropdown
   Stream<List<Map<String, String>>> _getFriends() {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return Stream.value([]);
@@ -167,7 +168,6 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
     });
   }
 
-  /// Récupère la liste des projets pour le dropdown
   Future<void> _fetchProjetsExistants() async {
     final snap = await FirebaseFirestore.instance.collection('projects').get();
     final names = <String, String>{};
@@ -180,7 +180,6 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
     });
   }
 
-  /// Met à jour l’objet CustomTask courant à partir de l’UI
   void _updateCurrentTaskFromUI() {
     final t = taskStack.last;
     t.name = nameController.text.trim();
@@ -203,9 +202,88 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
     t.endTime = _endTime;
     t.responsable = selectedResponsableId ?? '';
     t.project = selectedProject ?? '';
+
+    t.recurrenceType = _recurrence;
+    t.recurrenceIncludePast = _recurrenceIncludePast;
   }
 
-  /// Retour en arrière dans la pile de sous‐tâches
+  Future<void> _openRecurrenceDialog() async {
+    String tempRecurrence = _recurrence;
+    bool tempIncludePast = _recurrenceIncludePast;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text("Paramètres de récurrence"),
+          content: StatefulBuilder(
+            builder: (ctx2, setState2) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButton<String>(
+                    value: tempRecurrence,
+                    isExpanded: true,
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'none',
+                        child: Text('Aucune'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'sameDay',
+                        child: Text('Tous les mêmes jours'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'weekdays',
+                        child: Text('Jours de semaine (lun–ven)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'weekends',
+                        child: Text('Week‐ends (sam–dim)'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState2(() => tempRecurrence = value);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text("Inclure les tâches antérieures"),
+                    value: tempIncludePast,
+                    onChanged: (v) {
+                      if (v != null) {
+                        setState2(() => tempIncludePast = v);
+                      }
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text("Annuler"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _recurrence = tempRecurrence;
+                  _recurrenceIncludePast = tempIncludePast;
+                });
+                Navigator.of(ctx).pop();
+              },
+              child: const Text("Valider"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _goBack() {
     if (taskStack.length <= 1) return;
 
@@ -219,14 +297,14 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
     });
   }
 
-  /// Navigation vers une sous‐tâche (index idx)
   void _navigateToSubTask(int idx) {
     if (taskStack.isEmpty) return;
     final parent = taskStack.last;
-    if (parent.subTasks.isEmpty || idx < 0 || idx >= parent.subTasks.length) return;
-
+    if (parent.subTasks.isEmpty || idx < 0 || idx >= parent.subTasks.length) {
+      return;
+    }
     _updateCurrentTaskFromUI();
-    final sub = parent.subTasks[idx].copy();
+    final sub = parent.subTasks[idx].copyWith();
 
     setState(() {
       taskStack.add(sub);
@@ -236,18 +314,17 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
     });
   }
 
-  /// Sélection de la date d’échéance
   Future<void> _pickDeadline() async {
     final theme = Theme.of(context);
     final now = DateTime.now();
-    final pd = await showDatePicker(
+    final picked = await showDatePicker(
       context: context,
       initialDate: _deadline ?? now,
-      firstDate: now,
+      firstDate: DateTime(1970, 1, 1),
       lastDate: DateTime(now.year + 5),
       builder: (c, child) => Theme(data: theme, child: child!),
     );
-    if (pd != null) setState(() => _deadline = pd);
+    if (picked != null) setState(() => _deadline = picked);
   }
 
   @override
@@ -274,19 +351,17 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
     final cs = theme.colorScheme;
     final currentTask = taskStack.last;
 
-    // Couleurs dynamiques
-    final bgColor         = cs.background;
-    final onBg            = cs.onBackground;
-    final onBgFaded       = onBg.withOpacity(0.7);
-    final onBgFadedLight  = onBg.withOpacity(0.54);
-    final surfaceColor    = cs.surface;
-    final surfaceVariant  = cs.surfaceVariant ?? surfaceColor;
-    final borderColor     = onBg.withOpacity(0.3);
+    final bgColor = cs.background;
+    final onBg = cs.onBackground;
+    final onBgFaded = onBg.withOpacity(0.7);
+    final onBgFadedLight = onBg.withOpacity(0.54);
+    final surfaceColor = cs.surface;
+    final surfaceVariant = cs.surfaceVariant ?? surfaceColor;
+    final borderColor = onBg.withOpacity(0.3);
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: () {
-        // Si le dropdown Responsable est ouvert, on le ferme au tap extérieur
         if (_showResponsableDropdown) {
           setState(() => _showResponsableDropdown = false);
         }
@@ -367,6 +442,57 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
               ),
               const SizedBox(height: 8),
 
+              // --- Champ Récurrence (ouvre un dialogue) ---
+              Text(
+                "Récurrence :",
+                style: TextStyle(
+                  color: onBg,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              GestureDetector(
+                onTap: _openRecurrenceDialog,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: borderColor),
+                    borderRadius: BorderRadius.circular(4),
+                    color: surfaceColor,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _recurrence == 'none'
+                                ? "Aucune"
+                                : _recurrence == 'sameDay'
+                                ? "Tous les mêmes jours"
+                                : _recurrence == 'weekdays'
+                                ? "Jours de semaine"
+                                : _recurrence == 'weekends'
+                                ? "Week‐ends"
+                                : "Personnalisé",
+                            style: TextStyle(color: onBg),
+                          ),
+                          if (_recurrenceIncludePast)
+                            Text(
+                              "Inclut tâches antérieures",
+                              style:
+                              TextStyle(color: onBgFadedLight, fontSize: 12),
+                            ),
+                        ],
+                      ),
+                      Icon(Icons.arrow_forward_ios, size: 16, color: onBgFadedLight),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
               // --- Heures de début / fin ---
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -386,7 +512,8 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                             hintText: "HH",
                             hintStyle: TextStyle(color: onBgFadedLight),
                             counterText: "",
-                            contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                            contentPadding:
+                            const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                             enabledBorder: UnderlineInputBorder(
                               borderSide: BorderSide(color: borderColor),
                             ),
@@ -412,7 +539,8 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                             hintText: "MM",
                             hintStyle: TextStyle(color: onBgFadedLight),
                             counterText: "",
-                            contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                            contentPadding:
+                            const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                             enabledBorder: UnderlineInputBorder(
                               borderSide: BorderSide(color: borderColor),
                             ),
@@ -423,6 +551,7 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                       ),
                     ],
                   ),
+
                   // Heure de fin
                   Row(
                     children: [
@@ -438,7 +567,8 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                             hintText: "HH",
                             hintStyle: TextStyle(color: onBgFadedLight),
                             counterText: "",
-                            contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                            contentPadding:
+                            const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                             enabledBorder: UnderlineInputBorder(
                               borderSide: BorderSide(color: borderColor),
                             ),
@@ -464,7 +594,8 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                             hintText: "MM",
                             hintStyle: TextStyle(color: onBgFadedLight),
                             counterText: "",
-                            contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                            contentPadding:
+                            const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                             enabledBorder: UnderlineInputBorder(
                               borderSide: BorderSide(color: borderColor),
                             ),
@@ -506,7 +637,9 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                               ),
                             ),
                             Icon(
-                              _showResponsableDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                              _showResponsableDropdown
+                                  ? Icons.arrow_drop_up
+                                  : Icons.arrow_drop_down,
                               color: onBgFadedLight,
                             ),
                           ],
@@ -536,7 +669,8 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                                contentPadding:
+                                const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                               ),
                               onChanged: (v) => setState(() => responsableSearch = v.trim().toLowerCase()),
                             ),
@@ -554,9 +688,10 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                                     );
                                   }
                                   final results = snap.data!
-                                      .where((f) => f['displayName']!
-                                      .toLowerCase()
-                                      .contains(responsableSearch))
+                                      .where((f) =>
+                                      f['displayName']!
+                                          .toLowerCase()
+                                          .contains(responsableSearch))
                                       .toList();
                                   if (results.isEmpty) {
                                     return Center(
@@ -597,7 +732,7 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                 ),
               ),
 
-              // --- Sélecteur de projet (bouton "+" retiré) ---
+              // --- Sélecteur de projet (sans bouton "+") ---
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Row(
@@ -629,6 +764,7 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                 ),
               ),
 
+              const SizedBox(height: 16),
               Divider(color: borderColor, height: 24),
 
               // --- Champ description ---
@@ -670,7 +806,8 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                     s.status = s.status == 'terminé' ? 'à venir' : 'terminé';
                   });
                 },
-                onAdd: (name) => setState(() => currentTask.subTasks.add(CustomTask(name: name, description: ''))),
+                onAdd: (name) =>
+                    setState(() => currentTask.subTasks.add(CustomTask(name: name, description: ''))),
               ),
 
               const SizedBox(height: 16),
@@ -695,13 +832,15 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                         final eh = _endTime!.hour;
                         final em = _endTime!.minute;
                         if (sh > eh || (sh == eh && sm >= em)) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text(
-                              "L'heure de fin doit être ultérieure à celle de début.",
-                              style: TextStyle(color: onBg),
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                "L'heure de fin doit être ultérieure à celle de début.",
+                                style: TextStyle(color: onBg),
+                              ),
+                              backgroundColor: surfaceColor,
                             ),
-                            backgroundColor: surfaceColor,
-                          ));
+                          );
                           return;
                         }
                       }
@@ -709,21 +848,25 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                       try {
                         await widget.onSave(taskStack.last);
                         widget.onCalendarRefresh();
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(
-                            "Tâche '${taskStack.last.name}' enregistrée",
-                            style: TextStyle(color: onBg),
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              "Tâche '${taskStack.last.name}' enregistrée",
+                              style: TextStyle(color: onBg),
+                            ),
+                            backgroundColor: surfaceColor,
                           ),
-                          backgroundColor: surfaceColor,
-                        ));
+                        );
                       } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(
-                            "Erreur lors de la sauvegarde : $e",
-                            style: TextStyle(color: onBg),
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              "Erreur lors de la sauvegarde : $e",
+                              style: TextStyle(color: onBg),
+                            ),
+                            backgroundColor: surfaceColor,
                           ),
-                          backgroundColor: surfaceColor,
-                        ));
+                        );
                         return;
                       }
 

@@ -5,183 +5,208 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-// ───────────── Nouveaux imports pour Provider ─────────────
+// ───────────── Nouveaux imports ─────────────
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
-import 'core/providers/plugin_provider.dart';
 
-// Import du StockProvider
+// Vos providers existants
+import 'core/providers/plugin_provider.dart';
 import 'plugins/stock/providers/stock_provider.dart';
+import 'plugins/crm/providers/contact_provider.dart';
+import 'plugins/crm/providers/opportunity_provider.dart';
+import 'plugins/crm/providers/quote_provider.dart';
 
 import 'features/auth/services/auth_service.dart';
 import 'features/auth/views/login_screen.dart';
 import 'features/auth/views/register_screen.dart';
-import 'shared/interface/interface.dart';
+import 'shared/interface/interface.dart'; // Pour HomeScreen
 import 'firebase_options.dart';
 
-/// 1) On crée un ValueNotifier global pour piloter le ThemeMode de l'app.
-///    Par défaut, on reste en thème sombre.
-final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.dark);
+/// 1) Enum à trois valeurs
+enum AppTheme { light, dark, sequoia }
 
-/// 2) Classe centralisant toutes les couleurs utilisées dans l'app
-///    pour pouvoir les réutiliser facilement dans les Themes et composants.
+/// 2) ValueNotifier global, initialisé à Sequoia (sera écrasé si prefs contient autre chose)
+final ValueNotifier<AppTheme> themeNotifier = ValueNotifier(AppTheme.sequoia);
+
+/// 3) Classe centralisant toutes les couleurs utilisées dans l’app
 class AppColors {
-  /// Fond sombre principal (gris cendres)
-  static const Color darkBackground = Color(0xFF212121);
-
-  /// Nouveau gris foncé (#424242) pour certains fonds d'éléments en sombre
-  static const Color darkGreyBackground = Color(0xFF424242);
-
-  /// Bleu « actif » (icônes, sélection, etc.)
-  static const Color blue = Color(0xFF448AFF);
-
-  /// Validation (boutons ou icônes de validation) en vert
-  static const Color green = Color(0xFF4CAF50);
-
-  /// Couleur « principale » pour certains boutons (violet)
-  static const Color purple = Color(0xFF6750A4);
-
-  /// Nouveau gris clair pour certains fonds en mode clair (#F2F2F2)
-  static const Color lightGreyBackground = Color(0xFFF2F2F2);
+  static const Color darkBackground      = Color(0xFF212121);
+  static const Color darkGreyBackground  = Color(0xFF424242);
+  static const Color lightGreyBackground = Color(0xFFF5F5F5);
+  static const Color tealEnergy          = Color(0xFF1ABC9C);
+  static const Color green               = Color(0xFF4CAF50);
+  static const Color purple              = Color(0xFF6750A4);
+  static const Color blue                = tealEnergy;
+  static const Color glassHeader         = Color(0x66000000);
+  static const Color glassBackground     = Color(0x33000000);
 }
 
-/// 3) Thème clair de l’application
+/// 4) Définition du thème clair
 final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
-
-  // Fond général en blanc
   scaffoldBackgroundColor: Colors.white,
-
-  // Définition du ColorScheme clair
   colorScheme: const ColorScheme.light(
-    primary: AppColors.purple,     // violet → boutons principaux
-    secondary: AppColors.blue,     // bleu   → éléments « actifs »
+    primary: AppColors.purple,
+    secondary: AppColors.blue,
     background: Colors.white,
-    onBackground: Colors.black,    // texte sur fond blanc
-    onPrimary: Colors.white,       // texte sur violet
-    onSecondary: Colors.white,     // texte sur bleu
+    onBackground: Colors.black,
+    onPrimary: Colors.white,
+    onSecondary: Colors.white,
   ),
-
-  // ElevatedButton principal en violet (background), texte blanc
+  appBarTheme: const AppBarTheme(
+    backgroundColor: AppColors.purple,
+    foregroundColor: Colors.white,
+  ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
       backgroundColor: AppColors.purple,
       foregroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
   ),
-
-  // TextButton par défaut (par exemple pour boutons de validation) en vert
   textButtonTheme: TextButtonThemeData(
-    style: TextButton.styleFrom(
-      foregroundColor: AppColors.green,
-    ),
+    style: TextButton.styleFrom(foregroundColor: AppColors.purple),
   ),
-
-  // Icônes par défaut en bleu
   iconTheme: const IconThemeData(color: AppColors.blue),
-
-  // BottomNavigationBar : icône sélectionnée en bleu, désélectionnée en gris
-  bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-    selectedIconTheme: IconThemeData(color: AppColors.blue),
-    unselectedIconTheme: IconThemeData(color: Colors.grey),
-    backgroundColor: Colors.white,
-  ),
-
-  // Switch & Checkbox : couleur active en vert
-  switchTheme: SwitchThemeData(
-    thumbColor: MaterialStateProperty.all(AppColors.green),
-    trackColor: MaterialStateProperty.resolveWith((states) {
-      if (states.contains(MaterialState.selected)) {
-        return AppColors.green.withOpacity(0.5);
-      }
-      return Colors.grey.withOpacity(0.5);
-    }),
-  ),
-  checkboxTheme: CheckboxThemeData(
-    fillColor: MaterialStateProperty.all(AppColors.green),
-  ),
-
-  // Exemple : Card sur thème clair (fond blanc, ombre légère)
-  cardColor: Colors.white,
-);
-
-/// 4) Thème sombre de l’application
-final ThemeData darkTheme = ThemeData(
-  brightness: Brightness.dark,
-
-  // Fond général en gris cendres
-  scaffoldBackgroundColor: AppColors.darkBackground,
-
-  // Définition du ColorScheme sombre
-  colorScheme: const ColorScheme.dark(
-    primary: AppColors.blue,         // bleu   → icônes « actives »
-    secondary: AppColors.purple,     // violet → boutons dans le dark
-    background: AppColors.darkBackground,
-    surface: AppColors.darkBackground,
-    onBackground: Colors.white,      // texte sur fond sombre
-    onPrimary: Colors.white,         // texte sur bleu
-    onSecondary: Colors.white,       // texte sur violet
-  ),
-
-  // ElevatedButton principal en violet (background), texte blanc
-  elevatedButtonTheme: ElevatedButtonThemeData(
-    style: ElevatedButton.styleFrom(
-      backgroundColor: AppColors.purple,
-      foregroundColor: Colors.white,
-    ),
-  ),
-
-  // TextButton par défaut (par exemple pour boutons de validation) en vert
-  textButtonTheme: TextButtonThemeData(
-    style: TextButton.styleFrom(
-      foregroundColor: AppColors.green,
-    ),
-  ),
-
-  // Icônes par défaut en bleu
-  iconTheme: const IconThemeData(color: AppColors.blue),
-
-  // BottomNavigationBar : icône sélectionnée en bleu, désélectionnée en gris
   bottomNavigationBarTheme: const BottomNavigationBarThemeData(
     selectedIconTheme: IconThemeData(color: AppColors.blue),
     unselectedIconTheme: IconThemeData(color: Colors.grey),
     backgroundColor: AppColors.darkBackground,
   ),
-
-  // Switch & Checkbox : couleur active en vert
   switchTheme: SwitchThemeData(
     thumbColor: MaterialStateProperty.all(AppColors.green),
     trackColor: MaterialStateProperty.resolveWith((states) {
       if (states.contains(MaterialState.selected)) {
         return AppColors.green.withOpacity(0.5);
       }
-      return Colors.grey.withOpacity(0.5);
+      return null;
     }),
   ),
   checkboxTheme: CheckboxThemeData(
-    fillColor: MaterialStateProperty.all(AppColors.green),
+    checkColor: MaterialStateProperty.all(Colors.white),
+    fillColor: MaterialStateProperty.resolveWith((states) {
+      if (states.contains(MaterialState.selected)) {
+        return AppColors.green;
+      }
+      return null;
+    }),
   ),
+);
 
-  // Pour certains Card ou Dialog en sombre, on souhaite utiliser le gris #424242
-  cardColor: AppColors.darkGreyBackground,
-  dialogBackgroundColor: AppColors.darkGreyBackground,
+/// 5) Définition du thème sombre
+final ThemeData darkTheme = ThemeData(
+  brightness: Brightness.dark,
+  scaffoldBackgroundColor: AppColors.darkBackground,
+  colorScheme: const ColorScheme.dark(
+    primary: AppColors.blue,
+    secondary: AppColors.purple,
+    background: AppColors.darkBackground,
+    surface: AppColors.darkBackground,
+    onBackground: Colors.white,
+    onPrimary: Colors.white,
+    onSecondary: Colors.white,
+  ),
+  appBarTheme: const AppBarTheme(
+    backgroundColor: AppColors.darkGreyBackground,
+    foregroundColor: Colors.white,
+  ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: AppColors.blue,
+      foregroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    ),
+  ),
+  textButtonTheme: TextButtonThemeData(
+    style: TextButton.styleFrom(foregroundColor: AppColors.purple),
+  ),
+  iconTheme: const IconThemeData(color: AppColors.blue),
+  bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+    selectedIconTheme: IconThemeData(color: AppColors.blue),
+    unselectedIconTheme: IconThemeData(color: Colors.grey),
+    backgroundColor: AppColors.darkBackground,
+  ),
+  switchTheme: SwitchThemeData(
+    thumbColor: MaterialStateProperty.all(AppColors.green),
+    trackColor: MaterialStateProperty.resolveWith((states) {
+      if (states.contains(MaterialState.selected)) {
+        return AppColors.green.withOpacity(0.5);
+      }
+      return null;
+    }),
+  ),
+  checkboxTheme: CheckboxThemeData(
+    checkColor: MaterialStateProperty.all(Colors.white),
+    fillColor: MaterialStateProperty.resolveWith((states) {
+      if (states.contains(MaterialState.selected)) {
+        return AppColors.green;
+      }
+      return null;
+    }),
+  ),
+);
+
+/// 6) Définition du thème Sequoia (verre dépoli)
+final ThemeData sequoiaTheme = darkTheme.copyWith(
+  scaffoldBackgroundColor: Colors.transparent,
+  canvasColor: Colors.black.withOpacity(0.5),
+  cardColor: Colors.black.withOpacity(0.5),
+  dialogBackgroundColor: Colors.black.withOpacity(0.5),
+  bottomSheetTheme: BottomSheetThemeData(
+    backgroundColor: Colors.black.withOpacity(0.5),
+  ),
+  listTileTheme: ListTileThemeData(
+    tileColor: Colors.black.withOpacity(0.5),
+    iconColor: Colors.white,
+    textColor: Colors.white,
+  ),
+  popupMenuTheme: PopupMenuThemeData(
+    color: Colors.black.withOpacity(0.5),
+    textStyle: const TextStyle(color: Colors.white),
+  ),
+  chipTheme: ChipThemeData.fromDefaults(
+    secondaryColor: Colors.black.withOpacity(0.5),
+    brightness: Brightness.dark,
+    labelStyle: const TextStyle(color: Colors.white),
+  ).copyWith(backgroundColor: Colors.black.withOpacity(0.5)),
+  appBarTheme: darkTheme.appBarTheme.copyWith(
+    backgroundColor: Colors.black54,
+    foregroundColor: Colors.white,
+  ),
+  bottomNavigationBarTheme:
+  darkTheme.bottomNavigationBarTheme.copyWith(
+    backgroundColor: Colors.black.withOpacity(0.5),
+  ),
+  navigationRailTheme:
+  darkTheme.navigationRailTheme.copyWith(
+    backgroundColor: Colors.black.withOpacity(0.5),
+  ),
 );
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialisation Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Initialisation des locales pour Intl (ici en français)
   await initializeDateFormatting('fr_FR', null);
 
-  // ─────────── On enveloppe l’application dans MultiProvider ───────────
+  // ───────────── Charger le thème sauvegardé ─────────────
+  final prefs = await SharedPreferences.getInstance();
+  final stored = prefs.getString('appTheme');
+  if (stored != null) {
+    themeNotifier.value = AppTheme.values.firstWhere(
+          (e) => e.toString() == stored,
+      orElse: () => AppTheme.sequoia,
+    );
+  }
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => PluginProvider()),
         ChangeNotifierProvider(create: (_) => StockProvider()),
-        // … d’autres providers éventuels
+        ChangeNotifierProvider(create: (_) => ContactProvider()),
+        ChangeNotifierProvider(create: (_) => OpportunityProvider()),
+        ChangeNotifierProvider(create: (_) => QuoteProvider()),
+        // … ajoutez d’autres providers si besoin …
       ],
       child: const MyApp(),
     ),
@@ -193,27 +218,33 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // On écoute le themeNotifier pour basculer entre light et dark
-    return ValueListenableBuilder<ThemeMode>(
+    return ValueListenableBuilder<AppTheme>(
       valueListenable: themeNotifier,
-      builder: (context, currentThemeMode, child) {
+      builder: (context, currentAppTheme, child) {
         final bool isLoggedIn = FirebaseAuth.instance.currentUser != null;
+        ThemeData themeToApply;
+        switch (currentAppTheme) {
+          case AppTheme.light:
+            themeToApply = lightTheme;
+            break;
+          case AppTheme.dark:
+            themeToApply = darkTheme;
+            break;
+          case AppTheme.sequoia:
+            themeToApply = sequoiaTheme;
+            break;
+        }
+
         return MaterialApp(
           title: 'Mon App',
           debugShowCheckedModeBanner: false,
-
-          // On connecte nos deux thèmes
-          theme: lightTheme,
-          darkTheme: darkTheme,
-          themeMode: currentThemeMode,
-
-          // Home / routing
+          theme: themeToApply,
           home: isLoggedIn ? const HomeScreen() : const LoginPage(),
           routes: {
-            '/login': (_) => const LoginPage(),
+            '/login':    (_) => const LoginPage(),
             '/register': (_) => const RegisterPage(),
-            '/home': (_) => const HomeScreen(),
-            // Ajoutez d’autres routes au besoin
+            '/home':     (_) => const HomeScreen(),
+            // Les routes CRM / FSM / ESP sont gérées dynamiquement via PluginProvider
           },
         );
       },

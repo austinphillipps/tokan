@@ -1,13 +1,15 @@
+// lib/shared/interface/settings_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/auth/views/login_screen.dart';
-import '../../main.dart'; // Pour accéder à themeNotifier
+import '../../main.dart'; // Pour AppTheme et themeNotifier
 import 'profile_screen.dart'; // Import de la page Profil
 
 /// Page Paramètres de l’app
-/// Par défaut, on garde le design sombre existant (gris foncé),
-/// et on ajoute la possibilité de basculer vers un thème clair.
+/// Ajoute les thèmes Clair / Sombre / Sequoia et persiste le choix.
 class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
 
@@ -16,13 +18,24 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  late bool _isDarkMode;
+  late AppTheme _selectedTheme;
 
   @override
   void initState() {
     super.initState();
-    // On récupère l’état initial du themeNotifier (true si sombre)
-    _isDarkMode = (themeNotifier.value == ThemeMode.dark);
+    // Récupère l’état actuel du themeNotifier
+    _selectedTheme = themeNotifier.value;
+  }
+
+  /// Sauvegarde et applique le thème sélectionné
+  Future<void> _onThemeChanged(AppTheme? newTheme) async {
+    if (newTheme == null) return;
+    setState(() {
+      _selectedTheme = newTheme;
+      themeNotifier.value = newTheme;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('appTheme', newTheme.toString());
   }
 
   Future<void> _signOut(BuildContext context) async {
@@ -35,39 +48,25 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    /// Dans le darkTheme, on voulait :
-    ///  • scaffoldBackgroundColor = Colors.grey[900]
-    ///  • appBar background = Colors.grey[850]
-    ///  • ListTile tileColor = Colors.grey[850], texte blanc, icônes blanches, sous-texte blanc70
-    ///
-    /// Dans le lightTheme, on choisit par exemple :
-    ///  • scaffoldBackgroundColor = Colors.grey[100]
-    ///  • appBar background = Colors.white
-    ///  • ListTile tileColor = Colors.white, texte noir87, icônes noir87, sous-texte noir54
-    ///
-    /// Ici, on exploite Theme.of(context) pour récupérer les couleurs dynamiques.
-
+    final bool isDarkStyle = _selectedTheme == AppTheme.dark ||
+        _selectedTheme == AppTheme.sequoia;
     final colorScheme = Theme.of(context).colorScheme;
-    final isDark = _isDarkMode;
-    // Couleur de fond de la Scaffold est gérée par ThemeData.scaffoldBackgroundColor
-    // Texte principal (titres de section) :
-    final sectionTitleColor = isDark
+
+    final sectionTitleColor = isDarkStyle
         ? Colors.white70
         : colorScheme.onBackground.withOpacity(0.7);
-    // Tile background :
-    final tileBgColor = isDark ? Colors.grey[850]! : Colors.white;
-    // Texte et icônes dans les ListTile :
-    final tileIconColor = isDark ? Colors.white : Colors.black87;
-    final tileTextColor = isDark ? Colors.white : Colors.black87;
-    // Couleur d’accent (par exemple l’icône du switch) :
-    final accentColor = isDark ? Colors.blueAccent : colorScheme.primary;
+    final tileBgColor    = isDarkStyle ? Colors.grey[850]! : Colors.white;
+    final tileIconColor  = isDarkStyle ? Colors.white : Colors.black87;
+    final tileTextColor  = isDarkStyle ? Colors.white : Colors.black87;
+    final accentColor    = isDarkStyle ? Colors.blueAccent : colorScheme.primary;
 
     return Scaffold(
-      backgroundColor:
-      isDark ? Colors.grey[900] : Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: isDarkStyle
+          ? Colors.grey[900]
+          : Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: isDark ? Colors.grey[850] : Colors.white,
-        foregroundColor: isDark ? Colors.white : Colors.black,
+        backgroundColor: isDarkStyle ? Colors.grey[850] : Colors.white,
+        foregroundColor: isDarkStyle ? Colors.white : Colors.black,
         title: const Text('Paramètres'),
         centerTitle: true,
         elevation: 0,
@@ -75,9 +74,7 @@ class _SettingsPageState extends State<SettingsPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // ============================
           // SECTION « Général »
-          // ============================
           Text(
             'Général',
             style: TextStyle(
@@ -87,48 +84,46 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           const SizedBox(height: 8),
-
-          // ---------------------------------------------------------------
-          // SwitchListTile pour basculer Thème sombre / clair
-          // ---------------------------------------------------------------
           Container(
             decoration: BoxDecoration(
               color: tileBgColor,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: SwitchListTile(
-              title: Text(
-                'Thème sombre',
-                style: TextStyle(color: tileTextColor),
-              ),
-              subtitle: Text(
-                _isDarkMode ? 'Activé' : 'Désactivé',
-                style: TextStyle(
-                  color: isDark ? Colors.white70 : Colors.black54,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              children: [
+                Icon(Icons.palette, color: accentColor),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: DropdownButton<AppTheme>(
+                    isExpanded: true,
+                    value: _selectedTheme,
+                    underline: const SizedBox(),
+                    items: const [
+                      DropdownMenuItem(
+                        value: AppTheme.light,
+                        child: Text('Clair'),
+                      ),
+                      DropdownMenuItem(
+                        value: AppTheme.dark,
+                        child: Text('Sombre'),
+                      ),
+                      DropdownMenuItem(
+                        value: AppTheme.sequoia,
+                        child: Text('Sequoia'),
+                      ),
+                    ],
+                    onChanged: _onThemeChanged,
+                  ),
                 ),
-              ),
-              value: _isDarkMode,
-              onChanged: (bool newValue) {
-                setState(() {
-                  _isDarkMode = newValue;
-                  themeNotifier.value =
-                  newValue ? ThemeMode.dark : ThemeMode.light;
-                });
-              },
-              secondary: Icon(
-                _isDarkMode ? Icons.nightlight_round : Icons.wb_sunny,
-                color: accentColor,
-              ),
-              activeColor: accentColor,
+              ],
             ),
           ),
 
           const SizedBox(height: 16),
           const Divider(color: Colors.white24),
 
-          // ============================
           // SECTION « Compte »
-          // ============================
           Text(
             'Compte',
             style: TextStyle(
@@ -138,7 +133,6 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           const SizedBox(height: 8),
-
           _SettingTile(
             icon: Icons.person,
             label: 'Profil',
@@ -146,14 +140,12 @@ class _SettingsPageState extends State<SettingsPage> {
             iconColor: tileIconColor,
             textColor: tileTextColor,
             onTap: () {
-              // Navigation vers la page Profil
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const ProfileScreen()),
               );
             },
           ),
-
           _SettingTile(
             icon: Icons.logout,
             label: 'Se déconnecter',
@@ -166,9 +158,7 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 16),
           const Divider(color: Colors.white24),
 
-          // ============================
           // SECTION « À propos »
-          // ============================
           Text(
             'À propos',
             style: TextStyle(
@@ -178,7 +168,6 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           const SizedBox(height: 8),
-
           _SettingTile(
             icon: Icons.info_outline,
             label: 'Version',
@@ -188,14 +177,11 @@ class _SettingsPageState extends State<SettingsPage> {
             trailing: Text(
               '0.1.0',
               style: TextStyle(
-                color: isDark ? Colors.white54 : Colors.black54,
+                color: isDarkStyle ? Colors.white54 : Colors.black54,
               ),
             ),
-            onTap: () {
-              // Rien à faire pour la version
-            },
+            onTap: () {},
           ),
-
           _SettingTile(
             icon: Icons.support_agent,
             label: 'Support',
@@ -249,7 +235,8 @@ class _SettingTile extends StatelessWidget {
               color: iconColor.withOpacity(0.6),
             ),
         onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         dense: true,
       ),
     );

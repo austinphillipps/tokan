@@ -38,18 +38,13 @@ class CalendarMenuBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // En clair → on utilise AppColors.lightGreyBackground, sinon AppColors.darkGreyBackground
-    final bgColor = isDark
-        ? AppColors.darkGreyBackground
-        : AppColors.lightGreyBackground;
-    final borderColor = Theme.of(context).colorScheme.onBackground;
-    final textColor = Theme.of(context).colorScheme.onBackground;
-    final iconColor = Theme.of(context).colorScheme.onBackground;
+    final textColor = Colors.white;
+    final iconColor = Colors.white;
+    final borderColor = Colors.white.withOpacity(0.7);
 
     return AppBar(
-      backgroundColor: bgColor,
+      backgroundColor: AppColors.glassHeader,
+      elevation: 0,
       automaticallyImplyLeading: automaticallyImplyLeading,
       titleSpacing: 0,
       title: Row(
@@ -62,8 +57,7 @@ class CalendarMenuBar extends StatelessWidget implements PreferredSizeWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),
               ),
-              padding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
             child: Text(
               'AUJOURD\'HUI',
@@ -85,8 +79,7 @@ class CalendarMenuBar extends StatelessWidget implements PreferredSizeWidget {
           InkWell(
             onTap: onToggleMonthPopup,
             child: Container(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 border: Border.all(color: borderColor, width: 1),
                 borderRadius: BorderRadius.circular(20),

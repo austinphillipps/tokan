@@ -46,11 +46,11 @@ class _ChatScreenState extends State<ChatScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      // Le fond général prend la couleur définie dans le Theme (clair/sombre)
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      // Fond en glass background
+      backgroundColor: AppColors.glassBackground,
       appBar: AppBar(
-        // On reprend la même couleur que le scaffold pour rester uniforme
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        // On utilise glassHeader pour la barre d'app
+        backgroundColor: AppColors.glassHeader,
         elevation: 1,
         iconTheme: IconThemeData(
           color: Theme.of(context).colorScheme.onBackground, // icônes (retour, appel, etc.)

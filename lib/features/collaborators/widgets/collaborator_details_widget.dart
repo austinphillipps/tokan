@@ -1,4 +1,4 @@
-// lib/collaborator_details_widget.dart
+// lib/features/collaborators/widgets/collaborator_details_widget.dart
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -129,14 +129,14 @@ class _CollaboratorDetailPanelState extends State<CollaboratorDetailPanel> {
     final isDark = theme.brightness == Brightness.dark;
 
     // Couleurs dynamiques
-    final backgroundColor =
-    isDark ? AppColors.darkBackground : theme.colorScheme.surface;
+    final backgroundColor = AppColors.glassBackground;
     final onBackground = theme.colorScheme.onBackground;
     final onSurface = theme.colorScheme.onSurface;
     final dividerColor = onBackground.withOpacity(0.24);
     final iconColor = onBackground.withOpacity(0.7);
     final buttonColor = theme.colorScheme.error; // couleur d’erreur pour bouton
     final buttonTextColor = onSurface;
+    final glassHeaderColor = AppColors.glassHeader;
 
     if (collaboratorData == null) {
       return Container(
@@ -146,6 +146,18 @@ class _CollaboratorDetailPanelState extends State<CollaboratorDetailPanel> {
             valueColor: AlwaysStoppedAnimation(AppColors.blue),
           ),
         ),
+      );
+    }
+
+    Widget _buildItemContainer(Widget child) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        decoration: BoxDecoration(
+          color: glassHeaderColor,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: child,
       );
     }
 
@@ -180,13 +192,14 @@ class _CollaboratorDetailPanelState extends State<CollaboratorDetailPanel> {
                   Divider(color: dividerColor),
                   const SizedBox(height: 8),
 
-                  // Avatar
+                  // Avatar (dans container arrondi)
                   if (collaboratorData!['photoURL'] != null)
                     Center(
                       child: CircleAvatar(
                         radius: 40,
-                        backgroundImage: NetworkImage(
-                            collaboratorData!['photoURL'] as String),
+                        backgroundImage:
+                        NetworkImage(collaboratorData!['photoURL'] as String),
+                        backgroundColor: Colors.transparent,
                       ),
                     ),
                   const SizedBox(height: 16),
@@ -198,43 +211,72 @@ class _CollaboratorDetailPanelState extends State<CollaboratorDetailPanel> {
                         ?.copyWith(color: onBackground.withOpacity(0.7)),
                   ),
                   const SizedBox(height: 8),
-                  ListTile(
-                    leading: Icon(Icons.email, color: iconColor),
-                    title: Text(
-                      collaboratorData!['email'] as String? ?? 'Email inconnu',
-                      style: TextStyle(color: onBackground),
+
+                  if (collaboratorData!['email'] != null)
+                    _buildItemContainer(
+                      Row(
+                        children: [
+                          Icon(Icons.email, color: iconColor),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              collaboratorData!['email'] as String,
+                              style: TextStyle(color: onBackground),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    contentPadding: EdgeInsets.zero,
-                  ),
+
                   if (collaboratorData!['username'] != null)
-                    ListTile(
-                      leading: Icon(Icons.person, color: iconColor),
-                      title: Text(
-                        collaboratorData!['username'] as String,
-                        style: TextStyle(color: onBackground),
+                    _buildItemContainer(
+                      Row(
+                        children: [
+                          Icon(Icons.person, color: iconColor),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              collaboratorData!['username'] as String,
+                              style: TextStyle(color: onBackground),
+                            ),
+                          ),
+                        ],
                       ),
-                      contentPadding: EdgeInsets.zero,
                     ),
+
                   if (collaboratorData!['phoneNumber'] != null)
-                    ListTile(
-                      leading: Icon(Icons.phone, color: iconColor),
-                      title: Text(
-                        collaboratorData!['phoneNumber'] as String,
-                        style: TextStyle(color: onBackground),
+                    _buildItemContainer(
+                      Row(
+                        children: [
+                          Icon(Icons.phone, color: iconColor),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              collaboratorData!['phoneNumber'] as String,
+                              style: TextStyle(color: onBackground),
+                            ),
+                          ),
+                        ],
                       ),
-                      contentPadding: EdgeInsets.zero,
                     ),
+
                   if (collaboratorData!['createdAt'] != null)
-                    ListTile(
-                      leading: Icon(Icons.calendar_today, color: iconColor),
-                      title: Text(
-                        (collaboratorData!['createdAt'] as Timestamp)
-                            .toDate()
-                            .toLocal()
-                            .toString(),
-                        style: TextStyle(color: onBackground),
+                    _buildItemContainer(
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_today, color: iconColor),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              (collaboratorData!['createdAt'] as Timestamp)
+                                  .toDate()
+                                  .toLocal()
+                                  .toString(),
+                              style: TextStyle(color: onBackground),
+                            ),
+                          ),
+                        ],
                       ),
-                      contentPadding: EdgeInsets.zero,
                     ),
 
                   const SizedBox(height: 16),
@@ -244,20 +286,29 @@ class _CollaboratorDetailPanelState extends State<CollaboratorDetailPanel> {
                         ?.copyWith(color: onBackground.withOpacity(0.7)),
                   ),
                   const SizedBox(height: 8),
+
                   if (commonProjects.isEmpty)
-                    Text(
-                      'Aucun projet en commun',
-                      style: theme.textTheme.bodyMedium
-                          ?.copyWith(color: onBackground.withOpacity(0.7)),
+                    _buildItemContainer(
+                      Text(
+                        'Aucun projet en commun',
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(color: onBackground.withOpacity(0.7)),
+                      ),
                     )
                   else
                     ...commonProjects.map((project) {
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(Icons.work, color: iconColor),
-                        title: Text(
-                          project['name'] as String? ?? 'Sans nom',
-                          style: TextStyle(color: onBackground),
+                      return _buildItemContainer(
+                        Row(
+                          children: [
+                            Icon(Icons.work, color: iconColor),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                project['name'] as String? ?? 'Sans nom',
+                                style: TextStyle(color: onBackground),
+                              ),
+                            ),
+                          ],
                         ),
                       );
                     }),
@@ -313,7 +364,8 @@ class _CollaboratorDetailPanelState extends State<CollaboratorDetailPanel> {
                             onPressed: () => Navigator.of(ctx).pop(false),
                             child: Text(
                               'Annuler',
-                              style: TextStyle(color: onBackground),
+                              style:
+                              TextStyle(color: onBackground),
                             ),
                           ),
                           TextButton(

@@ -1,21 +1,19 @@
-// lib/core/plugin_registry.dart
+// lib/plugins/plugin_registry.dart
 
-import 'package:flutter/material.dart';
-import 'plugin_contract.dart';
+import '../contract/plugin_contract.dart';
+import '../../plugins/crm/services/crm_plugin.dart';
+// import '../../plugins/stock/services/stock_plugin.dart';
+// import '../../plugins/fsm/services/fsm_plugin.dart';
+// import '../../plugins/esp/services/esp_plugin.dart';
 
-// Import du plugin Hazel
-import '../../plugins/stock/services/stock_plugin.dart';
-
-// (Plus tard, tu ajouteras d’autres plugins ici)
-
-final List<PluginContract> allPlugins = [
-  StockPlugin(),
-  // Ajoute d’autres instances de PluginContract selon les prochains plugins
-];
-
-PluginContract? getPluginById(String id) {
-  for (final p in allPlugins) {
-    if (p.id == id) return p;
-  }
-  return null;
+/// Registre de tous les plugins disponibles.
+/// Quand vous créez un nouveau plugin, copiez-collez la ligne correspondante ci-dessous.
+class PluginRegistry {
+  /// Liste de tous les plugins installés dans l’application.
+  List<PluginContract> get availablePlugins => [
+    CrmPlugin(),
+    // StockPlugin(),
+    // FsmPlugin(),
+    // EspPlugin(),
+  ];
 }

@@ -268,8 +268,11 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                     borderSide: BorderSide(color: AppColors.blue),
                   ),
                 ),
-                onChanged: (v) => setSt(() => addSearch = v.trim().toLowerCase()),
-                style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
+                onChanged: (v) => setSt(() {
+                  addSearch = v.trim().toLowerCase();
+                }),
+                style:
+                TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
               ),
               const SizedBox(height: 12),
               SizedBox(
@@ -355,6 +358,10 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                               Navigator.of(ctx).pop();
                             },
                             child: const Text('Ajouter'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.blue,
+                              foregroundColor: Colors.white,
+                            ),
                           );
                         }
 
@@ -362,17 +369,15 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                           title: Text(
                             name,
                             style: TextStyle(
-                              color: Theme.of(ctx).colorScheme.onSurface,
-                            ),
+                                color: Theme.of(ctx).colorScheme.onSurface),
                           ),
                           subtitle: Text(
                             '@$username',
                             style: TextStyle(
-                              color: Theme.of(ctx)
-                                  .colorScheme
-                                  .onSurface
-                                  .withOpacity(0.7),
-                            ),
+                                color: Theme.of(ctx)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.7)),
                           ),
                           trailing: trailing,
                         );
@@ -388,7 +393,8 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
               onPressed: () => Navigator.of(ctx).pop(),
               child: Text(
                 'Fermer',
-                style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
+                style:
+                TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
               ),
             ),
           ],
@@ -405,10 +411,6 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Couleur de fond du Scaffold selon le mode
-    final scaffoldBg = isDark ? AppColors.darkBackground : AppColors.lightGreyBackground;
-    // Couleur du TabBar (conteneur de l’AppBar)
-    final tabBarBg = isDark ? AppColors.darkGreyBackground : AppColors.lightGreyBackground;
     // Couleur des labels non sélectionnés
     final unselectedColor = isDark ? Colors.white70 : Colors.black54;
     // Couleur des labels sélectionnés
@@ -417,15 +419,15 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
     return DefaultTabController(
       length: 4,
       child: Scaffold(
-        backgroundColor: scaffoldBg,
+        backgroundColor: AppColors.glassBackground,
         appBar: AppBar(
-          backgroundColor: tabBarBg,
-          toolbarHeight: 0,
+          backgroundColor: AppColors.glassHeader,
           elevation: 0,
+          toolbarHeight: 0,
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(kToolbarHeight),
             child: Container(
-              color: tabBarBg,
+              color: AppColors.glassHeader,
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Row(
                 children: [
@@ -444,8 +446,7 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.person_add,
-                        color: Theme.of(context).colorScheme.onBackground),
+                    icon: const Icon(Icons.person_add, color: Colors.white),
                     onPressed: _showAddCollaboratorDialog,
                   ),
                 ],
@@ -467,13 +468,15 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                           controller: _friendsSearchController,
                           decoration: InputDecoration(
                             hintText: 'Rechercher parmi vos amis',
-                            prefixIcon: Icon(Icons.search,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onBackground
-                                    .withOpacity(0.7)),
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onBackground
+                                  .withOpacity(0.7),
+                            ),
                             filled: true,
-                            fillColor: Theme.of(context).colorScheme.background,
+                            fillColor: AppColors.glassBackground,
                             contentPadding: const EdgeInsets.symmetric(
                                 vertical: 12, horizontal: 16),
                             border: OutlineInputBorder(
@@ -501,8 +504,8 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                           ),
                           style: TextStyle(
                               color: Theme.of(context).colorScheme.onBackground),
-                          onChanged: (v) =>
-                              setState(() => friendsSearch = v.trim().toLowerCase()),
+                          onChanged: (v) => setState(
+                                  () => friendsSearch = v.trim().toLowerCase()),
                         ),
                       ),
                       Expanded(
@@ -512,8 +515,8 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                             if (!snap.hasData) {
                               return Center(
                                 child: CircularProgressIndicator(
-                                  valueColor:
-                                  AlwaysStoppedAnimation<Color>(AppColors.blue),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.blue),
                                 ),
                               );
                             }
@@ -531,36 +534,50 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                               );
                             }
                             return ListView.builder(
+                              padding:
+                              const EdgeInsets.symmetric(vertical: 8),
                               itemCount: list.length,
                               itemBuilder: (ctx, i) {
                                 final c = list[i];
-                                return ListTile(
-                                  tileColor:
-                                  isDark ? AppColors.darkGreyBackground : Colors.white,
-                                  leading: Icon(Icons.person,
-                                      color:
-                                      Theme.of(context).colorScheme.onBackground),
-                                  title: Text(
-                                    c['displayName'] as String,
-                                    style: TextStyle(
-                                        color:
-                                        Theme.of(context).colorScheme.onBackground),
+                                return Container(
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.glassHeader,
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  trailing: IconButton(
-                                    icon: Icon(Icons.message_outlined,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onBackground),
-                                    onPressed: () => _openChat(
-                                      c['uid'] as String,
-                                      c['displayName'] as String,
+                                  child: ListTile(
+                                    tileColor: Colors.transparent,
+                                    leading: Icon(
+                                      Icons.person,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onBackground,
                                     ),
+                                    title: Text(
+                                      c['displayName'] as String,
+                                      style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onBackground),
+                                    ),
+                                    trailing: IconButton(
+                                      icon: Icon(Icons.message_outlined,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onBackground),
+                                      onPressed: () => _openChat(
+                                        c['uid'] as String,
+                                        c['displayName'] as String,
+                                      ),
+                                    ),
+                                    onTap: () => setState(() {
+                                      selectedCollaboratorId =
+                                      c['uid'] as String;
+                                      selectedCollaboratorName =
+                                      c['displayName'] as String;
+                                    }),
                                   ),
-                                  onTap: () => setState(() {
-                                    selectedCollaboratorId = c['uid'] as String;
-                                    selectedCollaboratorName =
-                                    c['displayName'] as String;
-                                  }),
                                 );
                               },
                             );
@@ -579,13 +596,15 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                           controller: _friendsSearchController,
                           decoration: InputDecoration(
                             hintText: 'Rechercher amis en ligne',
-                            prefixIcon: Icon(Icons.search,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onBackground
-                                    .withOpacity(0.7)),
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onBackground
+                                  .withOpacity(0.7),
+                            ),
                             filled: true,
-                            fillColor: Theme.of(context).colorScheme.background,
+                            fillColor: AppColors.glassBackground,
                             contentPadding: const EdgeInsets.symmetric(
                                 vertical: 12, horizontal: 16),
                             border: OutlineInputBorder(
@@ -613,8 +632,8 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                           ),
                           style: TextStyle(
                               color: Theme.of(context).colorScheme.onBackground),
-                          onChanged: (v) =>
-                              setState(() => friendsSearch = v.trim().toLowerCase()),
+                          onChanged: (v) => setState(
+                                  () => friendsSearch = v.trim().toLowerCase()),
                         ),
                       ),
                       Expanded(
@@ -624,8 +643,8 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                             if (!snap.hasData) {
                               return Center(
                                 child: CircularProgressIndicator(
-                                  valueColor:
-                                  AlwaysStoppedAnimation<Color>(AppColors.blue),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.blue),
                                 ),
                               );
                             }
@@ -645,35 +664,46 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                               );
                             }
                             return ListView.builder(
+                              padding:
+                              const EdgeInsets.symmetric(vertical: 8),
                               itemCount: list.length,
                               itemBuilder: (ctx, i) {
                                 final c = list[i];
-                                return ListTile(
-                                  tileColor:
-                                  isDark ? AppColors.darkGreyBackground : Colors.white,
-                                  leading:
-                                  const Icon(Icons.circle, color: Colors.greenAccent),
-                                  title: Text(
-                                    c['displayName'] as String,
-                                    style: TextStyle(
-                                        color:
-                                        Theme.of(context).colorScheme.onBackground),
+                                return Container(
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.glassHeader,
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  trailing: IconButton(
-                                    icon: Icon(Icons.message_outlined,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onBackground),
-                                    onPressed: () => _openChat(
-                                      c['uid'] as String,
+                                  child: ListTile(
+                                    tileColor: Colors.transparent,
+                                    leading: const Icon(Icons.circle,
+                                        color: Colors.greenAccent),
+                                    title: Text(
                                       c['displayName'] as String,
+                                      style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onBackground),
                                     ),
+                                    trailing: IconButton(
+                                      icon: Icon(Icons.message_outlined,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onBackground),
+                                      onPressed: () => _openChat(
+                                        c['uid'] as String,
+                                        c['displayName'] as String,
+                                      ),
+                                    ),
+                                    onTap: () => setState(() {
+                                      selectedCollaboratorId =
+                                      c['uid'] as String;
+                                      selectedCollaboratorName =
+                                      c['displayName'] as String;
+                                    }),
                                   ),
-                                  onTap: () => setState(() {
-                                    selectedCollaboratorId = c['uid'] as String;
-                                    selectedCollaboratorName =
-                                    c['displayName'] as String;
-                                  }),
                                 );
                               },
                             );
@@ -692,13 +722,15 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                           controller: _allSearchController,
                           decoration: InputDecoration(
                             hintText: 'Rechercher tous les utilisateurs',
-                            prefixIcon: Icon(Icons.search,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onBackground
-                                    .withOpacity(0.7)),
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onBackground
+                                  .withOpacity(0.7),
+                            ),
                             filled: true,
-                            fillColor: Theme.of(context).colorScheme.background,
+                            fillColor: AppColors.glassBackground,
                             contentPadding: const EdgeInsets.symmetric(
                                 vertical: 12, horizontal: 16),
                             border: OutlineInputBorder(
@@ -743,13 +775,15 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                           controller: _pendingSearchController,
                           decoration: InputDecoration(
                             hintText: 'Rechercher demandes en attente',
-                            prefixIcon: Icon(Icons.search,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onBackground
-                                    .withOpacity(0.7)),
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onBackground
+                                  .withOpacity(0.7),
+                            ),
                             filled: true,
-                            fillColor: Theme.of(context).colorScheme.background,
+                            fillColor: AppColors.glassBackground,
                             contentPadding: const EdgeInsets.symmetric(
                                 vertical: 12, horizontal: 16),
                             border: OutlineInputBorder(
@@ -840,6 +874,7 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
         }
 
         return ListView.builder(
+          padding: const EdgeInsets.symmetric(vertical: 8),
           itemCount: docs.length,
           itemBuilder: (ctx, i) {
             final doc = docs[i];
@@ -874,21 +909,28 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
               );
             }
 
-            return ListTile(
-              tileColor: isDark ? AppColors.darkGreyBackground : Colors.white,
-              title: Text(
-                name,
-                style: TextStyle(color: onBgColor),
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.glassHeader,
+                borderRadius: BorderRadius.circular(8),
               ),
-              subtitle: Text(
-                '@$username',
-                style: TextStyle(color: unselectedTxtColor),
+              child: ListTile(
+                tileColor: Colors.transparent,
+                title: Text(
+                  name,
+                  style: TextStyle(color: onBgColor),
+                ),
+                subtitle: Text(
+                  '@$username',
+                  style: TextStyle(color: unselectedTxtColor),
+                ),
+                trailing: trailing,
+                onTap: () => setState(() {
+                  selectedCollaboratorId = target;
+                  selectedCollaboratorName = name;
+                }),
               ),
-              trailing: trailing,
-              onTap: () => setState(() {
-                selectedCollaboratorId = target;
-                selectedCollaboratorName = name;
-              }),
             );
           },
         );
@@ -919,6 +961,7 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
           );
         }
         return ListView.builder(
+          padding: const EdgeInsets.symmetric(vertical: 8),
           itemCount: reqs.length,
           itemBuilder: (ctx, i) {
             final docReq = reqs[i];
@@ -932,25 +975,31 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                 if (!name.toLowerCase().contains(pendingSearch)) {
                   return const SizedBox.shrink();
                 }
-                return ListTile(
-                  tileColor: isDark ? AppColors.darkGreyBackground : Colors.white,
-                  leading: Icon(Icons.mail,
-                      color: onBgColor.withOpacity(0.7)),
-                  title: Text(name, style: TextStyle(color: onBgColor)),
-                  subtitle: Text('Souhaite collaborer',
-                      style: TextStyle(color: onBgColor.withOpacity(0.7))),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.check, color: Colors.green),
-                        onPressed: () => _respondToRequest(docReq.id, true),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.close, color: Colors.red),
-                        onPressed: () => _respondToRequest(docReq.id, false),
-                      ),
-                    ],
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.glassHeader,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: ListTile(
+                    tileColor: Colors.transparent,
+                    leading: Icon(Icons.mail, color: onBgColor.withOpacity(0.7)),
+                    title: Text(name, style: TextStyle(color: onBgColor)),
+                    subtitle: Text('Souhaite collaborer',
+                        style: TextStyle(color: onBgColor.withOpacity(0.7))),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.check, color: Colors.green),
+                          onPressed: () => _respondToRequest(docReq.id, true),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.red),
+                          onPressed: () => _respondToRequest(docReq.id, false),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },

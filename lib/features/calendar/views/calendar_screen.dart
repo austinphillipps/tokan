@@ -66,6 +66,10 @@ class _CalendarPageState extends State<CalendarPage> {
   bool _showTaskPanel = false;
   CustomTask? _activeTask;
 
+  // NOUVEAU : pour gérer la tâche en cours de drag
+  String? _draggingTaskId;
+  DateTime? _draggingToDay;
+
   @override
   void initState() {
     super.initState();
@@ -121,25 +125,191 @@ class _CalendarPageState extends State<CalendarPage> {
     }
 
     _tasksSubscription?.cancel();
-    _tasksSubscription = query.snapshots().listen((snap) {
+    _tasksSubscription = query.snapshots().listen((snap) async {
       if (!mounted) return;
-      final loaded = snap.docs.map((doc) {
-        final d = doc.data();
-        final dateVal = d['deadline'];
-        final stStr = d['startTime']?.toString() ?? '';
-        final etStr = d['endTime']?.toString() ?? '';
-        final title = d['name']?.toString() ?? '';
-        final start = _combineDateAndTime(dateVal, stStr);
-        final end = _combineDateAndTime(dateVal, etStr);
-        return CalendarTask(
-          id: doc.id,
-          start: start,
-          end: end,
-          title: title,
+
+      final List<CalendarTask> allOccurrences = [];
+      final DateTime todayDateOnly = DateTime.now().toLocal();
+      final DateTime todayStart = DateTime(
+          todayDateOnly.year, todayDateOnly.month, todayDateOnly.day);
+
+      for (final doc in snap.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final cTask = CustomTask.fromMap(data, doc.id);
+
+        // Couleur par défaut si pas de projet ou pas de couleur :
+        Color cellColor = AppColors.blue;
+        final projId = (data['project'] as String?)?.trim();
+        if (projId != null && projId.isNotEmpty) {
+          try {
+            final projSnap = await FirebaseFirestore.instance
+                .collection('projects')
+                .doc(projId)
+                .get();
+            if (projSnap.exists) {
+              final projData = projSnap.data()!;
+              final colorString = projData['color'] as String?;
+              if (colorString != null && colorString.isNotEmpty) {
+                cellColor = Color(int.parse(colorString, radix: 16));
+              }
+            }
+          } catch (_) {
+            // Garde la couleur par défaut en cas d'erreur
+          }
+        }
+
+        final taskDate = cTask.deadline;
+        if (taskDate == null) continue;
+        final stTOD = cTask.startTime ?? const TimeOfDay(hour: 0, minute: 0);
+        final enTOD = cTask.endTime ?? const TimeOfDay(hour: 23, minute: 59);
+
+        final origStart = DateTime(
+          taskDate.year,
+          taskDate.month,
+          taskDate.day,
+          stTOD.hour,
+          stTOD.minute,
         );
-      }).toList();
+        final origEnd = DateTime(
+          taskDate.year,
+          taskDate.month,
+          taskDate.day,
+          enTOD.hour,
+          enTOD.minute,
+        );
+
+        final forwardLimit = DateTime(
+          taskDate.year,
+          taskDate.month + 6,
+          taskDate.day,
+        );
+        final pastLimit = DateTime(
+          taskDate.year,
+          taskDate.month - 6,
+          taskDate.day,
+        );
+
+        final recType = cTask.recurrenceType;
+        final recDays = cTask.recurrenceDays;
+        final includePast = cTask.recurrenceIncludePast ?? false;
+
+        if (recType == null || recType == 'none') {
+          // On affiche maintenant toutes les tâches, quel que soit leur jour
+          allOccurrences.add(
+            CalendarTask(
+              id: doc.id,
+              start: origStart,
+              end: origEnd,
+              title: cTask.name,
+              projectColor: cellColor,
+            ),
+          );
+        } else {
+          if (includePast) {
+            DateTime currentBack =
+            origStart.subtract(const Duration(days: 1));
+            while (!currentBack.isBefore(pastLimit)) {
+              final weekdayIndex = currentBack.weekday;
+              bool shouldAddBack = false;
+              if (recType == 'sameDay') {
+                if (weekdayIndex == origStart.weekday) shouldAddBack = true;
+              } else if (recType == 'weekdays') {
+                if (weekdayIndex >= DateTime.monday &&
+                    weekdayIndex <= DateTime.friday) shouldAddBack = true;
+              } else if (recType == 'weekends') {
+                if (weekdayIndex == DateTime.saturday ||
+                    weekdayIndex == DateTime.sunday) shouldAddBack = true;
+              } else if (recDays != null && recDays.isNotEmpty) {
+                if (recDays.contains(weekdayIndex - 1)) shouldAddBack = true;
+              }
+              if (shouldAddBack) {
+                final startOcc = DateTime(
+                  currentBack.year,
+                  currentBack.month,
+                  currentBack.day,
+                  stTOD.hour,
+                  stTOD.minute,
+                );
+                final endOcc = DateTime(
+                  currentBack.year,
+                  currentBack.month,
+                  currentBack.day,
+                  enTOD.hour,
+                  enTOD.minute,
+                );
+                allOccurrences.add(
+                  CalendarTask(
+                    id: doc.id,
+                    start: startOcc,
+                    end: endOcc,
+                    title: cTask.name,
+                    projectColor: cellColor,
+                  ),
+                );
+              }
+              currentBack = currentBack.subtract(const Duration(days: 1));
+            }
+          }
+
+          DateTime current = origStart;
+          while (!current.isAfter(forwardLimit)) {
+            final weekdayIndex = current.weekday;
+            bool shouldAddForward = false;
+
+            if (recType == 'sameDay') {
+              if (weekdayIndex == origStart.weekday) shouldAddForward = true;
+            } else if (recType == 'weekdays') {
+              if (weekdayIndex >= DateTime.monday &&
+                  weekdayIndex <= DateTime.friday) shouldAddForward = true;
+            } else if (recType == 'weekends') {
+              if (weekdayIndex == DateTime.saturday ||
+                  weekdayIndex == DateTime.sunday) shouldAddForward = true;
+            } else if (recDays != null && recDays.isNotEmpty) {
+              if (recDays.contains(weekdayIndex - 1)) shouldAddForward = true;
+            }
+
+            if (shouldAddForward) {
+              final occurrenceDay = DateTime(
+                current.year,
+                current.month,
+                current.day,
+              );
+              if (includePast ||
+                  !occurrenceDay.isBefore(todayStart)) {
+                final startOcc = DateTime(
+                  current.year,
+                  current.month,
+                  current.day,
+                  stTOD.hour,
+                  stTOD.minute,
+                );
+                final endOcc = DateTime(
+                  current.year,
+                  current.month,
+                  current.day,
+                  enTOD.hour,
+                  enTOD.minute,
+                );
+                allOccurrences.add(
+                  CalendarTask(
+                    id: doc.id,
+                    start: startOcc,
+                    end: endOcc,
+                    title: cTask.name,
+                    projectColor: cellColor,
+                  ),
+                );
+              }
+            }
+
+            current = current.add(const Duration(days: 1));
+          }
+        }
+      }
+
+      if (!mounted) return;
       setState(() {
-        _tasks = loaded;
+        _tasks = allOccurrences;
         _frozenLayouts.clear();
       });
     });
@@ -174,14 +344,48 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   // ───────────────────────── navigation
-  void _goToPreviousWeek() =>
-      setState(() => _weekStart = _weekStart.subtract(const Duration(days: 7)));
-  void _goToNextWeek() =>
-      setState(() => _weekStart = _weekStart.add(const Duration(days: 7)));
-  void _goToToday() => setState(_initWeekStart);
+  void _goToPreviousWeek() => setState(() {
+    _weekStart = _weekStart.subtract(const Duration(days: 7));
+    _subscribeToTasks();
+  });
+
+  void _goToNextWeek() => setState(() {
+    _weekStart = _weekStart.add(const Duration(days: 7));
+    _subscribeToTasks();
+  });
+
+  void _goToToday() => setState(() {
+    _initWeekStart();
+    _subscribeToTasks();
+  });
 
   // ───────────────────────── layout computation
-  List<PositionedEvent> _computeLayoutForDay(List<CalendarTask> tasks) {
+
+  List<PositionedEvent> _computeLayoutForDay(
+      List<CalendarTask> tasks, DateTime day) {
+    // Si on déplace la tâche actuelle dans la même date, on l’affiche full-width
+    if (_draggingTaskId != null &&
+        _draggingToDay != null &&
+        day.year == _draggingToDay!.year &&
+        day.month == _draggingToDay!.month &&
+        day.day == _draggingToDay!.day) {
+      final movedList = tasks.where((t) => t.id == _draggingTaskId).toList();
+      if (movedList.isNotEmpty) {
+        final t = movedList.first;
+        final sMin = t.start.hour * 60 + t.start.minute;
+        final eMin = t.end.hour * 60 + t.end.minute;
+        return [
+          PositionedEvent(
+            task: t,
+            top: (sMin / 60) * _cellHeight,
+            height: ((eMin - sMin) / 60) * _cellHeight,
+            columnIndex: 0,
+            colCount: 1,
+          )
+        ];
+      }
+    }
+
     if (tasks.isEmpty) return [];
     tasks.sort((a, b) {
       final byStart = a.start.compareTo(b.start);
@@ -239,11 +443,31 @@ class _CalendarPageState extends State<CalendarPage> {
   List<PositionedEvent> _getLayoutForDay(DateTime day) {
     final key = DateFormat('yyyy-MM-dd').format(day);
     if (_frozenLayouts.containsKey(key)) return _frozenLayouts[key]!;
+
     final dayTasks = _tasks.where((t) =>
     t.start.year == day.year &&
         t.start.month == day.month &&
         t.start.day == day.day).toList();
-    return _computeLayoutForDay(dayTasks);
+
+    if (_draggingTaskId != null &&
+        _draggingToDay != null &&
+        day.year == _draggingToDay!.year &&
+        day.month == _draggingToDay!.month &&
+        day.day == _draggingToDay!.day) {
+      return _computeLayoutForDay(dayTasks, day);
+    }
+
+    if (_draggingTaskId != null &&
+        dayTasks.any((t) => t.id == _draggingTaskId) &&
+        !(
+            day.year == _draggingToDay?.year &&
+                day.month == _draggingToDay?.month &&
+                day.day == _draggingToDay?.day
+        )) {
+      dayTasks.removeWhere((t) => t.id == _draggingTaskId);
+    }
+
+    return _computeLayoutForDay(dayTasks, day);
   }
 
   void _moveTaskToDay(CalendarTask task, DateTime day,
@@ -253,8 +477,8 @@ class _CalendarPageState extends State<CalendarPage> {
     int minutes = ((localDy / _cellHeight) * 60).round();
     minutes = (minutes ~/ 15) * 15;
 
-    var newStart = DateTime(
-        day.year, day.month, day.day, minutes ~/ 60, minutes % 60);
+    var newStart =
+    DateTime(day.year, day.month, day.day, minutes ~/ 60, minutes % 60);
     final duration = task.end.difference(task.start);
     var newEnd = newStart.add(duration);
 
@@ -269,12 +493,22 @@ class _CalendarPageState extends State<CalendarPage> {
       start: newStart,
       end: newEnd,
       title: task.title,
+      projectColor: task.projectColor,
     );
 
+    // Mettre à jour Firestore
     _updateTaskInFirestore(updated);
+
     setState(() {
-      final idx = _tasks.indexWhere((t) => t.id == task.id);
-      if (idx != -1) _tasks[idx] = updated;
+      // Supprimer toutes les occurrences portant le même id
+      _tasks.removeWhere((t) => t.id == task.id);
+
+      // Ne PAS ajouter manuellement updated → on attend le listener Firestore
+      // pour régénérer la série complète (passées + futures)
+
+      // Réinitialiser l’état du drag
+      _draggingTaskId = null;
+      _draggingToDay = null;
       _frozenLayouts.clear();
     });
   }
@@ -290,6 +524,7 @@ class _CalendarPageState extends State<CalendarPage> {
       endTime: TimeOfDay(hour: start.hour + 1, minute: start.minute),
       client: null,
       project: widget.projectId,
+      responsable: '',
       subTasks: [],
     );
 
@@ -299,7 +534,7 @@ class _CalendarPageState extends State<CalendarPage> {
     });
   }
 
-  void _openTaskDetails(CalendarTask task) async {
+  Future<void> _openTaskDetails(CalendarTask task) async {
     final snap = await FirebaseFirestore.instance
         .collection('tasks')
         .doc(task.id)
@@ -313,20 +548,43 @@ class _CalendarPageState extends State<CalendarPage> {
     final name = data['name']?.toString() ?? '';
     final desc = data['description']?.toString() ?? '';
     final status = data['status']?.toString() ?? 'pending';
+    final client = data['client']?.toString();
+    final responsableId = data['responsable']?.toString() ?? '';
+    final projectId = data['project']?.toString();
+    final recType = data['recurrenceType'] as String?;
+    final recDays = (data['recurrenceDays'] != null)
+        ? List<int>.from((data['recurrenceDays'] as List).map((e) => e as int))
+        : null;
+    final recIncludePast = data['recurrenceIncludePast'] as bool? ?? false;
 
-    final st = _combineDateAndTime(dateVal, stStr);
-    final et = _combineDateAndTime(dateVal, etStr);
+    DateTime? parsedDeadline;
+    if (dateVal is Timestamp) {
+      parsedDeadline = dateVal.toDate();
+    } else if (dateVal is String && dateVal.isNotEmpty) {
+      parsedDeadline = DateTime.tryParse(dateVal);
+    }
 
-    final rawMap = Map<String, dynamic>.from(data);
-    rawMap['startTime'] = st;
-    rawMap['endTime'] = et;
-    rawMap['deadline'] = (dateVal is Timestamp)
-        ? dateVal.toDate()
-        : (dateVal is String && dateVal.isNotEmpty
-        ? DateTime.tryParse(dateVal)
-        : null);
+    final stDate = _combineDateAndTime(dateVal, stStr);
+    final etDate = _combineDateAndTime(dateVal, etStr);
+    final startTOD = TimeOfDay(hour: stDate.hour, minute: stDate.minute);
+    final endTOD = TimeOfDay(hour: etDate.hour, minute: etDate.minute);
 
-    final cTask = CustomTask.fromMap(rawMap, task.id);
+    final cTask = CustomTask(
+      id: task.id,
+      name: name,
+      description: desc,
+      status: status,
+      deadline: parsedDeadline,
+      startTime: startTOD,
+      endTime: endTOD,
+      client: client,
+      project: projectId,
+      responsable: responsableId,
+      recurrenceType: recType,
+      recurrenceDays: recDays,
+      recurrenceIncludePast: recIncludePast,
+      subTasks: [],
+    );
 
     setState(() {
       _activeTask = cTask;
@@ -341,45 +599,34 @@ class _CalendarPageState extends State<CalendarPage> {
     final eM = u.endTime?.minute ?? 0;
     final date = u.deadline ?? DateTime.now();
 
-    final List<Map<String, dynamic>> subTasksData = u.subTasks.map((sub) {
-      return {
-        'id': sub.id,
-        'name': sub.name,
-        'description': sub.description,
-        'status': sub.status,
-        'deadline': sub.deadline != null
-            ? DateFormat('yyyy-MM-dd').format(sub.deadline!)
-            : null,
-        'startTime': sub.startTime != null
-            ? '${sub.startTime!.hour.toString().padLeft(2, '0')}:${sub.startTime!.minute.toString().padLeft(2, '0')}'
-            : null,
-        'endTime': sub.endTime != null
-            ? '${sub.endTime!.hour.toString().padLeft(2, '0')}:${sub.endTime!.minute.toString().padLeft(2, '0')}'
-            : null,
-        'client': sub.client,
-        'responsable': sub.responsable,
-        'project': sub.project,
-        'subTasks': [],
-      };
-    }).toList();
-
     final data = <String, dynamic>{
       'deadline': DateFormat('yyyy-MM-dd').format(date),
-      'startTime': '${sH.toString().padLeft(2, '0')}:${sM.toString().padLeft(2, '0')}',
-      'endTime': '${eH.toString().padLeft(2, '0')}:${eM.toString().padLeft(2, '0')}',
+      'startTime':
+      '${sH.toString().padLeft(2, '0')}:${sM.toString().padLeft(2, '0')}',
+      'endTime':
+      '${eH.toString().padLeft(2, '0')}:${eM.toString().padLeft(2, '0')}',
       'name': u.name.trim(),
       'description': u.description,
       'status': u.status,
+      'client': u.client,
+      'responsable': u.responsable,
+      'project': u.project,
+      'recurrenceType': u.recurrenceType,
+      'recurrenceDays': u.recurrenceDays,
+      'recurrenceIncludePast': u.recurrenceIncludePast ?? false,
       'createdBy': FirebaseAuth.instance.currentUser?.uid,
-      'subTasks': subTasksData,
-      if (widget.projectId?.isNotEmpty == true) 'project': widget.projectId,
+      'subTasks': [], // on ne gère pas les sous‐tâches ici
     };
 
     if (u.id.isEmpty) {
-      final docRef = await FirebaseFirestore.instance.collection('tasks').add(data);
+      final docRef =
+      await FirebaseFirestore.instance.collection('tasks').add(data);
       u.id = docRef.id;
     } else {
-      await FirebaseFirestore.instance.collection('tasks').doc(u.id).update(data);
+      await FirebaseFirestore.instance
+          .collection('tasks')
+          .doc(u.id)
+          .update(data);
     }
 
     _subscribeToTasks();
@@ -391,12 +638,9 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Widget _buildHeaderRow(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // En sombre, on utilise AppColors.darkGreyBackground pour le header
-    // En clair, on utilise la couleur de surface du thème (souvent blanche)
-    final headerBg = isDark
-        ? AppColors.darkGreyBackground
-        : Theme.of(context).colorScheme.surface;
-    final borderColor = Theme.of(context).colorScheme.onBackground.withOpacity(0.3);
+    final headerBg = AppColors.glassHeader;
+    final borderColor =
+    Theme.of(context).colorScheme.onBackground.withOpacity(0.3);
     final textColor = Theme.of(context).colorScheme.onBackground;
 
     List<Widget> dayHeaders = [];
@@ -437,20 +681,15 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Widget _buildDayColumn(DateTime day, int _) {
     return LayoutBuilder(builder: (ctx, constraints) {
-      final isDark = Theme.of(ctx).brightness == Brightness.dark;
       final dayHeight = 24 * _cellHeight;
       final layout = _getLayoutForDay(day);
-
-      // Pour le fond des colonnes :
-      //   - thème sombre → AppColors.darkBackground
-      //   - thème clair   → Colors.white (ou colorScheme.surface si vous préférez)
-      final background = isDark
-          ? AppColors.darkBackground
-          : Colors.white;
-      final borderColor = Theme.of(ctx).colorScheme.onBackground.withOpacity(0.3);
+      final background = AppColors.glassBackground;
+      final borderColor =
+      Theme.of(ctx).colorScheme.onBackground.withOpacity(0.3);
 
       return Stack(
         children: [
+          // 1) Fond de la colonne
           Container(
             height: dayHeight,
             decoration: BoxDecoration(
@@ -469,13 +708,53 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
             ),
           ),
+
+          // 2) GestureDetector pour créer une tâche à l'heure (tap)
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTapDown: (details) {
+                final localDy = details.localPosition.dy;
+                int minutes = ((localDy / _cellHeight) * 60).round();
+                if (minutes < 0) minutes = 0;
+                if (minutes > 23 * 60 + 59) minutes = 23 * 60 + 59;
+                final start = DateTime(
+                  day.year,
+                  day.month,
+                  day.day,
+                  minutes ~/ 60,
+                  minutes % 60,
+                );
+                _openNewTaskDetail(start);
+              },
+              child: Container(),
+            ),
+          ),
+
+          // 3) DragTarget pour déplacer les tâches existantes
           Positioned.fill(
             child: DragTarget<CalendarTask>(
-              onWillAccept: (_) => true,
+              onWillAccept: (incoming) {
+                if (incoming == null) return false;
+                setState(() {
+                  _draggingTaskId = incoming.id;
+                  _draggingToDay = DateTime(
+                      day.year, day.month, day.day);
+                });
+                return true;
+              },
+              onLeave: (_) {
+                setState(() {
+                  _draggingTaskId = null;
+                  _draggingToDay = null;
+                });
+              },
               onAcceptWithDetails: (details) {
                 final box = ctx.findRenderObject() as RenderBox;
                 final local = box.globalToLocal(details.offset);
-                _moveTaskToDay(details.data, day, localDy: local.dy);
+                _moveTaskToDay(
+                    details.data, day,
+                    localDy: local.dy);
               },
               builder: (_, candidate, __) {
                 return Container(
@@ -486,6 +765,8 @@ class _CalendarPageState extends State<CalendarPage> {
               },
             ),
           ),
+
+          // 4) Placement des tâches (ResizableTaskCell)
           ...layout.map((pe) {
             final colWidth = (constraints.maxWidth -
                 (_innerMargin * (pe.colCount + 1))) /
@@ -493,7 +774,7 @@ class _CalendarPageState extends State<CalendarPage> {
             final leftOffset =
                 _innerMargin + pe.columnIndex * (colWidth + _innerMargin);
             return ResizableTaskCell(
-              key: ValueKey(pe.task.id),
+              key: ValueKey('${pe.task.id}-${pe.top}-${pe.columnIndex}'),
               task: pe.task,
               top: pe.top,
               height: pe.height,
@@ -550,10 +831,9 @@ class _CalendarPageState extends State<CalendarPage> {
                   // Colonne des heures
                   Builder(builder: (ctx) {
                     final isDark = Theme.of(ctx).brightness == Brightness.dark;
-                    final hourColColor = isDark
-                        ? AppColors.darkGreyBackground
-                        : Colors.white;
-                    final textColor = Theme.of(ctx).colorScheme.onBackground.withOpacity(0.7);
+                    final hourColColor = AppColors.glassBackground;
+                    final textColor =
+                    Theme.of(ctx).colorScheme.onBackground.withOpacity(0.7);
 
                     return Container(
                       width: _hourColumnWidth,
@@ -568,7 +848,8 @@ class _CalendarPageState extends State<CalendarPage> {
                               offset: const Offset(0, -10),
                               child: Text(
                                 '${h.toString().padLeft(2, '0')}h',
-                                style: TextStyle(color: textColor, fontSize: 12),
+                                style: TextStyle(
+                                    color: textColor, fontSize: 12),
                               ),
                             ),
                           );
@@ -584,7 +865,8 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
           ),
           Builder(builder: (ctx) {
-            final borderColor = Theme.of(ctx).colorScheme.onBackground.withOpacity(0.3);
+            final borderColor =
+            Theme.of(ctx).colorScheme.onBackground.withOpacity(0.3);
             return Container(height: 1, color: borderColor);
           }),
           const SizedBox(height: 20),
@@ -608,7 +890,6 @@ class _CalendarPageState extends State<CalendarPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Le fond général de la page s'appuie sur scaffoldBackgroundColor défini dans main.dart
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: CalendarMenuBar(
         onPreviousWeek: _goToPreviousWeek,
@@ -619,80 +900,83 @@ class _CalendarPageState extends State<CalendarPage> {
         currentMonth: _currentMonth.month,
         automaticallyImplyLeading: false,
       ),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              _buildHeaderRow(context),
-              Expanded(child: _buildBodyRow()),
-            ],
-          ),
-          if (_showMonthPopup) ...[
-            GestureDetector(
-              onTap: () => setState(() => _showMonthPopup = false),
-              child: Container(color: Colors.transparent),
+      body: Container(
+        color: AppColors.glassBackground,
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                _buildHeaderRow(context),
+                Expanded(child: _buildBodyRow()),
+              ],
             ),
-            Positioned(
-              top: 56,
-              right: 20,
-              child: MonthPopup(
-                initialMonth: _currentMonth,
-                onDateSelected: (d) {
-                  final diff = d.weekday - DateTime.monday;
-                  final newStart = d.subtract(Duration(days: diff));
-                  setState(() {
-                    _weekStart = DateTime(newStart.year, newStart.month, newStart.day);
-                    _currentMonth = d;
-                    _showMonthPopup = false;
-                  });
-                },
-                onClose: () => setState(() => _showMonthPopup = false),
+            if (_showMonthPopup) ...[
+              GestureDetector(
+                onTap: () => setState(() => _showMonthPopup = false),
+                child: Container(color: Colors.transparent),
               ),
-            ),
-          ],
-          if (_showTaskPanel && _activeTask != null) ...[
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: () => setState(() {
-                  _showTaskPanel = false;
-                  _activeTask = null;
-                }),
-                child: Container(color: Colors.black.withOpacity(0.5)),
-              ),
-            ),
-            Positioned(
-              top: 0,
-              bottom: 0,
-              right: 0,
-              width: 400,
-              child: Container(
-                // Fond du panneau de détails : blanc en clair, gris foncé en sombre
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.darkBackground
-                    : Colors.white,
-                child: TaskDetailPanel(
-                  task: _activeTask!,
-                  onSave: (updatedTask) async {
-                    await _saveTaskFromCalendar(updatedTask);
+              Positioned(
+                top: 56,
+                right: 20,
+                child: MonthPopup(
+                  initialMonth: _currentMonth,
+                  onDateSelected: (d) {
+                    final diff = d.weekday - DateTime.monday;
+                    final newStart = d.subtract(Duration(days: diff));
+                    setState(() {
+                      _weekStart = DateTime(newStart.year, newStart.month, newStart.day);
+                      _currentMonth = d;
+                      _showMonthPopup = false;
+                    });
+                    _subscribeToTasks();
                   },
-                  onClose: () => setState(() {
+                  onClose: () => setState(() => _showMonthPopup = false),
+                ),
+              ),
+            ],
+            if (_showTaskPanel && _activeTask != null) ...[
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: () => setState(() {
                     _showTaskPanel = false;
                     _activeTask = null;
                   }),
-                  onMarkAsDone: () {
-                    // Optionnel : permettre de marquer terminé directement
-                  },
-                  onCalendarRefresh: () {
-                    _subscribeToTasks();
-                  },
+                  child: Container(color: Colors.black.withOpacity(0.5)),
                 ),
               ),
-            ),
+              Positioned(
+                top: 0,
+                bottom: 0,
+                right: 0,
+                width: 400,
+                child: Container(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkBackground
+                      : Colors.white,
+                  child: TaskDetailPanel(
+                    task: _activeTask!,
+                    onSave: (updatedTask) async {
+                      await _saveTaskFromCalendar(updatedTask);
+                    },
+                    onClose: () => setState(() {
+                      _showTaskPanel = false;
+                      _activeTask = null;
+                    }),
+                    onMarkAsDone: () {
+                      // Optionnel : marquer terminé
+                    },
+                    onCalendarRefresh: () {
+                      _subscribeToTasks();
+                    },
+                  ),
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.blue, // bleu pour le bouton flottant
+        backgroundColor: AppColors.blue,
         onPressed: () => _onCalendarTapDefault(DateTime.now()),
         child: const Icon(Icons.add),
       ),

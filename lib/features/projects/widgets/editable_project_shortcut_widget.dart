@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import '../models/project_models.dart';
+import '../../../main.dart'; // pour AppColors
 
 /// Une carte de projet “shortcut” modifiable :
 /// • Taper sur la carte (ouvre/renomme)
@@ -23,10 +24,8 @@ class EditableProjectShortcutWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Couleur de fond de la carte en fonction du thème
-    final cardColor = theme.brightness == Brightness.dark
-        ? theme.colorScheme.surfaceVariant   // gris foncé en sombre
-        : theme.colorScheme.surface;         // blanc ou surface en clair
+    // Fond en « verre sombre » pour laisser transparaître l'image
+    final cardColor = AppColors.glassBackground;
 
     // Couleur du texte principal (titre du projet)
     final textColor = theme.colorScheme.onSurface;
@@ -122,7 +121,8 @@ class EditableProjectShortcutWidget extends StatelessWidget {
             child: Text(
               'Annuler',
               style: TextStyle(
-                  color: theme.colorScheme.primary), // couleur du thème
+                color: theme.colorScheme.primary,
+              ),
             ),
           ),
           TextButton(
@@ -133,7 +133,8 @@ class EditableProjectShortcutWidget extends StatelessWidget {
             child: Text(
               'OK',
               style: TextStyle(
-                  color: theme.colorScheme.primary), // couleur du thème
+                color: theme.colorScheme.primary,
+              ),
             ),
           ),
         ],

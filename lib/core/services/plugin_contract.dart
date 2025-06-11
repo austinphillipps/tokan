@@ -1,26 +1,19 @@
-// lib/core/plugin_contract.dart
+import 'package:flutter/material.dart';
 
-import 'package:flutter/widgets.dart';
-
-/// Contrat que doit implémenter chaque plugin pour
-/// pouvoir être reconnu et chargé dynamiquement.
+/// Interface que doit implémenter chaque plugin de l’app
 abstract class PluginContract {
-  /// Identifiant unique du plugin (doit être constant).
+  /// Identifiant unique, utilisé pour l’installation/persistance
   String get id;
 
-  /// Nom affiché dans la Library et dans la sidebar.
+  /// Nom affichable dans l’UI (Library, menu, titre…)
   String get displayName;
 
-  /// Icône représentant le plugin dans la sidebar (ou la Library).
-  /// Tu peux renvoyer un `Icon`, un `ImageIcon`, etc.
+  /// Icône du plugin (pour la Library, le menu…)
   Widget get icon;
 
-  /// Écran principal du plugin. Lorsqu’on clique sur l’icône
-  /// du plugin dans la barre de menu, on appelle cette méthode.
+  /// L’écran principal renvoyé par le plugin
   Widget buildMainScreen(BuildContext context);
 
-  /// Si le plugin fournit un widget de statistiques à afficher
-  /// dans le dashboard (dans la section "Statistiques"), renvoyer
-  /// un widget ici. Sinon, renvoyer `null`.
+  /// (Optionnel) Widget de stats à injecter dans le Dashboard
   Widget? buildDashboardWidget(BuildContext context);
 }

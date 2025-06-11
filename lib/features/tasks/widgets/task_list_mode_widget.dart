@@ -4,10 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../tasks/models/custom_task_model.dart';
+import '../../../main.dart'; // Pour accéder à AppColors
 
-// Import de AppColors (défini dans main.dart)
-import '../../../main.dart';
+import '../../tasks/models/custom_task_model.dart';
 
 class TasksListView extends StatelessWidget {
   final List<CustomTask> tasks;
@@ -17,6 +16,13 @@ class TasksListView extends StatelessWidget {
   final Function(CustomTask, DateTime) onDeadlineChanged;
   final Function(CustomTask) onOpenDetail;
   final VoidCallback onAddTask;
+  final Function(CustomTask) onDeleteTask;
+
+  // ← Paramètres pour la sélection multiple
+  final bool multiSelectMode;
+  final Set<String> selectedTaskIds;
+  final Function(CustomTask, bool) onTaskSelectToggle;
+  final VoidCallback onToggleMultiSelectMode;
 
   const TasksListView({
     Key? key,
@@ -27,6 +33,13 @@ class TasksListView extends StatelessWidget {
     required this.onDeadlineChanged,
     required this.onOpenDetail,
     required this.onAddTask,
+    required this.onDeleteTask,
+
+    // ← Nouveaux paramètres :
+    required this.multiSelectMode,
+    required this.selectedTaskIds,
+    required this.onTaskSelectToggle,
+    required this.onToggleMultiSelectMode,
   }) : super(key: key);
 
   @override
@@ -35,14 +48,14 @@ class TasksListView extends StatelessWidget {
     if (tasks.isEmpty) {
       return Center(
         child: Card(
-          color: Theme.of(context).colorScheme.surface, // Utilise la couleur surface
+          color: AppColors.glassBackground,
           margin: const EdgeInsets.all(24),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
             child: TextButton.icon(
               onPressed: onAddTask,
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.purple, // violet pour le bouton
+                foregroundColor: AppColors.purple,
               ),
               icon: const Icon(Icons.add),
               label: Text(
@@ -62,134 +75,297 @@ class TasksListView extends StatelessWidget {
     final enCours = tasks.where((t) => t.status != 'completed').toList();
     final terminees = tasks.where((t) => t.status == 'completed').toList();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildHeader(context),
-        Divider(
-          height: 1,
-          color: Theme.of(context).colorScheme.onBackground.withOpacity(0.3),
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.only(top: 8),
-            children: [
-              // Section "En cours"
-              if (enCours.isNotEmpty) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: Text(
-                    "En cours",
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                ...enCours.map((task) => Column(
-                  children: [
-                    _TaskRow(
-                      key: ValueKey(task.id),
-                      task: task,
-                      onToggle: onToggleStatus,
-                      onCollaboratorChanged: onCollaboratorChanged,
-                      onProjectChanged: onProjectChanged,
-                      onDeadlineChanged: onDeadlineChanged,
-                      onOpenDetail: onOpenDetail,
-                    ),
-                    Divider(
-                      height: 1,
-                      color: Theme.of(context).colorScheme.onBackground.withOpacity(0.3),
-                    ),
-                  ],
-                )),
-              ],
-              // Section "Terminées"
-              if (terminees.isNotEmpty) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: Text(
-                    "Terminées",
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                ...terminees.map((task) => Column(
-                  children: [
-                    _TaskRow(
-                      key: ValueKey(task.id),
-                      task: task,
-                      onToggle: onToggleStatus,
-                      onCollaboratorChanged: onCollaboratorChanged,
-                      onProjectChanged: onProjectChanged,
-                      onDeadlineChanged: onDeadlineChanged,
-                      onOpenDetail: onOpenDetail,
-                    ),
-                    Divider(
-                      height: 1,
-                      color: Theme.of(context).colorScheme.onBackground.withOpacity(0.3),
-                    ),
-                  ],
-                )),
-              ],
-              // Bouton pour ajouter une nouvelle tâche
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    icon: const Icon(Icons.add),
-                    label: Text(
-                      "Ajouter une tâche...",
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+    // On enveloppe le Column principal dans un GestureDetector transparent :
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () {
+        if (multiSelectMode) {
+          onToggleMultiSelectMode();
+        }
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(context),
+          Divider(
+            height: 1,
+            color: Theme.of(context).colorScheme.onBackground.withOpacity(0.3),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.only(top: 8),
+              children: [
+                // Section "En cours"
+                if (enCours.isNotEmpty) ...[
+                  Padding(
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: Text(
+                      "En cours",
+                      style:
+                      Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onBackground
+                            .withOpacity(0.7),
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  ),
+                  ...enCours.map((task) => Column(
+                    children: [
+                      _TaskRow(
+                        key: ValueKey(task.id),
+                        task: task,
+                        onToggle: onToggleStatus,
+                        onCollaboratorChanged: onCollaboratorChanged,
+                        onProjectChanged: onProjectChanged,
+                        onDeadlineChanged: onDeadlineChanged,
+                        onOpenDetail: onOpenDetail,
+                        onDelete: onDeleteTask,
+
+                        // ← Paramètres multi-sélection
+                        multiSelectMode: multiSelectMode,
+                        isSelected: selectedTaskIds.contains(task.id),
+                        onTaskSelectToggle: onTaskSelectToggle,
+                      ),
+                      Divider(
+                        height: 1,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onBackground
+                            .withOpacity(0.3),
+                      ),
+                    ],
+                  )),
+                ],
+                // Section "Terminées"
+                if (terminees.isNotEmpty) ...[
+                  Padding(
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: Text(
+                      "Terminées",
+                      style:
+                      Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onBackground
+                            .withOpacity(0.7),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    onPressed: onAddTask,
+                  ),
+                  ...terminees.map((task) => Column(
+                    children: [
+                      _TaskRow(
+                        key: ValueKey(task.id),
+                        task: task,
+                        onToggle: onToggleStatus,
+                        onCollaboratorChanged: onCollaboratorChanged,
+                        onProjectChanged: onProjectChanged,
+                        onDeadlineChanged: onDeadlineChanged,
+                        onOpenDetail: onOpenDetail,
+                        onDelete: onDeleteTask,
+
+                        // ← Paramètres multi-sélection
+                        multiSelectMode: multiSelectMode,
+                        isSelected: selectedTaskIds.contains(task.id),
+                        onTaskSelectToggle: onTaskSelectToggle,
+                      ),
+                      Divider(
+                        height: 1,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onBackground
+                            .withOpacity(0.3),
+                      ),
+                    ],
+                  )),
+                ],
+                // Bouton pour ajouter une nouvelle tâche
+                Padding(
+                  padding:
+                  const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      icon: const Icon(Icons.add),
+                      label: Text(
+                        "Ajouter une tâche...",
+                        style: TextStyle(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onBackground
+                              .withOpacity(0.7),
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 16),
+                      ),
+                      onPressed: onAddTask,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildHeader(BuildContext context) {
-    final ts = Theme.of(context).textTheme.bodyMedium?.copyWith(
-      color: Theme.of(context).colorScheme.onBackground,
-      fontWeight: FontWeight.bold,
-    );
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final headerBg = isDark
-        ? AppColors.darkGreyBackground
-        : AppColors.lightGreyBackground;
-
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       decoration: BoxDecoration(
-        color: headerBg,
+        color: AppColors.glassHeader,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
         children: [
-          const SizedBox(width: 40),
+          const SizedBox(width: 40), // Pour la colonne statut (cercle)
           _vDiv(context),
-          Expanded(flex: 3, child: Text("Nom", style: ts)),
+          Expanded(
+            flex: 3,
+            child: Text(
+              "Nom",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onBackground,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
           _vDiv(context),
-          Expanded(flex: 2, child: Text("Échéance", style: ts)),
+          Expanded(
+            flex: 2,
+            child: Text(
+              "Échéance",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onBackground,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
           _vDiv(context),
-          Expanded(flex: 2, child: Text("Responsable", style: ts)),
+          Expanded(
+            flex: 2,
+            child: Text(
+              "Responsable",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onBackground,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
           _vDiv(context),
-          Expanded(flex: 2, child: Text("Projet", style: ts)),
+          Expanded(
+            flex: 2,
+            child: Text(
+              "Projet",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onBackground,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          _vDiv(context),
+
+          // ← Zone réservée à l'icône checkbox ou corbeille (40px de large)
+          SizedBox(
+            width: 50,
+            child: multiSelectMode
+            // Si on est en mode multi-sélection, afficher la corbeille rouge
+                ? Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                tooltip: 'Supprimer les tâches sélectionnées',
+                onPressed: selectedTaskIds.isEmpty
+                    ? null
+                    : () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Confirmation'),
+                      content: Text(
+                        'Souhaitez-vous supprimer '
+                            '${selectedTaskIds.length} tâche(s) sélectionnée(s) ?',
+                      ),
+                      backgroundColor:
+                      Theme.of(ctx).colorScheme.surface,
+                      titleTextStyle: Theme.of(ctx)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(
+                          color: Theme.of(ctx)
+                              .colorScheme
+                              .onSurface),
+                      contentTextStyle: Theme.of(ctx)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(
+                          color: Theme.of(ctx)
+                              .colorScheme
+                              .onSurface),
+                      actions: [
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.of(ctx).pop(false),
+                          child: Text(
+                            'Annuler',
+                            style: TextStyle(
+                                color: Theme.of(ctx)
+                                    .colorScheme
+                                    .onSurface),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.of(ctx).pop(true),
+                          child: Text(
+                            'Supprimer',
+                            style: TextStyle(
+                                color: Colors.redAccent),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true) {
+                    // 1) On récupère d'abord la liste complète des CustomTask à supprimer
+                    final tasksToRemove = tasks
+                        .where((t) =>
+                        selectedTaskIds.contains(t.id))
+                        .toList();
+
+                    // 2) On supprime chaque tâche
+                    for (var task in tasksToRemove) {
+                      onDeleteTask(task);
+                    }
+
+                    // 3) On désélectionne chaque tâche (sans passer par tasks.firstWhere)
+                    for (var task in tasksToRemove) {
+                      onTaskSelectToggle(task, false);
+                    }
+
+                    // 4) On quitte le mode multi-sélection
+                    onToggleMultiSelectMode();
+                  }
+                },
+              ),
+            )
+            // Sinon, afficher l'icône pour entrer en mode sélection multiple
+                : IconButton(
+              icon: const Icon(Icons.check_box),
+              tooltip: 'Sélectionner plusieurs',
+              onPressed: onToggleMultiSelectMode,
+            ),
+          ),
         ],
       ),
     );
@@ -197,8 +373,8 @@ class TasksListView extends StatelessWidget {
 
   Widget _vDiv(BuildContext context) => Container(
     width: 1,
-    height: 24,
-    color: Theme.of(context).colorScheme.onBackground.withOpacity(0.5),
+    height: 40,
+    color: Theme.of(context).colorScheme.onBackground.withOpacity(0.3),
     margin: const EdgeInsets.symmetric(horizontal: 8),
   );
 }
@@ -210,6 +386,12 @@ class _TaskRow extends StatefulWidget {
   final Function(CustomTask, String) onProjectChanged;
   final Function(CustomTask, DateTime) onDeadlineChanged;
   final Function(CustomTask) onOpenDetail;
+  final Function(CustomTask) onDelete;
+
+  // ← Nouveaux paramètres pour la sélection multiple
+  final bool multiSelectMode;
+  final bool isSelected;
+  final Function(CustomTask, bool) onTaskSelectToggle;
 
   const _TaskRow({
     Key? key,
@@ -219,6 +401,11 @@ class _TaskRow extends StatefulWidget {
     required this.onProjectChanged,
     required this.onDeadlineChanged,
     required this.onOpenDetail,
+    required this.onDelete,
+
+    required this.multiSelectMode,
+    required this.isSelected,
+    required this.onTaskSelectToggle,
   }) : super(key: key);
 
   @override
@@ -242,8 +429,10 @@ class _TaskRowState extends State<_TaskRow> {
   Future<void> _loadCollaboratorName() async {
     final uid = widget.task.responsable;
     if (uid.isNotEmpty) {
-      final doc =
-      await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
       if (mounted) {
         setState(() {
           _collaboratorName =
@@ -336,7 +525,8 @@ class _TaskRowState extends State<_TaskRow> {
                   prefixIcon: const Icon(Icons.search),
                   hintText: 'Rechercher…',
                   hintStyle: TextStyle(
-                    color: Theme.of(ctx).colorScheme.onSurface.withOpacity(0.6),
+                    color:
+                    Theme.of(ctx).colorScheme.onSurface.withOpacity(0.6),
                   ),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(
@@ -348,7 +538,8 @@ class _TaskRowState extends State<_TaskRow> {
                     borderSide: BorderSide(color: AppColors.blue),
                   ),
                 ),
-                onChanged: (v) => setState(() => search = v.trim().toLowerCase()),
+                onChanged: (v) =>
+                    setState(() => search = v.trim().toLowerCase()),
                 style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
               ),
               const SizedBox(height: 8),
@@ -413,10 +604,13 @@ class _TaskRowState extends State<_TaskRow> {
                             return ListTile(
                               title: Text(
                                 u['displayName']!,
-                                style: TextStyle(color: Theme.of(ctx4).colorScheme.onSurface),
+                                style: TextStyle(
+                                    color:
+                                    Theme.of(ctx4).colorScheme.onSurface),
                               ),
                               onTap: () {
-                                widget.onCollaboratorChanged(widget.task, u['uid']!);
+                                widget.onCollaboratorChanged(
+                                    widget.task, u['uid']!);
                                 Navigator.pop(ctx);
                                 setState(() {
                                   _collaboratorName = u['displayName'];
@@ -468,18 +662,21 @@ class _TaskRowState extends State<_TaskRow> {
                   prefixIcon: const Icon(Icons.search),
                   hintText: 'Rechercher…',
                   hintStyle: TextStyle(
-                    color: Theme.of(ctx).colorScheme.onSurface.withOpacity(0.6),
+                    color:
+                    Theme.of(ctx).colorScheme.onSurface.withOpacity(0.6),
                   ),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(
-                      color: Theme.of(ctx).colorScheme.onSurface.withOpacity(0.3),
+                      color:
+                      Theme.of(ctx).colorScheme.onSurface.withOpacity(0.3),
                     ),
                   ),
                   focusedBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: AppColors.blue),
                   ),
                 ),
-                onChanged: (v) => setState(() => search = v.trim().toLowerCase()),
+                onChanged: (v) =>
+                    setState(() => search = v.trim().toLowerCase()),
                 style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
               ),
               const SizedBox(height: 8),
@@ -487,16 +684,17 @@ class _TaskRowState extends State<_TaskRow> {
                 height: 200,
                 child: ListView(
                   children: projects
-                      .where(
-                        (p) => p['name']!.toLowerCase().contains(search),
-                  )
+                      .where((p) =>
+                      p['name']!.toLowerCase().contains(search))
                       .map((p) => ListTile(
                     title: Text(
                       p['name']!,
-                      style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
+                      style: TextStyle(
+                          color: Theme.of(ctx).colorScheme.onSurface),
                     ),
                     onTap: () {
-                      widget.onProjectChanged(widget.task, p['id']!);
+                      widget.onProjectChanged(
+                          widget.task, p['id']!);
                       Navigator.pop(ctx);
                       setState(() {
                         _projectName = p['name'];
@@ -529,11 +727,7 @@ class _TaskRowState extends State<_TaskRow> {
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         decoration: BoxDecoration(
-          color: _hoverRow
-              ? AppColors.blue.withOpacity(0.1)
-              : (isDark
-              ? AppColors.darkGreyBackground
-              : Colors.white),
+          color: _hoverRow ? AppColors.glassHeader : AppColors.glassBackground,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
@@ -545,7 +739,7 @@ class _TaskRowState extends State<_TaskRow> {
         ),
         child: Row(
           children: [
-            // Point de statut (cercle vert si terminé, gris clair sinon)
+            // 1) Point de statut (cercle vert si terminé, gris clair sinon)
             SizedBox(
               width: 40,
               child: InkWell(
@@ -555,7 +749,10 @@ class _TaskRowState extends State<_TaskRow> {
                   backgroundColor: widget.task.status == 'completed'
                       ? AppColors.green
                       : (isDark
-                      ? Theme.of(context).colorScheme.onBackground.withOpacity(0.2)
+                      ? Theme.of(context)
+                      .colorScheme
+                      .onBackground
+                      .withOpacity(0.2)
                       : Colors.grey[300]),
                   child: Icon(
                     Icons.check,
@@ -568,7 +765,7 @@ class _TaskRowState extends State<_TaskRow> {
               ),
             ),
             _vDiv(context),
-            // Nom de la tâche → ouvre le panneau de détails
+            // 2) Nom de la tâche → ouvre le panneau de détails
             Expanded(
               flex: 3,
               child: GestureDetector(
@@ -587,7 +784,7 @@ class _TaskRowState extends State<_TaskRow> {
               ),
             ),
             _vDiv(context),
-            // Échéance → ouvre date picker
+            // 3) Échéance → ouvre date picker
             Expanded(
               flex: 2,
               child: GestureDetector(
@@ -597,7 +794,10 @@ class _TaskRowState extends State<_TaskRow> {
                   style: TextStyle(
                     color: deadlineStr != null
                         ? (isDark
-                        ? Theme.of(context).colorScheme.onBackground.withOpacity(0.7)
+                        ? Theme.of(context)
+                        .colorScheme
+                        .onBackground
+                        .withOpacity(0.7)
                         : Colors.black54)
                         : AppColors.blue,
                     fontSize: 14,
@@ -606,7 +806,7 @@ class _TaskRowState extends State<_TaskRow> {
               ),
             ),
             _vDiv(context),
-            // Responsable → ouvre dialog de sélection
+            // 4) Responsable → ouvre dialog de sélection
             Expanded(
               flex: 2,
               child: GestureDetector(
@@ -616,7 +816,10 @@ class _TaskRowState extends State<_TaskRow> {
                   style: TextStyle(
                     color: _collaboratorName != null
                         ? (isDark
-                        ? Theme.of(context).colorScheme.onBackground.withOpacity(0.7)
+                        ? Theme.of(context)
+                        .colorScheme
+                        .onBackground
+                        .withOpacity(0.7)
                         : Colors.black54)
                         : AppColors.blue,
                     fontSize: 12,
@@ -625,7 +828,7 @@ class _TaskRowState extends State<_TaskRow> {
               ),
             ),
             _vDiv(context),
-            // Projet → ouvre dialog de sélection
+            // 5) Projet → ouvre dialog de sélection
             Expanded(
               flex: 2,
               child: GestureDetector(
@@ -635,13 +838,41 @@ class _TaskRowState extends State<_TaskRow> {
                   style: TextStyle(
                     color: _projectName != null
                         ? (isDark
-                        ? Theme.of(context).colorScheme.onBackground.withOpacity(0.7)
+                        ? Theme.of(context)
+                        .colorScheme
+                        .onBackground
+                        .withOpacity(0.7)
                         : Colors.black54)
                         : AppColors.blue,
                     fontSize: 12,
                   ),
                 ),
               ),
+            ),
+            _vDiv(context),
+            // 6) Zone de droite (checkbox ou bouton de suppression individuelle)
+            SizedBox(
+              width: 40,
+              child: widget.multiSelectMode
+              // Mode multi-sélection : afficher la checkbox
+                  ? Checkbox(
+                value: widget.isSelected,
+                onChanged: (v) {
+                  widget.onTaskSelectToggle(widget.task, v!);
+                },
+              )
+                  : (_hoverRow
+              // Mode normal + survol : afficher la croix de suppression
+                  ? IconButton(
+                icon: const Icon(Icons.close, color: Colors.red),
+                tooltip: 'Supprimer cette tâche',
+                onPressed: () => widget.onDelete(widget.task),
+                padding: const EdgeInsets.all(8),
+                constraints:
+                const BoxConstraints(), // pour ne pas ajouter de padding supplémentaire
+              )
+              // Mode normal + pas de survol : espace vide
+                  : Container()),
             ),
           ],
         ),

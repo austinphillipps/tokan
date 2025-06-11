@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../main.dart'; // Pour accéder à AppColors, themeNotifier et AppTheme
 import '../providers/stock_provider.dart';
 
 class StockDashboardWidget extends StatefulWidget {
@@ -12,77 +13,84 @@ class StockDashboardWidget extends StatefulWidget {
 }
 
 class _StockDashboardWidgetState extends State<StockDashboardWidget> {
-  bool _isLoadingValue = false;
-  double _totalValue = 0.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadTotalValue();
-  }
-
-  Future<void> _loadTotalValue() async {
-    setState(() => _isLoadingValue = true);
-    final val = await context.read<StockProvider>().recalcStockValue();
-    setState(() {
-      _totalValue = val;
-      _isLoadingValue = false;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final stockProv = context.watch<StockProvider>();
+    final stockProv = Provider.of<StockProvider>(context);
+    final bool isSequoia = themeNotifier.value == AppTheme.sequoia;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Aperçu Stock',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            _StatCard(
-              label: 'Articles',
-              value: stockProv.totalItems.toString(),
-              icon: Icons.inventory_2,
+    // Fond global du widget : verre sombre
+    final Color background = AppColors.glassBackground;
+
+    return Container(
+      color: background,
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // En-tête « Aperçu Stock » avec verre sombre un peu plus opaque
+          Container(
+            width: double.infinity,
+            color: AppColors.glassHeader,
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+            child: const Text(
+              'APERÇU STOCK',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
-            const SizedBox(width: 12),
-            _StatCard(
-              label: 'Sous seuil',
-              value: stockProv.lowStockCount.toString(),
-              icon: Icons.warning_amber_rounded,
-              color: Colors.orange.shade200,
-            ),
-            const SizedBox(width: 12),
-            _StatCard(
-              label: 'Ruptures',
-              value: stockProv.outOfStockCount.toString(),
-              icon: Icons.error_outline,
-              color: Colors.red.shade200,
-            ),
-            const SizedBox(width: 12),
-            _StatCard(
-              label: 'Valeur totale',
-              value: _isLoadingValue ? '…' : '${_totalValue.toStringAsFixed(2)} €',
-              icon: Icons.attach_money,
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        // Placeholder pour futur graphique d’évolution
-        Container(
-          width: double.infinity,
-          height: 80,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade200,
-            borderRadius: BorderRadius.circular(8),
           ),
-          child: const Center(child: Text('Graphique évolution (à venir)')),
-        ),
-      ],
+          const SizedBox(height: 12),
+
+          // Statistiques en cartes
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: _StatCard(
+                  label: 'Articles\n(total)',
+                  value: stockProv.totalItems.toString(),
+                  icon: Icons.inventory_2,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatCard(
+                  label: 'Sous seuil',
+                  value: stockProv.lowStockCount.toString(),
+                  icon: Icons.warning_amber_rounded,
+                  color: Colors.amberAccent,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatCard(
+                  label: 'Ruptures',
+                  value: stockProv.outOfStockCount.toString(),
+                  icon: Icons.error_outline,
+                  color: Colors.redAccent,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Exemple de graphique ou liste (placeholder)
+          Expanded(
+            child: Center(
+              child: Text(
+                'Graphique / Détails Stocks…',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white.withOpacity(0.6),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -103,25 +111,39 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Fond de chaque carte : verre sombre (un peu moins opaque que glassHeader)
+    final Color cardBg = AppColors.glassBackground;
+
     return Container(
-      width: 100,
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
       decoration: BoxDecoration(
-        color: color ?? Colors.blue.shade100,
-        borderRadius: BorderRadius.circular(8),
+        color: cardBg,
+        borderRadius: BorderRadius.circular(12),
       ),
+      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 20),
-          const SizedBox(height: 4),
+          Icon(
+            icon,
+            size: 28,
+            color: color ?? Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: Colors.white,
+            ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(fontSize: 12),
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.white70,
+            ),
             textAlign: TextAlign.center,
           ),
         ],

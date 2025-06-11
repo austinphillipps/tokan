@@ -2,23 +2,22 @@
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../../core/providers/plugin_provider.dart';
-import '../../../plugins/stock/views/stock_screen.dart';
-import '../../../plugins/stock/views/commande_screen.dart'; // IMPORTER l’écran Commandes
+import '../../../main.dart'; // pour AppColors
 import '../models/project_models.dart';
 import '../../tasks/views/tasks_screen.dart';
-import 'discussion_screen.dart';
-import '../../../main.dart'; // pour AppColors
 import '../views/project_settings_screen.dart';
+import 'discussion_screen.dart';
+
+import '../../../plugins/stock/views/stock_screen.dart';
+import '../../../plugins/stock/views/commande_screen.dart';
+import '../../../plugins/crm/services/crm_plugin.dart'; // CrmPlugin
 
 class ProjectDetailPanel extends StatefulWidget {
   final Project project;
   final void Function(Project) onSave;
   final VoidCallback onClose;
-  /// 0 = Informations, 1 = Tâches, 2 = Discussion générale, 3 = Stock (si activé), 4 = Commandes (si activé)
   final int initialTab;
 
   const ProjectDetailPanel({
@@ -35,23 +34,16 @@ class ProjectDetailPanel extends StatefulWidget {
 
 class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
   final _formKey = GlobalKey<FormState>();
-
-  late final TextEditingController
-  _nameCtrl,
-      _descCtrl,
-      _objCtrl,
-      _collaboratorSearchController;
+  late final TextEditingController _nameCtrl, _descCtrl, _objCtrl;
+  late final TextEditingController _collabSearchCtrl;
   late List<Collaborator> _collaborators;
   late Color _selectedColor;
   bool _isEditingName = false;
   late FocusNode _nameFocus;
 
-  /// Flux de vos amis “accepted”
   late Stream<List<Map<String, String>>> _friendsStream;
-  String collaboratorSearch = '';
-
-  /// Pour stocker les displayName de chaque collaborateur
-  final Map<String, String> _collaboratorNames = {};
+  final Map<String, String> _collabNames = {};
+  String _collabSearch = '';
 
   @override
   void initState() {
@@ -63,8 +55,8 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
       ..addListener(_autoSave);
     _objCtrl = TextEditingController(text: widget.project.objective ?? '')
       ..addListener(_autoSave);
+    _collabSearchCtrl = TextEditingController();
 
-    _collaboratorSearchController = TextEditingController();
     _collaborators = List.from(widget.project.collaborators);
     _selectedColor = widget.project.color != null
         ? Color(int.parse(widget.project.color!, radix: 16))
@@ -77,7 +69,7 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
         }
       });
 
-    _friendsStream = _getFriends();
+    _friendsStream = _loadFriends();
     _loadCollaboratorNames();
   }
 
@@ -86,47 +78,43 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
     _nameCtrl.dispose();
     _descCtrl.dispose();
     _objCtrl.dispose();
-    _collaboratorSearchController.dispose();
+    _collabSearchCtrl.dispose();
     _nameFocus.dispose();
     super.dispose();
   }
 
-  /// Met à jour automatiquement le projet parent
   void _autoSave() {
     final raw = _nameCtrl.text.trim();
     final name = raw.isNotEmpty
         ? '${raw[0].toUpperCase()}${raw.substring(1)}'
         : raw;
-
-    final updated = widget.project.copyWith(
+    widget.onSave(widget.project.copyWith(
       name: name,
       description: _descCtrl.text.trim(),
       objective:
       _objCtrl.text.trim().isNotEmpty ? _objCtrl.text.trim() : null,
       collaborators: _collaborators,
       color: _selectedColor.value.toRadixString(16),
-      plugins: widget.project.plugins, // inchangé ici
-    );
-    widget.onSave(updated);
+      plugins: widget.project.plugins,
+    ));
   }
 
-  /// Récupère la liste de vos « amis » Firestore (status == accepted)
-  Stream<List<Map<String, String>>> _getFriends() {
+  Stream<List<Map<String, String>>> _loadFriends() {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return Stream.value([]);
-
     return FirebaseFirestore.instance
         .collection('collaborations')
         .where('status', isEqualTo: 'accepted')
         .snapshots()
         .asyncMap((snap) async {
-      final List<Map<String, String>> list = [];
+      final out = <Map<String, String>>[];
       for (var d in snap.docs) {
         final data = d.data();
         final from = data['from'] as String?;
         final to = data['to'] as String?;
-        if (from == null || to == null) continue;
-        final other = (from == user.uid) ? to : (to == user.uid ? from : null);
+        final other = (from == user.uid)
+            ? to
+            : (to == user.uid ? from : null);
         if (other == null) continue;
         final udoc = await FirebaseFirestore.instance
             .collection('users')
@@ -134,138 +122,29 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
             .get();
         if (!udoc.exists) continue;
         final ud = udoc.data()!;
-        list.add({
+        out.add({
           'uid': other,
           'displayName': ud['displayName'] as String? ?? 'Utilisateur',
         });
       }
-      return list;
+      return out;
     });
   }
 
-  /// Charge en batch les displayName de tous les collaborateurs initiaux
   Future<void> _loadCollaboratorNames() async {
     for (var c in _collaborators) {
-      if (!_collaboratorNames.containsKey(c.uid)) {
-        final doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(c.uid)
-            .get();
-        if (doc.exists) {
-          final data = doc.data()!;
-          _collaboratorNames[c.uid] =
-              (data['displayName'] as String?)?.trim() ?? c.uid;
-        } else {
-          _collaboratorNames[c.uid] = c.uid;
-        }
-      }
+      if (_collabNames.containsKey(c.uid)) continue;
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(c.uid)
+          .get();
+      _collabNames[c.uid] = doc.exists
+          ? (doc.data()!['displayName'] as String? ?? c.uid)
+          : c.uid;
     }
     setState(() {});
   }
 
-  /// Affiche le dialogue de recherche / ajout d’ami
-  void _showAddCollaboratorDialog() {
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctxDialog, setStateDialog) {
-          final theme = Theme.of(context);
-          return AlertDialog(
-            backgroundColor: theme.colorScheme.surface,
-            title: Text('Ajouter un collaborateur',
-                style: TextStyle(color: theme.colorScheme.onSurface)),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: _collaboratorSearchController,
-                  decoration: InputDecoration(
-                    hintText: 'Rechercher…',
-                    prefixIcon: const Icon(Icons.search),
-                    hintStyle: TextStyle(
-                        color: theme.colorScheme.onSurface.withOpacity(0.6)),
-                    filled: true,
-                    fillColor: theme.colorScheme.surfaceVariant,
-                    border: const OutlineInputBorder(),
-                  ),
-                  onChanged: (v) => setStateDialog(
-                          () => collaboratorSearch = v.trim().toLowerCase()),
-                  style: TextStyle(color: theme.colorScheme.onSurface),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  height: 200,
-                  width: double.maxFinite,
-                  child: StreamBuilder<List<Map<String, String>>>(
-                    stream: _friendsStream,
-                    builder: (_, snap) {
-                      if (!snap.hasData) {
-                        return Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation(
-                                theme.colorScheme.primary),
-                          ),
-                        );
-                      }
-                      final results = snap.data!
-                          .where((f) =>
-                          f['displayName']!
-                              .toLowerCase()
-                              .contains(collaboratorSearch))
-                          .where((f) =>
-                      !_collaborators.any((c) => c.uid == f['uid']))
-                          .toList();
-                      if (results.isEmpty) {
-                        return Center(
-                          child: Text(
-                            'Aucun utilisateur trouvé',
-                            style:
-                            TextStyle(color: theme.colorScheme.onSurface),
-                          ),
-                        );
-                      }
-                      return ListView.builder(
-                        itemCount: results.length,
-                        itemBuilder: (_, i) {
-                          final f = results[i];
-                          return ListTile(
-                            title: Text(
-                              f['displayName']!,
-                              style: TextStyle(
-                                  color: theme.colorScheme.onSurface),
-                            ),
-                            onTap: () {
-                              setState(() {
-                                _collaborators.add(
-                                    Collaborator(uid: f['uid']!, role: 'viewer'));
-                              });
-                              _autoSave();
-                              Navigator.of(ctx).pop();
-                            },
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(
-                  'Annuler',
-                  style: TextStyle(color: theme.colorScheme.primary),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  /// Ouvre un sélecteur de couleur et _autoSave
   Future<void> _pickColor() async {
     const options = [
       Colors.red,
@@ -287,10 +166,8 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
             child: Container(
               width: 36,
               height: 36,
-              decoration: BoxDecoration(
-                color: c,
-                shape: BoxShape.circle,
-              ),
+              decoration:
+              BoxDecoration(color: c, shape: BoxShape.circle),
             ),
           ))
               .toList(),
@@ -306,270 +183,231 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final headerBg =
-    isDark ? AppColors.darkGreyBackground : theme.colorScheme.surface;
     final onSurface = theme.colorScheme.onSurface;
+    final headerBg = AppColors.glassHeader;
+    final isDark = theme.brightness == Brightness.dark;
 
-    // PluginProvider (pour vérifier si Stock & Commandes est installé globalement)
-    final isStockInstalled =
-    Provider.of<PluginProvider>(context).isInstalled('stock');
-
-    // On écoute en direct la collection “projects” pour le document courant
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('projects')
           .doc(widget.project.id)
           .snapshots(),
-      builder: (context, snapshot) {
-        // Si pas encore de données, on se base sur widget.project.plugins
-        List<String> livePlugins = widget.project.plugins ?? [];
-        if (snapshot.hasData && snapshot.data!.exists) {
-          final data = snapshot.data!.data()!;
-          livePlugins = (data['plugins'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-              [];
-        }
+      builder: (ctx, snap) {
+        final live = snap.hasData && snap.data!.exists
+            ? (snap.data!.data()!['plugins'] as List<dynamic>?)
+            ?.cast<String>() ??
+            []
+            : widget.project.plugins ?? [];
 
-        // 1. Construire la liste d’onglets selon l’état en direct
-        final baseTabs = <Tab>[
-          const Tab(text: 'Informations'),
-          const Tab(text: 'Tâches'),
-          const Tab(text: 'Discussion générale'),
+        // Définit les onglets et leurs vues
+        final tabs = <String>[
+          'Informations',
+          'Tâches',
+          'Discussion générale',
         ];
-        final baseViews = <Widget>[
-          // Onglet “Informations”
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Nom du projet
-                  TextFormField(
-                    controller: _nameCtrl,
-                    style: TextStyle(color: onSurface),
-                    decoration: InputDecoration(
-                      labelText: 'Nom du projet',
-                      labelStyle: TextStyle(color: onSurface.withOpacity(0.7)),
-                      border: UnderlineInputBorder(
-                        borderSide:
-                        BorderSide(color: onSurface.withOpacity(0.3)),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide:
-                        BorderSide(color: theme.colorScheme.primary),
-                      ),
-                    ),
-                    cursorColor: theme.colorScheme.primary,
-                    onChanged: (_) => _autoSave(),
-                    validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Requis' : null,
-                  ),
-                  const SizedBox(height: 16),
-                  // Description
-                  TextFormField(
-                    controller: _descCtrl,
-                    style: TextStyle(color: onSurface),
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      labelText: 'Description',
-                      labelStyle:
-                      TextStyle(color: onSurface.withOpacity(0.7)),
-                      filled: true,
-                      fillColor:
-                      isDark ? AppColors.darkGreyBackground : Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderSide:
-                        BorderSide(color: onSurface.withOpacity(0.3)),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide:
-                        BorderSide(color: theme.colorScheme.primary),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    onChanged: (_) => _autoSave(),
-                  ),
-                  const SizedBox(height: 16),
-                  // Couleur du libellé
-                  Text(
-                    'Couleur du libellé',
-                    style: TextStyle(color: onSurface),
-                  ),
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: _pickColor,
-                    child: Container(
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: _selectedColor,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Onglet “Tâches”
+        final views = <Widget>[
+          _buildInfoTab(onSurface, isDark),
           TasksPage(projectId: widget.project.id),
-
-          // Onglet “Discussion générale”
           ProjectDiscussionScreen(projectId: widget.project.id),
         ];
 
-        // 2. Si le plugin Stock est installé ET 'stock' dans livePlugins, on ajoute “Stock”
-        final hasStockActivated =
-            isStockInstalled && livePlugins.contains('stock');
-        if (hasStockActivated) {
-          baseTabs.add(const Tab(text: 'Stock'));
-          baseViews.add(const StockScreen());
+        if (live.contains('stock')) {
+          tabs.add('Stock');
+          views.add(const StockScreen());
+        }
+        if (live.contains('commande')) {
+          tabs.add('Commandes');
+          views.add(const CommandeScreen());
+        }
+        if (live.contains('crm')) {
+          tabs.add('CRM');
+          views.add(CrmPlugin().buildContent(context));
         }
 
-        // 3. Si le plugin Stock est installé ET 'commande' dans livePlugins, on ajoute “Commandes”
-        final hasCommandeActivated =
-            isStockInstalled && livePlugins.contains('commande');
-        if (hasCommandeActivated) {
-          baseTabs.add(const Tab(text: 'Commandes'));
-          baseViews.add(const CommandeScreen());
-        }
+        return Container(
+          color: AppColors.darkBackground,
+          child: DefaultTabController(
+            length: tabs.length,
+            initialIndex:
+            widget.initialTab < tabs.length ? widget.initialTab : 0,
+            child: Builder(
+              builder: (context) {
+                final tabController = DefaultTabController.of(context)!;
 
-        // 4. On enveloppe la partie onglets dans un DefaultTabController
-        return DefaultTabController(
-          length: baseTabs.length,
-          initialIndex:
-          (widget.initialTab < baseTabs.length) ? widget.initialTab : 0,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ─── EN-TÊTE ───────────────────────────────────────────
-              Container(
-                color: headerBg,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Stack(
-                  alignment: Alignment.center,
+                return Column(
                   children: [
-                    // Bouton Fermer (à gauche)
-                    Positioned(
-                      left: 0,
-                      child: IconButton(
-                        icon: Icon(Icons.close, color: onSurface),
-                        onPressed: widget.onClose,
-                      ),
-                    ),
-                    // TITRE du projet (centré)
-                    Center(
-                      child: _isEditingName
-                          ? SizedBox(
-                        width: 200,
-                        child: TextField(
-                          controller: _nameCtrl,
-                          focusNode: _nameFocus,
-                          textAlign: TextAlign.center,
-                          style:
-                          TextStyle(color: onSurface, fontSize: 20),
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            hintText: 'Nom du projet',
-                            hintStyle: TextStyle(
-                                color: onSurface.withOpacity(0.6)),
-                          ),
-                          autofocus: true,
-                          onSubmitted: (_) => _nameFocus.unfocus(),
-                        ),
-                      )
-                          : GestureDetector(
-                        onTap: () {
-                          setState(() => _isEditingName = true);
-                          _nameFocus.requestFocus();
-                        },
-                        child: Text(
-                          _nameCtrl.text,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.headlineSmall
-                              ?.copyWith(color: onSurface),
-                        ),
-                      ),
-                    ),
-                    // Bulles d’initiales + bouton ajouter + bouton settings
-                    Positioned(
-                      right: 0,
+                    // En-tête with back button, project name, and settings button
+                    Container(
+                      color: headerBg,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      height: 56,
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Initiales des collaborateurs
-                          ..._collaborators.map((col) {
-                            final display =
-                                _collaboratorNames[col.uid] ?? col.uid;
-                            final parts = display.split(' ');
-                            final initials = parts.length > 1
-                                ? '${parts[0][0]}${parts[1][0]}'
-                                : display.substring(0, 1);
-                            return Container(
-                              margin: const EdgeInsets.only(right: 4),
-                              child: CircleAvatar(
-                                radius: 12,
-                                backgroundColor:
-                                isDark ? Colors.white24 : Colors.grey[200],
-                                child: Text(
-                                  initials.toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: isDark ? Colors.white : Colors.black87,
-                                  ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                          // Bouton “Ajouter un collaborateur”
                           IconButton(
-                            icon: Icon(Icons.person_add, color: onSurface),
-                            tooltip: 'Ajouter un collaborateur',
-                            onPressed: _showAddCollaboratorDialog,
+                            icon: Icon(Icons.arrow_back, color: onSurface),
+                            onPressed: widget.onClose,
                           ),
-                          const SizedBox(width: 8),
-                          // Bouton “Paramètres du projet”
+                          Expanded(
+                            child: _isEditingName
+                                ? TextField(
+                              controller: _nameCtrl,
+                              focusNode: _nameFocus,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  color: onSurface, fontSize: 20),
+                              decoration: const InputDecoration(
+                                  border: InputBorder.none),
+                              autofocus: true,
+                              onSubmitted: (_) =>
+                                  _nameFocus.unfocus(),
+                            )
+                                : GestureDetector(
+                              onTap: () {
+                                setState(() => _isEditingName = true);
+                                _nameFocus.requestFocus();
+                              },
+                              child: Text(
+                                widget.project.name,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.headlineSmall
+                                    ?.copyWith(color: onSurface),
+                              ),
+                            ),
+                          ),
                           IconButton(
                             icon: Icon(Icons.settings, color: onSurface),
                             tooltip: 'Paramètres du projet',
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => ProjectSettingsScreen(
-                                    project: widget.project,
-                                  ),
-                                ),
-                              );
-                            },
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ProjectSettingsScreen(
+                                    projectId: widget.project.id),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Expanded(
+                      child: Row(
+                        children: [
+                          // NavigationRail without purple background
+                          AnimatedBuilder(
+                            animation: tabController,
+                            builder: (context, _) => NavigationRail(
+                              backgroundColor: headerBg,
+                              selectedIndex: tabController.index,
+                              onDestinationSelected: (idx) {
+                                tabController.animateTo(idx);
+                              },
+                              labelType: NavigationRailLabelType.all,
+                              indicatorColor: Colors.transparent,
+                              destinations: tabs.map((label) {
+                                IconData icon;
+                                switch (label) {
+                                  case 'Informations':
+                                    icon = Icons.info_outline;
+                                    break;
+                                  case 'Tâches':
+                                    icon = Icons.check_circle_outline;
+                                    break;
+                                  case 'Discussion générale':
+                                    icon = Icons.forum_outlined;
+                                    break;
+                                  case 'Stock':
+                                    icon = Icons.store_outlined;
+                                    break;
+                                  case 'Commandes':
+                                    icon = Icons.shopping_cart_outlined;
+                                    break;
+                                  case 'CRM':
+                                    icon = Icons.business_center_outlined;
+                                    break;
+                                  default:
+                                    icon = Icons.circle;
+                                }
+                                return NavigationRailDestination(
+                                  icon: Icon(icon,
+                                      color: onSurface.withOpacity(0.6)),
+                                  selectedIcon: Icon(icon,
+                                      color: theme.colorScheme.primary),
+                                  label: Text(label),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+
+                          // Vertical divider
+                          const VerticalDivider(width: 1, thickness: 1),
+
+                          // Tab content
+                          Expanded(
+                            child: TabBarView(
+                              physics: const NeverScrollableScrollPhysics(),
+                              children: views,
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ],
-                ),
-              ),
-
-              // ─── ONGLETS ───────────────────────────────────────────
-              TabBar(
-                labelColor: onSurface,
-                unselectedLabelColor: onSurface.withOpacity(0.6),
-                indicatorColor: theme.colorScheme.primary,
-                tabs: baseTabs,
-              ),
-
-              // ─── CONTENU DES ONGLETS ─────────────────────────────────
-              Expanded(
-                child: TabBarView(children: baseViews),
-              ),
-            ],
+                );
+              },
+            ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildInfoTab(Color onSurface, bool isDark) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextFormField(
+              controller: _descCtrl,
+              maxLines: 3,
+              decoration: InputDecoration(
+                labelText: 'Description',
+                filled: true,
+                fillColor:
+                isDark ? AppColors.darkGreyBackground : Colors.grey[100],
+              ),
+              onChanged: (_) => _autoSave(),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _objCtrl,
+              maxLines: 2,
+              decoration: InputDecoration(
+                labelText: 'Objectif',
+                filled: true,
+                fillColor:
+                isDark ? AppColors.darkGreyBackground : Colors.grey[100],
+              ),
+              onChanged: (_) => _autoSave(),
+            ),
+            const SizedBox(height: 16),
+            Text('Couleur du libellé', style: TextStyle(color: onSurface)),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: _pickColor,
+              child: Container(
+                height: 40,
+                decoration: BoxDecoration(
+                  color: _selectedColor,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

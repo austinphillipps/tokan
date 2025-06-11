@@ -1,6 +1,7 @@
 // lib/features/stock/screens/commande_screen.dart
 
 import 'package:flutter/material.dart';
+import '../../../main.dart'; // Pour AppColors
 
 class CommandeScreen extends StatefulWidget {
   const CommandeScreen({Key? key}) : super(key: key);
@@ -24,10 +25,8 @@ class _CommandeScreenState extends State<CommandeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final Color primaryColor = theme.colorScheme.primary;
-    final Color onPrimary = theme.colorScheme.onPrimary;
-    final Color backgroundColor = theme.scaffoldBackgroundColor;
     final Color onBackground = theme.colorScheme.onBackground;
+    final screenWidth = MediaQuery.of(context).size.width;
 
     // Filtrage local à partir de _searchCtrl.text
     final query = _searchCtrl.text.trim().toLowerCase();
@@ -44,8 +43,12 @@ class _CommandeScreenState extends State<CommandeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: backgroundColor,
-        title: const Text('Commandes'),
+        backgroundColor: AppColors.glassHeader,
+        elevation: 0,
+        title: Text(
+          'Commandes',
+          style: TextStyle(color: onBackground),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -61,19 +64,19 @@ class _CommandeScreenState extends State<CommandeScreen> {
         children: [
           // Barre de recherche
           Container(
-            color: primaryColor,
+            color: AppColors.glassHeader,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _searchCtrl,
-                    style: TextStyle(color: onPrimary),
-                    cursorColor: onPrimary,
+                    style: TextStyle(color: onBackground),
+                    cursorColor: onBackground,
                     decoration: InputDecoration(
                       hintText: 'Rechercher commandes...',
-                      hintStyle: TextStyle(color: onPrimary.withOpacity(0.7)),
-                      prefixIcon: Icon(Icons.search, color: onPrimary),
+                      hintStyle: TextStyle(color: onBackground.withOpacity(0.7)),
+                      prefixIcon: Icon(Icons.search, color: onBackground),
                       filled: true,
                       fillColor: theme.brightness == Brightness.dark
                           ? Colors.white10
@@ -90,7 +93,7 @@ class _CommandeScreenState extends State<CommandeScreen> {
                 ),
                 const SizedBox(width: 12),
                 IconButton(
-                  icon: Icon(Icons.filter_list, color: onPrimary),
+                  icon: Icon(Icons.filter_list, color: onBackground),
                   tooltip: 'Filtres avancés',
                   onPressed: () {
                     showModalBottomSheet(
@@ -124,11 +127,12 @@ class _CommandeScreenState extends State<CommandeScreen> {
 
           const SizedBox(height: 8),
 
-          // DataTable des commandes
+          // DataTable des commandes (plein écran)
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SizedBox(
+              width: double.infinity,
               child: Card(
+                margin: EdgeInsets.zero,
                 color: theme.cardColor,
                 elevation: 2,
                 shape: RoundedRectangleBorder(
@@ -136,75 +140,79 @@ class _CommandeScreenState extends State<CommandeScreen> {
                 clipBehavior: Clip.antiAlias,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    headingRowColor:
-                    MaterialStateProperty.all(primaryColor.withOpacity(0.1)),
-                    dataRowColor: MaterialStateProperty.resolveWith((states) =>
-                    theme.brightness == Brightness.dark
-                        ? Colors.white10
-                        : Colors.grey[50]),
-                    headingTextStyle: TextStyle(
-                      color: primaryColor,
-                      fontWeight: FontWeight.bold,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minWidth: screenWidth),
+                    child: DataTable(
+                      headingRowColor: MaterialStateProperty.all(
+                          AppColors.glassHeader.withOpacity(0.5)),
+                      dataRowColor: MaterialStateProperty.resolveWith((states) =>
+                      theme.brightness == Brightness.dark
+                          ? Colors.white10
+                          : Colors.grey[50]),
+                      headingTextStyle: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      columns: const [
+                        DataColumn(label: Text('ID Commande')),
+                        DataColumn(label: Text('Produit')),
+                        DataColumn(label: Text('Quantité')),
+                        DataColumn(label: Text('Client')),
+                        DataColumn(label: Text('Date')),
+                        DataColumn(label: Text('Vendeur')),
+                        DataColumn(label: Text('Statut')),
+                        DataColumn(label: Text('Actions')),
+                      ],
+                      rows: filtered.map((cmd) {
+                        return DataRow(
+                          cells: [
+                            DataCell(Text(cmd['id'] ?? '',
+                                style: TextStyle(color: onBackground))),
+                            DataCell(Text(cmd['produit'] ?? '',
+                                style: TextStyle(color: onBackground))),
+                            DataCell(Text(cmd['quantite'] ?? '',
+                                style: TextStyle(color: onBackground))),
+                            DataCell(Text(cmd['client'] ?? '',
+                                style: TextStyle(color: onBackground))),
+                            DataCell(Text(cmd['date'] ?? '',
+                                style: TextStyle(color: onBackground))),
+                            DataCell(Text(cmd['vendeur'] ?? '',
+                                style: TextStyle(color: onBackground))),
+                            DataCell(Text(cmd['statut'] ?? '',
+                                style: TextStyle(color: onBackground))),
+                            DataCell(Row(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.visibility, size: 20),
+                                  tooltip: 'Voir détails',
+                                  color: Colors.white,
+                                  onPressed: () {
+                                    // TODO: Afficher détails de la commande
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.edit, size: 20),
+                                  tooltip: 'Modifier',
+                                  color: theme.colorScheme.primary,
+                                  onPressed: () {
+                                    // TODO: Modifier la commande
+                                  },
+                                ),
+                                IconButton(
+                                  icon:
+                                  const Icon(Icons.delete_outline, size: 20),
+                                  tooltip: 'Supprimer',
+                                  color: Colors.redAccent,
+                                  onPressed: () {
+                                    // TODO: Supprimer la commande
+                                  },
+                                ),
+                              ],
+                            )),
+                          ],
+                        );
+                      }).toList(),
                     ),
-                    columns: const [
-                      DataColumn(label: Text('ID Commande')),
-                      DataColumn(label: Text('Produit')),
-                      DataColumn(label: Text('Quantité')),
-                      DataColumn(label: Text('Client')),
-                      DataColumn(label: Text('Date')),
-                      DataColumn(label: Text('Vendeur')),
-                      DataColumn(label: Text('Statut')),
-                      DataColumn(label: Text('Actions')),
-                    ],
-                    rows: filtered.map((cmd) {
-                      return DataRow(
-                        cells: [
-                          DataCell(Text(cmd['id'] ?? '',
-                              style: TextStyle(color: onBackground))),
-                          DataCell(Text(cmd['produit'] ?? '',
-                              style: TextStyle(color: onBackground))),
-                          DataCell(Text(cmd['quantite'] ?? '',
-                              style: TextStyle(color: onBackground))),
-                          DataCell(Text(cmd['client'] ?? '',
-                              style: TextStyle(color: onBackground))),
-                          DataCell(Text(cmd['date'] ?? '',
-                              style: TextStyle(color: onBackground))),
-                          DataCell(Text(cmd['vendeur'] ?? '',
-                              style: TextStyle(color: onBackground))),
-                          DataCell(Text(cmd['statut'] ?? '',
-                              style: TextStyle(color: onBackground))),
-                          DataCell(Row(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.visibility, size: 20),
-                                tooltip: 'Voir détails',
-                                color: primaryColor,
-                                onPressed: () {
-                                  // TODO: Afficher détails de la commande
-                                },
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.edit, size: 20),
-                                tooltip: 'Modifier',
-                                color: primaryColor,
-                                onPressed: () {
-                                  // TODO: Modifier la commande
-                                },
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline, size: 20),
-                                tooltip: 'Supprimer',
-                                color: Colors.redAccent,
-                                onPressed: () {
-                                  // TODO: Supprimer la commande
-                                },
-                              ),
-                            ],
-                          )),
-                        ],
-                      );
-                    }).toList(),
                   ),
                 ),
               ),

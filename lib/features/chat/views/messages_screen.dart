@@ -85,10 +85,8 @@ class _MessagesPageState extends State<MessagesPage> with TickerProviderStateMix
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Couleur de fond du panel gauche suivant le thème
-    final leftPanelColor = isDark
-        ? AppColors.darkGreyBackground
-        : Theme.of(context).colorScheme.surface;
+    // On remplace le fond du panneau gauche par un verre sombre
+    final leftPanelColor = AppColors.glassBackground;
 
     // Couleur du texte dans la liste
     final primaryTextColor = Theme.of(context).colorScheme.onBackground;
@@ -108,15 +106,18 @@ class _MessagesPageState extends State<MessagesPage> with TickerProviderStateMix
                   const SizedBox(height: 12),
 
                   // Onglets « Amis » / « Discussions »
-                  TabBar(
-                    controller: _leftTabController,
-                    indicatorColor: AppColors.blue,
-                    labelColor: primaryTextColor,
-                    unselectedLabelColor: primaryTextColor.withOpacity(0.6),
-                    tabs: const [
-                      Tab(icon: Icon(Icons.group), text: 'Amis'),
-                      Tab(icon: Icon(Icons.chat), text: 'Discussions'),
-                    ],
+                  Container(
+                    color: AppColors.glassHeader,
+                    child: TabBar(
+                      controller: _leftTabController,
+                      indicatorColor: AppColors.blue,
+                      labelColor: primaryTextColor,
+                      unselectedLabelColor: primaryTextColor.withOpacity(0.6),
+                      tabs: const [
+                        Tab(icon: Icon(Icons.group), text: 'Amis'),
+                        Tab(icon: Icon(Icons.chat), text: 'Discussions'),
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 8),

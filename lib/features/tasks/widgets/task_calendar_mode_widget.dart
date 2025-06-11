@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:tokan/features/calendar/views/calendar_screen.dart';
+import '../../../main.dart'; // Pour AppColors
 
 /// Widget enveloppant CalendarPage, en prenant en compte le refreshNotifier
 /// et le projectId (pour filtrer les tâches du calendrier).
@@ -20,10 +21,13 @@ class TasksCalendarView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // On appelle CalendarPage, en passant le refreshNotifier ET le projectId
-    return CalendarPage(
-      refreshNotifier: refreshNotifier,
-      projectId: projectId,
+    // On enveloppe CalendarPage dans un Container « verre sombre »
+    return Container(
+      color: AppColors.glassBackground,
+      child: CalendarPage(
+        refreshNotifier: refreshNotifier,
+        projectId: projectId,
+      ),
     );
   }
 }

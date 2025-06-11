@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../models/category.dart';
 import '../services/stock_service.dart';
+import '../../../main.dart'; // Pour AppColors
 
 class CategoryListScreen extends StatefulWidget {
   const CategoryListScreen({Key? key}) : super(key: key);
@@ -51,7 +52,11 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(isNew ? 'Nouvelle catégorie' : 'Modifier la catégorie'),
+        backgroundColor: Theme.of(context).dialogBackgroundColor,
+        title: Text(
+          isNew ? 'Nouvelle catégorie' : 'Modifier la catégorie',
+          style: TextStyle(color: Theme.of(context).colorScheme.onBackground),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -72,7 +77,10 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
+            child: Text(
+              'Annuler',
+              style: TextStyle(color: Theme.of(context).colorScheme.onBackground),
+            ),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -110,6 +118,9 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                 }
               }
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
             child: Text(isNew ? 'Ajouter' : 'Enregistrer'),
           ),
         ],
@@ -121,15 +132,25 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).dialogBackgroundColor,
         title: const Text('Confirmer suppression'),
-        content: Text('Supprimer la catégorie "${category.name}" ?'),
+        content: Text(
+          'Supprimer la catégorie "${category.name}" ?',
+          style: TextStyle(color: Theme.of(context).colorScheme.onBackground),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annuler'),
+            child: Text(
+              'Annuler',
+              style: TextStyle(color: Theme.of(context).colorScheme.onBackground),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+            ),
             child: const Text('Supprimer'),
           ),
         ],
@@ -150,33 +171,54 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final onBackground = Theme.of(context).colorScheme.onBackground;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Catégories')),
+      appBar: AppBar(
+        backgroundColor: AppColors.glassHeader,
+        elevation: 0,
+        title: Text(
+          'Catégories',
+          style: TextStyle(color: onBackground),
+        ),
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _categories.isEmpty
-          ? const Center(child: Text('Aucune catégorie enregistrée.'))
+          ? Center(
+        child: Text(
+          'Aucune catégorie enregistrée.',
+          style: TextStyle(color: onBackground),
+        ),
+      )
           : ListView.separated(
         itemCount: _categories.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
+        separatorBuilder: (_, __) =>
+            Divider(color: onBackground.withOpacity(0.3), height: 1),
         itemBuilder: (context, index) {
           final cat = _categories[index];
           return ListTile(
-            title: Text(cat.name),
+            title: Text(
+              cat.name,
+              style: TextStyle(color: onBackground),
+            ),
             subtitle: Text(
               cat.parentId == null
                   ? 'Niveau racine'
                   : 'Parent : ${cat.parentId}',
+              style: TextStyle(color: onBackground.withOpacity(0.7)),
             ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
                   icon: const Icon(Icons.edit),
+                  color: onBackground,
                   onPressed: () => _showCategoryDialog(existing: cat),
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete),
+                  color: Colors.redAccent,
                   onPressed: () => _confirmDeleteCategory(cat),
                 ),
               ],
@@ -187,7 +229,8 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCategoryDialog(),
         tooltip: 'Ajouter une catégorie',
-        child: const Icon(Icons.add),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

@@ -1,3 +1,5 @@
+// lib/features/tasks/views/tasks_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -19,7 +21,7 @@ enum TaskViewMode { list, calendar }
 
 class TasksPage extends StatefulWidget {
   /// Si non-null : affiche uniquement les tâches du projet {projectId}
-  /// Sinon : affiche toutes les tâches de l’utilisateur (racine + projets)
+  /// Sinon : affiche toutes les tâches de l’application pour l’utilisateur
   final String? projectId;
 
   const TasksPage({Key? key, this.projectId}) : super(key: key);
@@ -35,16 +37,31 @@ class _TasksPageState extends State<TasksPage> {
   String? filterCollaborator;
   DateTime? filterDate;
 
+  bool _multiSelectMode = false;
+  final Set<String> _selectedTaskIds = {};
+
   final ValueNotifier<int> _calendarRefreshNotifier = ValueNotifier<int>(0);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // On récupère la couleur de fond depuis le Theme
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
-          // 1) La liste / calendrier en fond
+          if (_multiSelectMode)
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: () {
+                  setState(() {
+                    _selectedTaskIds.clear();
+                    _multiSelectMode = false;
+                  });
+                },
+                child: Container(color: Colors.transparent),
+              ),
+            ),
+
           StreamBuilder<List<CustomTask>>(
             stream: _getTasksStream(),
             builder: (context, snap) {
@@ -52,58 +69,55 @@ class _TasksPageState extends State<TasksPage> {
                 return Center(
                   child: Text(
                     'Erreur : ${snap.error}',
-                    // On utilise la couleur “onBackground” pour le texte d’erreur
-                    style: TextStyle(color: Theme.of(context).colorScheme.onBackground),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onBackground,
+                    ),
                   ),
                 );
               }
               if (!snap.hasData) {
                 return Center(
                   child: CircularProgressIndicator(
-                    // On colore l’indicateur de progression en vert (validation / accent)
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.green),
+                    valueColor:
+                    AlwaysStoppedAnimation<Color>(AppColors.green),
                   ),
                 );
               }
               final tasks = snap.data!;
+
               return Column(
                 children: [
-                  _buildHorizontalMenu(),
+                  _buildHorizontalMenu(tasks),
                   Expanded(child: _buildView(tasks)),
                 ],
               );
             },
           ),
 
-          // 2) Si panneau ouvert, intercepteur de clics hors du panneau
           if (showTaskPanel)
             Positioned.fill(
               child: GestureDetector(
                 onTap: () {
-                  setState(() {
-                    showTaskPanel = false;
-                  });
+                  setState(() => showTaskPanel = false);
                 },
                 child: Container(color: Colors.transparent),
               ),
             ),
 
-          // 3) Le panneau de détails, affiché au-dessus
           if (showTaskPanel && activeTask != null)
             Positioned(
               right: 0,
               top: 0,
               bottom: 0,
               child: Container(
-                // Taille du panneau : 1/3 de la largeur de l’écran
                 width: MediaQuery.of(context).size.width / 3,
-                // On utilise la couleur “surface” du Theme (gris sombre en dark, blanc en light)
                 color: Theme.of(context).colorScheme.surface,
                 child: TaskDetailPanel(
                   task: activeTask!,
                   onSave: (updated) async {
                     await _saveTask(updated);
                     setState(() => showTaskPanel = false);
+                    _calendarRefreshNotifier.value++;
                   },
                   onClose: () => setState(() => showTaskPanel = false),
                   onMarkAsDone: () {
@@ -118,21 +132,32 @@ class _TasksPageState extends State<TasksPage> {
         ],
       ),
 
-      // Bouton flottant d’ajout de tâche : masqué lorsque le panneau est ouvert
       floatingActionButton: showTaskPanel
           ? null
           : FloatingActionButton(
         onPressed: () {
           setState(() {
             activeTask = CustomTask(
+              id: '',
               name: '',
               description: '',
+              status: '',
+              responsable: '',
+              deadline: null,
+              startTime: null,
+              endTime: null,
+              duration: null,
+              client: null,
               project: widget.projectId,
+              originalProjectId: null,
+              recurrenceType: null,
+              recurrenceDays: null,
+              recurrenceIncludePast: null,
+              subTasks: [],
             );
             showTaskPanel = true;
           });
         },
-        // On force la couleur de fond en violet (AppColors.purple)
         backgroundColor: AppColors.purple,
         child: const Icon(Icons.add),
       ),
@@ -156,13 +181,7 @@ class _TasksPageState extends State<TasksPage> {
         },
         onProjectChanged: (t, id) async {
           t.project = id;
-          // Si la tâche est nouvelle (id vide), on créera directement sous projects/{id}/tasks
-          if (t.id.isEmpty) {
-            await _saveTask(t);
-          } else {
-            // Sinon, tâche existante en racine, on migre
-            await _migrateToProject(t);
-          }
+          await _saveTask(t);
           setState(() {});
         },
         onDeadlineChanged: (t, date) async {
@@ -176,171 +195,51 @@ class _TasksPageState extends State<TasksPage> {
         }),
         onAddTask: () => setState(() {
           activeTask = CustomTask(
+            id: '',
             name: '',
             description: '',
+            status: '',
+            responsable: '',
+            deadline: null,
+            startTime: null,
+            endTime: null,
+            duration: null,
+            client: null,
             project: widget.projectId,
+            originalProjectId: null,
+            recurrenceType: null,
+            recurrenceDays: null,
+            recurrenceIncludePast: null,
+            subTasks: [],
           );
           showTaskPanel = true;
         }),
+        onDeleteTask: _deleteTask,
+
+        multiSelectMode: _multiSelectMode,
+        selectedTaskIds: _selectedTaskIds,
+        onTaskSelectToggle: (task, isSelected) {
+          setState(() {
+            if (isSelected) {
+              _selectedTaskIds.add(task.id);
+            } else {
+              _selectedTaskIds.remove(task.id);
+            }
+          });
+        },
+        onToggleMultiSelectMode: () {
+          setState(() {
+            if (_multiSelectMode) {
+              _selectedTaskIds.clear();
+            }
+            _multiSelectMode = !_multiSelectMode;
+          });
+        },
       );
     }
   }
 
-  /// Flux de tâches :
-  /// • Si widget.projectId non null → écoute /projects/{projectId}/tasks
-  /// • Sinon → écoute collectionGroup('tasks'), puis filtre client-side createdBy == me
-  Stream<List<CustomTask>> _getTasksStream() {
-    final db = FirebaseFirestore.instance;
-    final me = FirebaseAuth.instance.currentUser?.uid;
-
-    if (widget.projectId != null && widget.projectId!.isNotEmpty) {
-      return db
-          .collection('projects')
-          .doc(widget.projectId)
-          .collection('tasks')
-          .snapshots()
-          .map((snap) {
-        final list = snap.docs
-            .map((d) => CustomTask.fromMap(d.data(), d.id))
-            .toList();
-        list.sort((a, b) =>
-            (a.deadline ?? DateTime(1970)).compareTo(b.deadline ?? DateTime(1970)));
-        return list;
-      });
-    } else {
-      return db.collectionGroup('tasks').snapshots().map((snap) {
-        var list = snap.docs.where((d) {
-          final data = d.data() as Map<String, dynamic>;
-          return data['createdBy'] == me;
-        }).map((d) => CustomTask.fromMap(d.data(), d.id)).toList();
-
-        if (filterCollaborator?.isNotEmpty == true) {
-          list = list.where((t) => t.responsable == filterCollaborator).toList();
-        }
-        if (filterDate != null) {
-          list = list
-              .where((t) =>
-          t.deadline != null && _sameDay(t.deadline!, filterDate!))
-              .toList();
-        }
-        list.sort((a, b) =>
-            (a.deadline ?? DateTime(1970)).compareTo(b.deadline ?? DateTime(1970)));
-        return list;
-      });
-    }
-  }
-
-  bool _sameDay(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
-
-  /// Sauvegarde ou mise à jour d'une tâche, avec gestion de migration racine → projet
-  Future<void> _saveTask(CustomTask task) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-    final db = FirebaseFirestore.instance;
-
-    // --- 1) Si on est “dans un projet” (page projet courante) ---
-    if (widget.projectId != null && widget.projectId!.isNotEmpty) {
-      final refProj = db
-          .collection('projects')
-          .doc(widget.projectId)
-          .collection('tasks');
-      final data = task.toMap(user.uid)
-        ..['updatedBy'] = user.uid
-        ..['updatedAt'] = FieldValue.serverTimestamp();
-
-      if (task.id.isEmpty) {
-        // Nouvelle tâche DANS ce projet
-        if (task.status.isEmpty) task.status = 'à venir';
-        final docRef = await refProj.add(data);
-        task.id = docRef.id;
-      } else {
-        // Tâche existante DANS ce projet : simple update
-        await refProj.doc(task.id).update(data);
-      }
-      return;
-    }
-
-    // --- 2) Sinon – on est dans la “vue principale” (page toutes mes tâches) ---
-    if (task.project != null && task.project!.isNotEmpty) {
-      final refProj = db
-          .collection('projects')
-          .doc(task.project)
-          .collection('tasks');
-      final data = task.toMap(user.uid)
-        ..['updatedBy'] = user.uid
-        ..['updatedAt'] = FieldValue.serverTimestamp();
-
-      if (task.id.isEmpty) {
-        // 2a) Nouvelle tâche qui passe directement dans un projet : création
-        if (task.status.isEmpty) task.status = 'à venir';
-        final docRef = await refProj.add(data);
-        task.id = docRef.id;
-      } else {
-        // 2b) Tâche existante en “racine”, on doit vérifier si elle existe déjà dans le projet
-        final snapshot = await refProj.doc(task.id).get();
-        if (snapshot.exists) {
-          // 2b-i) si le doc existe déjà dans projects/{…}/tasks → simple update
-          await refProj.doc(task.id).update(data);
-        } else {
-          // 2b-ii) sinon, on migre la tâche
-          await _migrateToProject(task);
-        }
-      }
-      return;
-    }
-
-    // --- 3) Cas “racine” (pas de projet sélectionné) ---
-    final refRoot = db.collection('tasks');
-    final dataRoot = task.toMap(user.uid)
-      ..['updatedBy'] = user.uid
-      ..['updatedAt'] = FieldValue.serverTimestamp();
-
-    if (task.id.isEmpty) {
-      // Nouvelle tâche en « racine »
-      if (task.status.isEmpty) task.status = 'à venir';
-      final docRef = await refRoot.add(dataRoot);
-      task.id = docRef.id;
-    } else {
-      // Mise à jour d’une tâche existante en « racine »
-      await refRoot.doc(task.id).update(dataRoot);
-    }
-  }
-
-  /// Migration manuelle : quand on change le projet d'une tâche déjà en racine
-  Future<void> _migrateToProject(CustomTask task) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-    final db = FirebaseFirestore.instance;
-    final data = task.toMap(user.uid)
-      ..['updatedBy'] = user.uid
-      ..['updatedAt'] = FieldValue.serverTimestamp();
-
-    final projRef = db
-        .collection('projects')
-        .doc(task.project)
-        .collection('tasks');
-
-    // 1) Création dans le projet
-    final docRef = await projRef.add(data);
-
-    // 2) Suppression de l’ancienne tâche dans “tasks/{task.id}”
-    if (task.id.isNotEmpty) {
-      await db.collection('tasks').doc(task.id).delete();
-    }
-    // 3) Mise à jour de l’ID local pour pointer vers le nouvel ID dans le projet
-    task.id = docRef.id;
-  }
-
-  void _toggleStatus(CustomTask task) async {
-    final nextStatus = task.status == 'completed' ? 'pending' : 'completed';
-    task.status = nextStatus;
-    await _saveTask(task);
-    _calendarRefreshNotifier.value++;
-  }
-
-  /// Barre d'outils en haut : bascule Liste/Calendrier, filtres (sur Liste)
-  Widget _buildHorizontalMenu() {
+  Widget _buildHorizontalMenu(List<CustomTask> tasks) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
       child: Row(
@@ -353,9 +252,10 @@ class _TasksPageState extends State<TasksPage> {
             onPressed: (index) {
               setState(() {
                 _viewMode = TaskViewMode.values[index];
+                _multiSelectMode = false;
+                _selectedTaskIds.clear();
               });
             },
-            // On peut (éventuellement) surcharger les couleurs sélectionnées :
             color: Theme.of(context).colorScheme.onBackground,
             selectedColor: AppColors.blue,
             fillColor: AppColors.blue.withOpacity(0.1),
@@ -393,23 +293,26 @@ class _TasksPageState extends State<TasksPage> {
                   firstDate: DateTime(2000),
                   lastDate: DateTime(2100),
                   builder: (context, child) {
-                    // On force le thème sur le datePicker : si sombre, fond sombre, etc.
                     return Theme(
                       data: Theme.of(context).copyWith(
                         colorScheme: ColorScheme(
                           brightness: Theme.of(context).brightness,
-                          primary: AppColors.blue, // jour sélectionné en bleu
+                          primary: AppColors.blue,
                           onPrimary: Colors.white,
                           secondary: AppColors.blue,
                           onSecondary: Colors.white,
                           error: Colors.red,
                           onError: Colors.white,
-                          background: Theme.of(context).scaffoldBackgroundColor,
-                          onBackground: Theme.of(context).colorScheme.onBackground,
+                          background:
+                          Theme.of(context).scaffoldBackgroundColor,
+                          onBackground:
+                          Theme.of(context).colorScheme.onBackground,
                           surface: Theme.of(context).colorScheme.surface,
-                          onSurface: Theme.of(context).colorScheme.onBackground,
+                          onSurface:
+                          Theme.of(context).colorScheme.onBackground,
                         ),
-                        dialogBackgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                        dialogBackgroundColor:
+                        Theme.of(context).scaffoldBackgroundColor,
                       ),
                       child: child!,
                     );
@@ -419,7 +322,6 @@ class _TasksPageState extends State<TasksPage> {
                   setState(() => filterDate = picked);
                 }
               },
-              // Utilise la couleur par défaut de l’ElevatedButton (violet)
               child: Text(
                 filterDate == null
                     ? 'Filtrer par date'
@@ -429,12 +331,97 @@ class _TasksPageState extends State<TasksPage> {
             if (filterDate != null)
               IconButton(
                 icon: const Icon(Icons.clear),
-                // On hérite la couleur d’icône active (bleu)
                 onPressed: () => setState(() => filterDate = null),
               ),
           ],
+          const Spacer(),
         ],
       ),
     );
+  }
+
+  Stream<List<CustomTask>> _getTasksStream() {
+    final db = FirebaseFirestore.instance;
+
+    if (widget.projectId != null && widget.projectId!.isNotEmpty) {
+      return db
+          .collection('tasks')
+          .where('project', isEqualTo: widget.projectId)
+          .snapshots()
+          .map((snap) {
+        final list = snap.docs
+            .map((d) =>
+            CustomTask.fromMap(d.data() as Map<String, dynamic>, d.id))
+            .toList();
+        list.sort((a, b) =>
+            (a.deadline ?? DateTime(1970))
+                .compareTo(b.deadline ?? DateTime(1970)));
+        return list;
+      });
+    } else {
+      return db
+          .collection('tasks')
+          .snapshots()
+          .map((snap) {
+        var list = snap.docs
+            .map((d) =>
+            CustomTask.fromMap(d.data() as Map<String, dynamic>, d.id))
+            .toList();
+
+        if (filterCollaborator?.isNotEmpty == true) {
+          list =
+              list.where((t) => t.responsable == filterCollaborator).toList();
+        }
+        if (filterDate != null) {
+          list = list
+              .where((t) =>
+          t.deadline != null && _sameDay(t.deadline!, filterDate!))
+              .toList();
+        }
+        list.sort((a, b) =>
+            (a.deadline ?? DateTime(1970))
+                .compareTo(b.deadline ?? DateTime(1970)));
+        return list;
+      });
+    }
+  }
+
+  bool _sameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  Future<void> _saveTask(CustomTask task) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final db = FirebaseFirestore.instance;
+    final tasksCollection = db.collection('tasks');
+
+    // Construire les données à enregistrer
+    final data = task.toMap(user.uid)
+      ..['project'] = task.project
+      ..['updatedBy'] = user.uid
+      ..['updatedAt'] = FieldValue.serverTimestamp();
+
+    if (task.id.isEmpty) {
+      if (task.status.isEmpty) task.status = 'à venir';
+      final docRef = await tasksCollection.add(data);
+      task.id = docRef.id;
+    } else {
+      await tasksCollection.doc(task.id).update(data);
+    }
+  }
+
+  void _toggleStatus(CustomTask task) async {
+    final nextStatus = (task.status == 'completed' || task.status == 'terminée')
+        ? 'pending'
+        : 'completed';
+    task.status = nextStatus;
+    await _saveTask(task);
+    _calendarRefreshNotifier.value++;
+  }
+
+  Future<void> _deleteTask(CustomTask task) async {
+    final db = FirebaseFirestore.instance;
+    await db.collection('tasks').doc(task.id).delete();
+    _calendarRefreshNotifier.value++;
   }
 }
