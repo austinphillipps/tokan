@@ -66,10 +66,12 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
             Text('Nom : ${_contact!.name}',
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
+            Text('Prénom : ${_contact!.firstName}'),
+            const SizedBox(height: 8),
             Text('Email : ${_contact!.email}'),
             if (_contact!.phone != null && _contact!.phone!.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text('Téléphone : ${_contact!.phone}'),
+              Text('Téléphone : ${_contact!.phonePrefix} ${_contact!.phone}'),
             ],
             const SizedBox(height: 24),
             ElevatedButton.icon(
