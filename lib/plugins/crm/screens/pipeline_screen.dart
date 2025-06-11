@@ -67,7 +67,11 @@ class _PipelineScreenState extends State<PipelineScreen> {
                 height: height,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: Row(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                     children: <String>[
                       'Prospect',
                       'Qualification',
@@ -83,9 +87,10 @@ class _PipelineScreenState extends State<PipelineScreen> {
                         width: 280,
                         height: height,
                         child: Card(
-                          margin: const EdgeInsets.all(8),
+                          elevation: 3,
+                          margin: const EdgeInsets.all(12),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(8),
                             side: BorderSide(
                               color: Theme.of(context).dividerColor,
                             ),
@@ -97,9 +102,12 @@ class _PipelineScreenState extends State<PipelineScreen> {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: AppColors.glassHeader,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withOpacity(0.8),
                                   borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(4)),
+                                      top: Radius.circular(8)),
                                 ),
                                 child: Text(
                                   stage,
