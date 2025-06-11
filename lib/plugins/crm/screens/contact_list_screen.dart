@@ -77,7 +77,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
               itemBuilder: (ctx, i) {
                 final Contact c = prov.contacts[i];
                 return ListTile(
-                  title: Text(c.name),
+                  title: Text('${c.firstName} ${c.name}'),
                   subtitle: Text(c.email),
                   onTap: () => _openPanel(contactId: c.id),
                 );
