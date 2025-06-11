@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:tokan/main.dart'; // pour AppColors
 import 'package:tokan/plugins/crm/models/contact.dart';
 import 'package:tokan/plugins/crm/providers/contact_provider.dart';
+import 'package:tokan/plugins/crm/utils/phone_prefixes.dart';
 
 class ContactFormScreen extends StatefulWidget {
   /// Si contactId est null → création, sinon édition
@@ -23,7 +24,7 @@ class _ContactFormScreenState extends State<ContactFormScreen> {
   final _firstNameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
-  String _phonePrefix = '+33';
+  String _phonePrefix = kPhonePrefixes.first;
   bool _loading = false;
 
   bool get _isEditing => widget.contactId != null;
@@ -136,7 +137,7 @@ class _ContactFormScreenState extends State<ContactFormScreen> {
                     DropdownButton<String>(
                       value: _phonePrefix,
                       onChanged: (v) => setState(() => _phonePrefix = v ?? _phonePrefix),
-                      items: const ['+33', '+596', '+590']
+                      items: kPhonePrefixes
                           .map((p) => DropdownMenuItem(value: p, child: Text(p)))
                           .toList(),
                     ),
