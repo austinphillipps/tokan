@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:tokan/main.dart'; // pour AppColors
 import 'package:tokan/plugins/crm/models/contact.dart';
 import 'package:tokan/plugins/crm/providers/contact_provider.dart';
+import 'package:tokan/plugins/crm/utils/phone_prefixes.dart';
 
 class ContactFormScreen extends StatefulWidget {
   /// Si contactId est null → création, sinon édition
@@ -20,8 +21,10 @@ class ContactFormScreen extends StatefulWidget {
 class _ContactFormScreenState extends State<ContactFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl  = TextEditingController();
+  final _firstNameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  String _phonePrefix = kPhonePrefixes.first;
   bool _loading = false;
 
   bool get _isEditing => widget.contactId != null;
@@ -39,7 +42,9 @@ class _ContactFormScreenState extends State<ContactFormScreen> {
     final contact = await context.read<ContactProvider>().fetchById(widget.contactId!);
     if (contact != null) {
       _nameCtrl.text  = contact.name;
+      _firstNameCtrl.text = contact.firstName;
       _emailCtrl.text = contact.email;
+      _phonePrefix = contact.phonePrefix;
       _phoneCtrl.text = contact.phone ?? '';
     }
     setState(() => _loading = false);
@@ -53,7 +58,9 @@ class _ContactFormScreenState extends State<ContactFormScreen> {
     final contact = Contact(
       id:    widget.contactId,
       name:  _nameCtrl.text.trim(),
+      firstName: _firstNameCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
+      phonePrefix: _phonePrefix,
       phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
     );
 
@@ -74,6 +81,7 @@ class _ContactFormScreenState extends State<ContactFormScreen> {
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _firstNameCtrl.dispose();
     _emailCtrl.dispose();
     _phoneCtrl.dispose();
     super.dispose();
@@ -112,6 +120,11 @@ class _ContactFormScreenState extends State<ContactFormScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
+                  controller: _firstNameCtrl,
+                  decoration: const InputDecoration(labelText: 'Prénom'),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
                   controller: _emailCtrl,
                   decoration: const InputDecoration(labelText: 'Email'),
                   keyboardType: TextInputType.emailAddress,
@@ -119,10 +132,24 @@ class _ContactFormScreenState extends State<ContactFormScreen> {
                   (v == null || !v.contains('@')) ? 'Email invalide' : null,
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _phoneCtrl,
-                  decoration: const InputDecoration(labelText: 'Téléphone'),
-                  keyboardType: TextInputType.phone,
+                Row(
+                  children: [
+                    DropdownButton<String>(
+                      value: _phonePrefix,
+                      onChanged: (v) => setState(() => _phonePrefix = v ?? _phonePrefix),
+                      items: kPhonePrefixes
+                          .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                          .toList(),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _phoneCtrl,
+                        decoration: const InputDecoration(labelText: 'Téléphone'),
+                        keyboardType: TextInputType.phone,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
