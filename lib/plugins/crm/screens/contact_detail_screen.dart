@@ -8,7 +8,9 @@ import 'contact_form_screen.dart';  // ← import du formulaire
 
 class ContactDetailScreen extends StatefulWidget {
   final String contactId;
-  const ContactDetailScreen({Key? key, required this.contactId}) : super(key: key);
+  final VoidCallback? onClose;
+  const ContactDetailScreen({Key? key, required this.contactId, this.onClose})
+      : super(key: key);
 
   @override
   State<ContactDetailScreen> createState() => _ContactDetailScreenState();
@@ -78,7 +80,11 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
               ),
               onPressed: () async {
                 await context.read<ContactProvider>().delete(widget.contactId);
-                Navigator.of(context).pop();
+                if (widget.onClose != null) {
+                  widget.onClose!();
+                } else {
+                  Navigator.of(context).pop();
+                }
               },
             ),
           ],

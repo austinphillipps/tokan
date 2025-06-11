@@ -10,7 +10,8 @@ import 'package:tokan/plugins/crm/providers/contact_provider.dart';
 class ContactFormScreen extends StatefulWidget {
   /// Si contactId est null → création, sinon édition
   final String? contactId;
-  const ContactFormScreen({Key? key, this.contactId}) : super(key: key);
+  final VoidCallback? onClose;
+  const ContactFormScreen({Key? key, this.contactId, this.onClose}) : super(key: key);
 
   @override
   State<ContactFormScreen> createState() => _ContactFormScreenState();
@@ -63,7 +64,11 @@ class _ContactFormScreenState extends State<ContactFormScreen> {
     }
 
     setState(() => _loading = false);
-    Navigator.of(context).pop();
+    if (widget.onClose != null) {
+      widget.onClose!();
+    } else {
+      Navigator.of(context).pop();
+    }
   }
 
   @override

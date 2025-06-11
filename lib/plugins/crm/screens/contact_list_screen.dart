@@ -107,8 +107,8 @@ class _ContactListScreenState extends State<ContactListScreen> {
               color: AppColors.glassBackground,
               child: SafeArea(
                 child: _panelContactId == null
-                    ? const ContactFormScreen()
-                    : ContactDetailScreen(contactId: _panelContactId!),
+                    ? ContactFormScreen(onClose: _closePanel)
+                    : ContactDetailScreen(contactId: _panelContactId!, onClose: _closePanel),
               ),
             ),
           ),
