@@ -72,101 +72,14 @@ class _PipelineScreenState extends State<PipelineScreen> {
                     alignment: Alignment.topCenter,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                    children: <String>[
-                      'Prospect',
-                      'Qualification',
-                      'Négociation',
-                      'Gagné',
-                      'Perdu',
-                    ].map((stage) {
-                      final items = prov.opportunities
-                          .where((o) => o.stage == stage)
-                          .toList();
-
-                      return SizedBox(
-                        width: 280,
-                        height: height,
-                        child: Card(
-                          elevation: 3,
-                          margin: const EdgeInsets.all(12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: BorderSide(
-                              color: Theme.of(context).dividerColor,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // En-tête de colonne
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .primary
-                                      .withOpacity(0.8),
-                                  borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(8)),
-                                ),
-                                child: Text(
-                                  stage,
-                                  textAlign: TextAlign.center,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-
-                              // Liste des opportunités
-                              Expanded(
-                                child: items.isEmpty
-                                    ? const Center(child: Text('—'))
-                                    : ListView.builder(
-                                  padding: EdgeInsets.zero,
-                                  itemCount: items.length,
-                                  itemBuilder: (_, i) {
-                                    final opp = items[i];
-                                    return Card(
-                                      margin: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      child: ListTile(
-                                        title: Text(opp.name),
-                                        subtitle: Text(
-                                          '${NumberFormat.currency(symbol: '€', decimalDigits: 0).format(opp.amount)} • '
-                                              '${DateFormat.yMd().format(opp.createdAt)}',
-                                        ),
-                                        onTap: () => _openPanel(
-                                            opportunityId: opp.id),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-
-                              // Bouton "Nouveau"
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton.icon(
-                                    icon: const Icon(Icons.add),
-                                    label: const Text('Nouveau'),
-                                    onPressed: () => _openPanel(),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                      children: [
+                        for (var i = 0; i < 5; i++) ...[
+                          _buildColumn(context, height, prov,
+                              ['Prospect', 'Qualification', 'Négociation', 'Gagné', 'Perdu'][i]),
+                          if (i < 4) const SizedBox(width: 16),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -202,6 +115,78 @@ class _PipelineScreenState extends State<PipelineScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildColumn(BuildContext context, double height, OpportunityProvider prov, String stage) {
+    final items = prov.opportunities.where((o) => o.stage == stage).toList();
+
+    return SizedBox(
+      width: 280,
+      height: height,
+      child: Card(
+        elevation: 4,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: Theme.of(context).dividerColor,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              ),
+              child: Text(
+                stage,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ),
+            Expanded(
+              child: items.isEmpty
+                  ? const Center(child: Text('—'))
+                  : ListView.builder(
+                      padding: EdgeInsets.zero,
+                      itemCount: items.length,
+                      itemBuilder: (_, i) {
+                        final opp = items[i];
+                        return Card(
+                          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          child: ListTile(
+                            title: Text(opp.name),
+                            subtitle: Text(
+                              '${NumberFormat.currency(symbol: '€', decimalDigits: 0).format(opp.amount)} • '
+                              '${DateFormat.yMd().format(opp.createdAt)}',
+                            ),
+                            onTap: () => _openPanel(opportunityId: opp.id),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.add),
+                  label: const Text('Nouveau'),
+                  onPressed: () => _openPanel(),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
