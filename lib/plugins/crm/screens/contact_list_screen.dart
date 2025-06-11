@@ -36,6 +36,69 @@ class _ContactListScreenState extends State<ContactListScreen> {
     });
   }
 
+  /// Affiche une boite de dialogue pour rechercher un contact
+  void _showSearchDialog() {
+    final searchCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSt) {
+          final prov = context.read<ContactProvider>();
+          final query = searchCtrl.text.trim().toLowerCase();
+          final results = prov.contacts.where((c) {
+            final name = c.name.toLowerCase();
+            final email = c.email.toLowerCase();
+            return name.contains(query) || email.contains(query);
+          }).toList();
+
+          return AlertDialog(
+            title: const Text('Rechercher un contact'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: searchCtrl,
+                  decoration: const InputDecoration(
+                    hintText: 'Nom ou email',
+                    prefixIcon: Icon(Icons.search),
+                  ),
+                  onChanged: (_) => setSt(() {}),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 300,
+                  width: double.maxFinite,
+                  child: results.isEmpty
+                      ? const Center(child: Text('Aucun résultat'))
+                      : ListView.builder(
+                          itemCount: results.length,
+                          itemBuilder: (ctx, i) {
+                            final c = results[i];
+                            return ListTile(
+                              title: Text(c.name),
+                              subtitle: Text(c.email),
+                              onTap: () {
+                                Navigator.of(ctx).pop();
+                                _openPanel(contactId: c.id);
+                              },
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Fermer'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -58,9 +121,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
-            onPressed: () {
-              // TODO: implémenter recherche
-            },
+            onPressed: _showSearchDialog,
           ),
         ],
       ),
