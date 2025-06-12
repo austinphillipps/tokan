@@ -66,6 +66,22 @@ class _PipelineScreenState extends State<PipelineScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
+          final stages = [
+            'Prospect',
+            'Qualification',
+            'Négociation',
+            'Gagné',
+            'Perdu',
+          ];
+          final visibleStages = stages
+              .where((stage) =>
+                  prov.opportunities.any((o) => o.stage == stage))
+              .toList();
+
+          if (visibleStages.isEmpty) {
+            return const Center(child: Text('Aucune opportunité'));
+          }
+
           return Stack(
             children: [
               // --- 1) Kanban horizontal, prend toute la hauteur ---
@@ -73,17 +89,16 @@ class _PipelineScreenState extends State<PipelineScreen> {
                 height: height,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: <String>[
-                      'Prospect',
-                      'Qualification',
-                      'Négociation',
-                      'Gagné',
-                      'Perdu',
-                    ].map((stage) {
-                      final items = prov.opportunities
-                          .where((o) => o.stage == stage)
-                          .toList();
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minWidth: constraints.maxWidth,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: visibleStages.map((stage) {
+                        final items = prov.opportunities
+                            .where((o) => o.stage == stage)
+                            .toList();
 
                       return SizedBox(
                         width: 280,
