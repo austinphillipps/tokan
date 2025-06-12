@@ -15,6 +15,7 @@ class NotificationService {
   StreamSubscription<QuerySnapshot>? _incomingReqSub;
   StreamSubscription<QuerySnapshot>? _acceptedReqSub;
   StreamSubscription<QuerySnapshot>? _messageConvSub;
+  StreamSubscription<QuerySnapshot>? _notifSub;
 
   Future<void> init() async {
     // Initialisation des notifications locales
@@ -25,6 +26,7 @@ class NotificationService {
     _listenFriendRequests();
     _listenFriendAcceptances();
     _listenMessages();
+    _listenNotifications();
   }
 
   void _listenFriendRequests() {
@@ -56,21 +58,6 @@ class NotificationService {
               'read': false,
             });
 
-            // Afficher notification locale
-            _localNotif.show(
-              0,
-              'Nouvelle demande d’ami',
-              '$name vous a envoyé une demande d’ami.',
-              const NotificationDetails(
-                android: AndroidNotificationDetails(
-                  'friend_request_channel',
-                  'Demandes d’amis',
-                  channelDescription: 'Nouvelles demandes d’ami',
-                  importance: Importance.max,
-                  priority: Priority.high,
-                ),
-              ),
-            );
           });
         }
       }
@@ -105,20 +92,6 @@ class NotificationService {
               'read': false,
             });
 
-            _localNotif.show(
-              1,
-              'Demande d’ami acceptée',
-              '$name a accepté votre demande d’ami.',
-              const NotificationDetails(
-                android: AndroidNotificationDetails(
-                  'friend_accept_channel',
-                  'Acceptations d’amis',
-                  channelDescription: 'Acceptations de demandes d’ami',
-                  importance: Importance.max,
-                  priority: Priority.high,
-                ),
-              ),
-            );
           });
         }
       }
@@ -135,11 +108,12 @@ class NotificationService {
         .snapshots()
         .listen((snap) {
       for (var change in snap.docChanges) {
-        if (change.type == DocumentChangeType.modified) {
+        if (change.type == DocumentChangeType.modified ||
+            change.type == DocumentChangeType.added) {
           final data = change.doc.data();
           final sender = data?['lastSenderId'] as String?;
           final msg = data?['lastMessage'] as String? ?? '';
-          if (sender == null || sender == uid) continue;
+          if (sender == null || sender == uid || msg.isEmpty) continue;
 
           _firestore.collection('notifications').add({
             'recipientId': uid,
@@ -150,16 +124,34 @@ class NotificationService {
             'timestamp': FieldValue.serverTimestamp(),
             'read': false,
           });
+        }
+      }
+    });
+  }
 
+  void _listenNotifications() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    _notifSub = _firestore
+        .collection('notifications')
+        .where('recipientId', isEqualTo: uid)
+        .snapshots()
+        .listen((snap) {
+      for (var change in snap.docChanges) {
+        if (change.type == DocumentChangeType.added) {
+          final data = change.doc.data() as Map<String, dynamic>? ?? {};
+          final title = data['title'] as String? ?? '';
+          final body = data['body'] as String? ?? '';
           _localNotif.show(
-            2,
-            'Nouveau message',
-            msg,
+            DateTime.now().millisecondsSinceEpoch ~/ 1000,
+            title,
+            body,
             const NotificationDetails(
               android: AndroidNotificationDetails(
-                'message_channel',
-                'Messages',
-                channelDescription: 'Nouveaux messages',
+                'default_channel',
+                'Notifications',
+                channelDescription: 'Toutes les notifications',
                 importance: Importance.max,
                 priority: Priority.high,
               ),
@@ -174,5 +166,6 @@ class NotificationService {
     _incomingReqSub?.cancel();
     _acceptedReqSub?.cancel();
     _messageConvSub?.cancel();
+    _notifSub?.cancel();
   }
 }

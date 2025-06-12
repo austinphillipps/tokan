@@ -26,10 +26,39 @@ class ProjectService {
       await createProject(project);
       return;
     }
+    final docRef = _projectsRef.doc(project.id);
+    final prev = await docRef.get();
+    final oldList = <String>{};
+    if (prev.exists) {
+      final prevData = prev.data() as Map<String, dynamic>;
+      final prevCollabs = prevData['collaborators'] as List<dynamic>? ?? [];
+      for (var c in prevCollabs) {
+        if (c is Map<String, dynamic>) {
+          final uid = c['uid'] as String?;
+          if (uid != null) oldList.add(uid);
+        } else if (c is String) {
+          oldList.add(c);
+        }
+      }
+    }
+
     // Projet existant : on met à jour
     final data = project.toMap()..['ownerId'] = project.ownerId;
-    // 'plugins' contenu par toMap()
-    await _projectsRef.doc(project.id).update(data);
+    await docRef.update(data);
+
+    final newList = project.collaborators.map((c) => c.uid).toSet();
+    final added = newList.difference(oldList);
+    for (var uid in added) {
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'recipientId': uid,
+        'type': 'project_invite',
+        'title': 'Nouveau projet',
+        'body': 'Vous avez été ajouté au projet ${project.name}',
+        'projectId': project.id,
+        'timestamp': FieldValue.serverTimestamp(),
+        'read': false,
+      });
+    }
   }
 
   /// Supprime un projet.
