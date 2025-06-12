@@ -31,6 +31,10 @@ dependencies:
   share_plus: ^11.0.0
   path_provider: ^2.1.5
 
+  # PDF generation & printing
+  pdf: ^3.10.4
+  printing: ^5.11.0
+
 
 
 
