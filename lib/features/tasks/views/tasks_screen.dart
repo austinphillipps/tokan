@@ -175,7 +175,7 @@ class _TasksPageState extends State<TasksPage> {
         tasks: tasks,
         onToggleStatus: _toggleStatus,
         onCollaboratorChanged: (t, uid) async {
-          t.responsable = uid;
+          t.responsable = uid ?? '';
           await _saveTask(t);
           setState(() {});
         },
