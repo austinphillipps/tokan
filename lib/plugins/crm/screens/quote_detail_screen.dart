@@ -80,79 +80,88 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
           child: _loading
               ? const Center(child: CircularProgressIndicator())
               : _quote == null
-              ? const Center(child: Text('Devis introuvable'))
-              : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Référence : ${_quote!.reference}',
-                  style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              Text(
-                'Total : ${NumberFormat.currency(symbol: '€').format(_quote!.total)}',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              if (_quote!.discount != null) ...[
-                const SizedBox(height: 8),
-                Text('Remise : ${_quote!.discount!.toStringAsFixed(2)}%',
-                    style: Theme.of(context).textTheme.titleMedium),
-              ],
-              const SizedBox(height: 8),
-              Text('Statut : ${_quote!.status}',
-                  style: Theme.of(context).textTheme.titleMedium),
-              if (_quote!.customer != null && _quote!.customer!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text('Client : ${_quote!.customer!}',
-                    style: Theme.of(context).textTheme.titleMedium),
-              ],
-              const SizedBox(height: 8),
-              Text(
-                'Créé le : ${DateFormat.yMd().format(_quote!.createdAt)}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              if (_quote!.dueDate != null) ...[
-                const SizedBox(height: 8),
-                Text('Échéance : ${DateFormat.yMd().format(_quote!.dueDate!)}',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-              if (_quote!.description != null && _quote!.description!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text('Description : ${_quote!.description!}',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-              if (_quote!.items.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text('Détails', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                ..._quote!.items.map((e) => Text(
-                    '${e.designation} - ${e.quantity} x ${e.unitPrice.toStringAsFixed(2)} €')),
-              ],
-              if (_quote!.notes != null && _quote!.notes!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text('Notes : ${_quote!.notes!}',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-              const SizedBox(height: 8),
-              Text('TVA : ${_quote!.vatRate.toStringAsFixed(2)}%',
-                  style: Theme.of(context).textTheme.bodyMedium),
-              if (_quote!.iban != null && _quote!.iban!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text('IBAN : ${_quote!.iban!}',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-              if (_quote!.bic != null && _quote!.bic!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text('BIC : ${_quote!.bic!}',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-              if (_quote!.depositPercent != null) ...[
-                const SizedBox(height: 8),
-                Text('Acompte : ${_quote!.depositPercent!.toStringAsFixed(2)}%',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-            ],
-          ),
+                  ? const Center(child: Text('Devis introuvable'))
+                  : _buildContent(context),
         ),
       ),
+      );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    final subTotal = _quote!.items.fold<double>(
+        0, (prev, item) => prev + item.total);
+    final totalHt = subTotal - (_quote!.discount ?? 0);
+    final vatAmount = totalHt * _quote!.vatRate / 100;
+    final totalTtc = totalHt + vatAmount;
+
+    return ListView(
+      children: [
+        Text('Référence : ${_quote!.reference}',
+            style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        if (_quote!.customer != null && _quote!.customer!.isNotEmpty) ...[
+          Text('Client : ${_quote!.customer!}',
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+        ],
+        Text('Statut : ${_quote!.status}',
+            style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Text('Créé le : ${DateFormat.yMd().format(_quote!.createdAt)}',
+            style: Theme.of(context).textTheme.bodyMedium),
+        if (_quote!.dueDate != null) ...[
+          const SizedBox(height: 8),
+          Text('Échéance : ${DateFormat.yMd().format(_quote!.dueDate!)}',
+              style: Theme.of(context).textTheme.bodyMedium),
+        ],
+        if (_quote!.description != null && _quote!.description!.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(_quote!.description!,
+              style: Theme.of(context).textTheme.bodyMedium),
+        ],
+        if (_quote!.items.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          DataTable(
+            columns: const [
+              DataColumn(label: Text('Désignation')),
+              DataColumn(label: Text('Qté')),
+              DataColumn(label: Text('P.U')),
+              DataColumn(label: Text('Total')),
+            ],
+            rows: _quote!.items
+                .map((e) => DataRow(cells: [
+                      DataCell(Text(e.designation)),
+                      DataCell(Text(e.quantity.toStringAsFixed(2))),
+                      DataCell(Text(e.unitPrice.toStringAsFixed(2))),
+                      DataCell(Text(e.total.toStringAsFixed(2))),
+                    ]))
+                .toList(),
+          ),
+        ],
+        const SizedBox(height: 16),
+        Text('Sous-total HT : ${subTotal.toStringAsFixed(2)} €'),
+        if (_quote!.discount != null) ...[
+          Text('Remise : -${_quote!.discount!.toStringAsFixed(2)} €'),
+        ],
+        Text('Total HT : ${totalHt.toStringAsFixed(2)} €'),
+        Text('TVA ${_quote!.vatRate.toStringAsFixed(2)}% : ${vatAmount.toStringAsFixed(2)} €'),
+        Text('Total TTC : ${totalTtc.toStringAsFixed(2)} €'),
+        if (_quote!.depositPercent != null) ...[
+          Text('Acompte ${_quote!.depositPercent!.toStringAsFixed(2)}% : '
+              '${(totalTtc * _quote!.depositPercent! / 100).toStringAsFixed(2)} €'),
+        ],
+        if (_quote!.notes != null && _quote!.notes!.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Text('Notes : ${_quote!.notes!}'),
+        ],
+        if (_quote!.iban != null && _quote!.iban!.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Text('IBAN : ${_quote!.iban!}'),
+        ],
+        if (_quote!.bic != null && _quote!.bic!.isNotEmpty) ...[
+          Text('BIC : ${_quote!.bic!}'),
+        ],
+      ],
     );
   }
 }
