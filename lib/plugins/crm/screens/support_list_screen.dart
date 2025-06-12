@@ -95,7 +95,7 @@ class _SupportListScreenState extends State<SupportListScreen> {
               color: AppColors.glassBackground,
               child: SafeArea(
                 child: _panelTicketId == null
-                    ? SupportFormScreen()
+                    ? SupportFormScreen(onSaved: _closePanel)
                     : SupportDetailScreen(ticketId: _panelTicketId!),
               ),
             ),
