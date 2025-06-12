@@ -54,7 +54,8 @@ class _ContactListScreenState extends State<ContactListScreen> {
             final contacts = context
                 .read<ContactProvider>()
                 .contacts
-                .where((c) => c.name.toLowerCase().contains(query))
+                .where((c) =>
+                    ('${c.firstName} ${c.name}').toLowerCase().contains(query))
                 .toList();
 
             return AlertDialog(
@@ -148,7 +149,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
               itemBuilder: (ctx, i) {
                 final Contact c = prov.contacts[i];
                 return ListTile(
-                  title: Text(c.name),
+                  title: Text('${c.firstName} ${c.name}'),
                   subtitle: Text(c.email),
                   onTap: () => _openPanel(contactId: c.id),
                 );
