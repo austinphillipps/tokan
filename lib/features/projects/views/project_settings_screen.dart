@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../../../main.dart'; // pour AppColors
 import 'package:tokan/core/services/plugin_registry.dart';
 import 'package:tokan/features/projects/services/project_service.dart';
+import 'package:provider/provider.dart';
+import '../../../core/providers/plugin_provider.dart';
 
 /// Écran de paramètres d’un projet,
 /// qui expose un toggle par plugin installé pour activer/désactiver son onglet.
@@ -67,15 +69,27 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
           : ListView(
         children: PluginRegistry()
             .availablePlugins
-            .map((plugin) => SwitchListTile(
-          title: Text(plugin.displayName,
-              style: const TextStyle(color: Colors.white)),
-          secondary: Icon(plugin.iconData, color: Colors.white),
-          activeColor: AppColors.green,
-          value: _activated[plugin.id] ?? false,
-          onChanged: (val) => _toggle(plugin.id, val),
-        ))
-            .toList(),
+            .map((plugin) {
+          final pluginProv = context.watch<PluginProvider>();
+          final installed = pluginProv.isInstalled(plugin.id);
+          return SwitchListTile(
+            title: Text(
+              plugin.displayName,
+              style: const TextStyle(color: Colors.white),
+            ),
+            subtitle: installed
+                ? null
+                : Text(
+                    'Le plugin ${plugin.displayName} n\'est pas installé',
+                    style: const TextStyle(color: Colors.white54),
+                  ),
+            secondary: Icon(plugin.iconData, color: Colors.white),
+            activeColor: AppColors.green,
+            value: _activated[plugin.id] ?? false,
+            onChanged:
+                installed ? (val) => _toggle(plugin.id, val) : null,
+          );
+        }).toList(),
       ),
     );
   }
