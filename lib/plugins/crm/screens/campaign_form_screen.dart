@@ -9,7 +9,9 @@ import '../models/campaign.dart';
 
 class CampaignFormScreen extends StatefulWidget {
   final String? campaignId;
-  const CampaignFormScreen({Key? key, this.campaignId}) : super(key: key);
+  final VoidCallback? onSaved;
+  const CampaignFormScreen({Key? key, this.campaignId, this.onSaved})
+      : super(key: key);
 
   @override
   State<CampaignFormScreen> createState() => _CampaignFormScreenState();
@@ -94,7 +96,11 @@ class _CampaignFormScreenState extends State<CampaignFormScreen> {
     } else {
       await prov.update(camp);
     }
-    Navigator.of(context).pop();
+    if (widget.onSaved != null) {
+      widget.onSaved!();
+    } else {
+      Navigator.of(context).pop();
+    }
   }
 
   @override

@@ -11,7 +11,8 @@ import 'package:tokan/plugins/crm/providers/quote_provider.dart';
 class QuoteFormScreen extends StatefulWidget {
   /// Si quoteId est null, on est en création, sinon en édition
   final String? quoteId;
-  const QuoteFormScreen({Key? key, this.quoteId}) : super(key: key);
+  final VoidCallback? onSaved;
+  const QuoteFormScreen({Key? key, this.quoteId, this.onSaved}) : super(key: key);
 
   @override
   State<QuoteFormScreen> createState() => _QuoteFormScreenState();
@@ -22,6 +23,11 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
   String? _reference;
   double? _total;
   String _status = 'Brouillon';
+  String? _customer;
+  String? _description;
+  String? _dueDateStr;
+  double? _discount;
+  String? _notes;
   bool _loading = false;
 
   bool get _isEditing => widget.quoteId != null;
@@ -36,6 +42,13 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             _reference = q.reference;
             _total = q.total;
             _status = q.status;
+            _customer = q.customer;
+            _description = q.description;
+            _dueDateStr = q.dueDate == null
+                ? null
+                : DateFormat('yyyy-MM-dd').format(q.dueDate!);
+            _discount = q.discount;
+            _notes = q.notes;
           });
         }
       });
@@ -55,6 +68,13 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
           reference: _reference!,
           total: _total!,
           status: _status,
+          customer: _customer,
+          description: _description,
+          dueDate: _dueDateStr == null || _dueDateStr!.isEmpty
+              ? null
+              : DateTime.tryParse(_dueDateStr!),
+          discount: _discount,
+          notes: _notes,
         ),
       );
     } else {
@@ -63,12 +83,23 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
           reference: _reference!,
           total: _total!,
           status: _status,
+          customer: _customer,
+          description: _description,
+          dueDate: _dueDateStr == null || _dueDateStr!.isEmpty
+              ? null
+              : DateTime.tryParse(_dueDateStr!),
+          discount: _discount,
+          notes: _notes,
         ),
       );
     }
 
     setState(() => _loading = false);
-    Navigator.of(context).pop();
+    if (widget.onSaved != null) {
+      widget.onSaved!();
+    } else {
+      Navigator.of(context).pop();
+    }
   }
 
   @override
@@ -110,6 +141,14 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
                   onSaved: (v) => _total = double.parse(v!),
                 ),
                 const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _discount?.toStringAsFixed(2),
+                  decoration: const InputDecoration(labelText: 'Remise (%)'),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  onSaved: (v) => _discount =
+                      v == null || v.isEmpty ? null : double.tryParse(v),
+                ),
+                const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   value: _status,
                   decoration: const InputDecoration(labelText: 'Statut'),
@@ -117,6 +156,33 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
                       .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                       .toList(),
                   onChanged: (v) => setState(() => _status = v!),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _customer,
+                  decoration: const InputDecoration(labelText: 'Client'),
+                  onSaved: (v) => _customer = v,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _dueDateStr,
+                  decoration: const InputDecoration(labelText: 'Échéance (YYYY-MM-DD)'),
+                  keyboardType: TextInputType.datetime,
+                  onSaved: (v) => _dueDateStr = v,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _description,
+                  decoration: const InputDecoration(labelText: 'Description'),
+                  maxLines: 2,
+                  onSaved: (v) => _description = v,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _notes,
+                  decoration: const InputDecoration(labelText: 'Notes'),
+                  maxLines: 3,
+                  onSaved: (v) => _notes = v,
                 ),
               ],
             ),

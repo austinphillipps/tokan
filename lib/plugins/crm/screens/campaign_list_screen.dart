@@ -93,7 +93,7 @@ class _CampaignListScreenState extends State<CampaignListScreen> {
               color: AppColors.glassBackground,
               child: SafeArea(
                 child: _panelCampaignId == null
-                    ? const CampaignFormScreen()
+                    ? CampaignFormScreen(onSaved: _closePanel)
                     : CampaignDetailScreen(campaignId: _panelCampaignId!),
               ),
             ),

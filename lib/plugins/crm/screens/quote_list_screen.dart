@@ -104,7 +104,7 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
               color: AppColors.glassBackground,
               child: SafeArea(
                 child: _panelQuoteId == null
-                    ? const QuoteFormScreen()
+                    ? QuoteFormScreen(onSaved: _closePanel)
                     : QuoteDetailScreen(quoteId: _panelQuoteId!),
               ),
             ),

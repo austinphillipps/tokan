@@ -10,7 +10,9 @@ import 'package:tokan/plugins/crm/providers/opportunity_provider.dart';
 class OpportunityFormScreen extends StatefulWidget {
   /// Si opportunityId est null, on crée une nouvelle opportunité, sinon on édite
   final String? opportunityId;
-  const OpportunityFormScreen({Key? key, this.opportunityId}) : super(key: key);
+  final VoidCallback? onSaved;
+  const OpportunityFormScreen({Key? key, this.opportunityId, this.onSaved})
+      : super(key: key);
 
   @override
   State<OpportunityFormScreen> createState() => _OpportunityFormScreenState();
@@ -73,7 +75,11 @@ class _OpportunityFormScreenState extends State<OpportunityFormScreen> {
       await provider.create(opp);
     }
     setState(() => _loading = false);
-    Navigator.of(context).pop();
+    if (widget.onSaved != null) {
+      widget.onSaved!();
+    } else {
+      Navigator.of(context).pop();
+    }
   }
 
   @override
