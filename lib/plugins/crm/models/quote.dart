@@ -8,6 +8,11 @@ class Quote {
   double total;
   String status;
   DateTime createdAt;
+  String? customer;
+  String? description;
+  DateTime? dueDate;
+  double? discount;
+  String? notes;
 
   Quote({
     this.id,
@@ -15,6 +20,11 @@ class Quote {
     required this.total,
     required this.status,
     DateTime? createdAt,
+    this.customer,
+    this.description,
+    this.dueDate,
+    this.discount,
+    this.notes,
   }) : createdAt = createdAt ?? DateTime.now();
 
   factory Quote.fromDoc(DocumentSnapshot doc) {
@@ -25,6 +35,11 @@ class Quote {
       total: (data['total'] as num?)?.toDouble() ?? 0.0,
       status: data['status'] as String? ?? 'Brouillon',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
+      customer: data['customer'] as String?,
+      description: data['description'] as String?,
+      dueDate: (data['dueDate'] as Timestamp?)?.toDate(),
+      discount: (data['discount'] as num?)?.toDouble(),
+      notes: data['notes'] as String?,
     );
   }
 
@@ -33,5 +48,10 @@ class Quote {
     'total': total,
     'status': status,
     'createdAt': createdAt,
+    'customer': customer,
+    'description': description,
+    'dueDate': dueDate,
+    'discount': discount,
+    'notes': notes,
   };
 }
