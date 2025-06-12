@@ -4,17 +4,29 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Contact {
   /// Identifiant Firestore
   String? id;
-  /// Nom complet du contact
+
+  /// Prénom du contact
+  String firstName;
+
+  /// Nom du contact
   String name;
+
   /// Adresse e-mail
   String email;
+
   /// Numéro de téléphone (optionnel)
   String? phone;
+
   /// Date de création dans la base
   DateTime createdAt;
 
+  /// Nom complet "Prénom Nom" pour l'affichage
+  String get fullName =>
+      [firstName, name].where((p) => p.trim().isNotEmpty).join(' ');
+
   Contact({
     this.id,
+    required this.firstName,
     required this.name,
     required this.email,
     this.phone,
@@ -26,10 +38,11 @@ class Contact {
     final data = doc.data() as Map<String, dynamic>;
     return Contact(
       id: doc.id,
+      firstName: data['firstName'] as String? ?? '',
       name: data['name'] as String? ?? '',
       email: data['email'] as String? ?? '',
       phone: data['phone'] as String?,
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
@@ -37,6 +50,7 @@ class Contact {
   /// Utilise [Timestamp] pour conserver la compatibilité Firestore
   Map<String, dynamic> toMap() {
     return {
+      'firstName': firstName,
       'name': name,
       'email': email,
       'phone': phone,
