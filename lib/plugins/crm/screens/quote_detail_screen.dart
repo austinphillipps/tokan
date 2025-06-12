@@ -119,9 +119,34 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
                 Text('Description : ${_quote!.description!}',
                     style: Theme.of(context).textTheme.bodyMedium),
               ],
+              if (_quote!.items.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text('Détails', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                ..._quote!.items.map((e) => Text(
+                    '${e.designation} - ${e.quantity} x ${e.unitPrice.toStringAsFixed(2)} €')),
+              ],
               if (_quote!.notes != null && _quote!.notes!.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text('Notes : ${_quote!.notes!}',
+                    style: Theme.of(context).textTheme.bodyMedium),
+              ],
+              const SizedBox(height: 8),
+              Text('TVA : ${_quote!.vatRate.toStringAsFixed(2)}%',
+                  style: Theme.of(context).textTheme.bodyMedium),
+              if (_quote!.iban != null && _quote!.iban!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text('IBAN : ${_quote!.iban!}',
+                    style: Theme.of(context).textTheme.bodyMedium),
+              ],
+              if (_quote!.bic != null && _quote!.bic!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text('BIC : ${_quote!.bic!}',
+                    style: Theme.of(context).textTheme.bodyMedium),
+              ],
+              if (_quote!.depositPercent != null) ...[
+                const SizedBox(height: 8),
+                Text('Acompte : ${_quote!.depositPercent!.toStringAsFixed(2)}%',
                     style: Theme.of(context).textTheme.bodyMedium),
               ],
             ],
