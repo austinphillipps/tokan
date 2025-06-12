@@ -8,6 +8,7 @@ import 'package:tokan/main.dart'; // pour AppColors
 import 'package:tokan/plugins/crm/providers/quote_provider.dart';
 import 'package:tokan/plugins/crm/models/quote.dart';
 import 'package:tokan/plugins/crm/screens/quote_form_screen.dart';
+import 'package:tokan/plugins/crm/services/quote_pdf_service.dart';
 
 class QuoteDetailScreen extends StatefulWidget {
   final String quoteId;
@@ -61,6 +62,14 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
                 builder: (_) => QuoteFormScreen(quoteId: widget.quoteId),
               ),
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.print),
+            onPressed: () async {
+              if (_quote != null) {
+                await QuotePdfService().printQuote(_quote!);
+              }
+            },
           ),
           IconButton(
             icon: const Icon(Icons.delete),
