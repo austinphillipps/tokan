@@ -44,6 +44,7 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
   late Stream<List<Map<String, String>>> _friendsStream;
   final Map<String, String> _collabNames = {};
   String _collabSearch = '';
+  String _ownerName = '';
 
   @override
   void initState() {
@@ -71,6 +72,7 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
 
     _friendsStream = _loadFriends();
     _loadCollaboratorNames();
+    _loadOwnerName();
   }
 
   @override
@@ -145,6 +147,18 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
     setState(() {});
   }
 
+  Future<void> _loadOwnerName() async {
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.project.ownerId)
+        .get();
+    setState(() {
+      _ownerName = doc.exists
+          ? (doc.data()!['displayName'] as String? ?? 'Utilisateur')
+          : 'Utilisateur';
+    });
+  }
+
   Future<void> _pickColor() async {
     const options = [
       Colors.red,
@@ -176,6 +190,128 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
     );
     if (chosen != null) {
       setState(() => _selectedColor = chosen);
+      _autoSave();
+    }
+  }
+
+  List<Widget> _buildCollaboratorBubbles(Color onSurface) {
+    final names = <String>[];
+    if (_ownerName.isNotEmpty) names.add(_ownerName);
+    for (var c in _collaborators) {
+      final n = _collabNames[c.uid];
+      if (n != null) names.add(n);
+    }
+    return [
+      for (var name in names)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: _HoverAvatar(name: name, onSurface: onSurface),
+        ),
+    ];
+  }
+
+  Future<void> _showAddCollaboratorDialog() async {
+    String search = '';
+    final ctrl = TextEditingController();
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSt) => AlertDialog(
+          title: const Text('Ajouter un collaborateur'),
+          backgroundColor: Theme.of(ctx).colorScheme.surface,
+          titleTextStyle: Theme.of(ctx)
+              .textTheme
+              .titleLarge
+              ?.copyWith(color: Theme.of(ctx).colorScheme.onSurface),
+          content: SizedBox(
+            width: 300,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: ctrl,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: 'Rechercher…',
+                    hintStyle: TextStyle(
+                      color:
+                          Theme.of(ctx).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(ctx)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.3),
+                      ),
+                    ),
+                    focusedBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.blue),
+                    ),
+                  ),
+                  onChanged: (v) => setSt(() => search = v.trim().toLowerCase()),
+                  style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 200,
+                  child: StreamBuilder<List<Map<String, String>>>(
+                    stream: _friendsStream,
+                    builder: (ctx2, snap) {
+                      if (!snap.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      final list = snap.data!
+                          .where((u) => u['displayName']!
+                              .toLowerCase()
+                              .contains(search))
+                          .toList();
+                      if (list.isEmpty) {
+                        return Text(
+                          'Aucun ami trouvé',
+                          style: TextStyle(
+                              color: Theme.of(ctx2).colorScheme.onSurface),
+                        );
+                      }
+                      return ListView.builder(
+                        itemCount: list.length,
+                        itemBuilder: (ctx3, i) {
+                          final u = list[i];
+                          return ListTile(
+                            title: Text(
+                              u['displayName']!,
+                              style: TextStyle(
+                                  color: Theme.of(ctx3).colorScheme.onSurface),
+                            ),
+                            onTap: () => Navigator.pop(ctx, u['uid']),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(
+                'Fermer',
+                style:
+                    TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (selected != null &&
+        !_collaborators.any((c) => c.uid == selected)) {
+      setState(() {
+        _collaborators.add(Collaborator(uid: selected, role: 'viewer'));
+      });
+      await _loadCollaboratorNames();
       _autoSave();
     }
   }
@@ -274,6 +410,15 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
                                     ?.copyWith(color: onSurface),
                               ),
                             ),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: _buildCollaboratorBubbles(onSurface),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.person_add, color: onSurface),
+                            tooltip: 'Ajouter un collaborateur',
+                            onPressed: _showAddCollaboratorDialog,
                           ),
                           IconButton(
                             icon: Icon(Icons.settings, color: onSurface),
@@ -407,6 +552,51 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _HoverAvatar extends StatefulWidget {
+  final String name;
+  final Color onSurface;
+  const _HoverAvatar({required this.name, required this.onSurface});
+
+  @override
+  State<_HoverAvatar> createState() => _HoverAvatarState();
+}
+
+class _HoverAvatarState extends State<_HoverAvatar> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      cursor: SystemMouseCursors.click,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(
+            radius: 14,
+            backgroundColor: AppColors.blue,
+            child: Text(
+              widget.name.isNotEmpty
+                  ? widget.name[0].toUpperCase()
+                  : '?',
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+          if (_hover)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                widget.name,
+                style: TextStyle(color: widget.onSurface, fontSize: 12),
+              ),
+            ),
+        ],
       ),
     );
   }
