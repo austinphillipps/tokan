@@ -186,7 +186,7 @@ class _PipelineScreenState extends State<PipelineScreen> {
                   color: AppColors.glassBackground,
                   child: SafeArea(
                     child: _panelOppId == null
-                        ? const OpportunityFormScreen()
+                        ? OpportunityFormScreen(onSaved: _closePanel)
                         : OpportunityDetailScreen(opportunityId: _panelOppId!),
                   ),
                 ),

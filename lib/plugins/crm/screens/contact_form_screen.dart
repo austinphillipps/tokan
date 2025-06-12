@@ -11,7 +11,9 @@ import 'package:tokan/plugins/crm/data/country_codes.dart';
 class ContactFormScreen extends StatefulWidget {
   /// Si contactId est null → création, sinon édition
   final String? contactId;
-  const ContactFormScreen({Key? key, this.contactId}) : super(key: key);
+  final VoidCallback? onSaved;
+  const ContactFormScreen({Key? key, this.contactId, this.onSaved})
+      : super(key: key);
 
   @override
   State<ContactFormScreen> createState() => _ContactFormScreenState();
@@ -78,7 +80,11 @@ class _ContactFormScreenState extends State<ContactFormScreen> {
     }
 
     setState(() => _loading = false);
-    Navigator.of(context).pop();
+    if (widget.onSaved != null) {
+      widget.onSaved!();
+    } else {
+      Navigator.of(context).pop();
+    }
   }
 
   @override

@@ -11,7 +11,8 @@ import 'package:tokan/plugins/crm/providers/quote_provider.dart';
 class QuoteFormScreen extends StatefulWidget {
   /// Si quoteId est null, on est en création, sinon en édition
   final String? quoteId;
-  const QuoteFormScreen({Key? key, this.quoteId}) : super(key: key);
+  final VoidCallback? onSaved;
+  const QuoteFormScreen({Key? key, this.quoteId, this.onSaved}) : super(key: key);
 
   @override
   State<QuoteFormScreen> createState() => _QuoteFormScreenState();
@@ -94,7 +95,11 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
     }
 
     setState(() => _loading = false);
-    Navigator.of(context).pop();
+    if (widget.onSaved != null) {
+      widget.onSaved!();
+    } else {
+      Navigator.of(context).pop();
+    }
   }
 
   @override

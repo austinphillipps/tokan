@@ -142,7 +142,13 @@ class _ContactListScreenState extends State<ContactListScreen> {
           if (prov.isLoading)
             const Center(child: CircularProgressIndicator())
           else if (prov.contacts.isEmpty)
-            const Center(child: Text('Aucun contact trouvé'))
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () => _openPanel(contactId: null),
+                icon: const Icon(Icons.add),
+                label: const Text('Ajouter votre premier contact'),
+              ),
+            )
           else
             ListView.builder(
               itemCount: prov.contacts.length,
@@ -179,7 +185,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
               color: AppColors.glassBackground,
               child: SafeArea(
                 child: _panelContactId == null
-                    ? const ContactFormScreen()
+                    ? ContactFormScreen(onSaved: _closePanel)
                     : ContactDetailScreen(contactId: _panelContactId!),
               ),
             ),

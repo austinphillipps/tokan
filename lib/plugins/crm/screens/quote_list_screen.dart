@@ -62,7 +62,13 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
           if (prov.isLoading)
             const Center(child: CircularProgressIndicator())
           else if (prov.quotes.isEmpty)
-            const Center(child: Text('Aucun devis pour le moment.'))
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () => _openPanel(quoteId: null),
+                icon: const Icon(Icons.add),
+                label: const Text('Ajouter votre premier devis'),
+              ),
+            )
           else
             ListView.builder(
               itemCount: prov.quotes.length,
@@ -104,7 +110,7 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
               color: AppColors.glassBackground,
               child: SafeArea(
                 child: _panelQuoteId == null
-                    ? const QuoteFormScreen()
+                    ? QuoteFormScreen(onSaved: _closePanel)
                     : QuoteDetailScreen(quoteId: _panelQuoteId!),
               ),
             ),
