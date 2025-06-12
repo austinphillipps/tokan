@@ -103,8 +103,8 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
             curve: Curves.easeOut,
             top: 0,
             bottom: 0,
-            right: _showPanel ? 0 : -screenWidth * 0.75,
-            width: screenWidth * 0.25,
+            right: _showPanel ? 0 : -screenWidth,
+            width: screenWidth,
             child: Material(
               elevation: 16,
               color: AppColors.glassBackground,
