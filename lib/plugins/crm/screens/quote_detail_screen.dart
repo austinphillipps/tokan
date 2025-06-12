@@ -11,7 +11,9 @@ import 'package:tokan/plugins/crm/screens/quote_form_screen.dart';
 
 class QuoteDetailScreen extends StatefulWidget {
   final String quoteId;
-  const QuoteDetailScreen({Key? key, required this.quoteId}) : super(key: key);
+  final VoidCallback? onClose;
+  const QuoteDetailScreen({Key? key, required this.quoteId, this.onClose})
+      : super(key: key);
 
   @override
   State<QuoteDetailScreen> createState() => _QuoteDetailScreenState();
@@ -40,6 +42,11 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
       extendBodyBehindAppBar: true,
 
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Colors.white),
+          onPressed: widget.onClose ?? () => Navigator.of(context).pop(),
+        ),
         backgroundColor: AppColors.glassHeader,
         elevation: 0,
         title: Text(
@@ -66,7 +73,11 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
             icon: const Icon(Icons.delete),
             onPressed: () async {
               await context.read<QuoteProvider>().delete(widget.quoteId);
-              Navigator.of(context).pop();
+              if (widget.onClose != null) {
+                widget.onClose!();
+              } else {
+                Navigator.of(context).pop();
+              }
             },
           ),
         ],

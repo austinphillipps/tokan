@@ -11,7 +11,8 @@ import 'campaign_form_screen.dart';
 
 class CampaignDetailScreen extends StatefulWidget {
   final String campaignId;
-  const CampaignDetailScreen({Key? key, required this.campaignId})
+  final VoidCallback? onClose;
+  const CampaignDetailScreen({Key? key, required this.campaignId, this.onClose})
       : super(key: key);
 
   @override
@@ -65,6 +66,11 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.glassBackground,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: widget.onClose ?? () => Navigator.of(context).pop(),
+        ),
         backgroundColor: AppColors.glassHeader,
         elevation: 0,
         title: Text(_campaign!.name),
@@ -81,7 +87,11 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
             icon: const Icon(Icons.delete, color: Colors.white),
             onPressed: () async {
               await context.read<CampaignProvider>().delete(widget.campaignId);
-              Navigator.of(context).pop();
+              if (widget.onClose != null) {
+                widget.onClose!();
+              } else {
+                Navigator.of(context).pop();
+              }
             },
           ),
         ],

@@ -100,7 +100,10 @@ class _CampaignListScreenState extends State<CampaignListScreen> {
               child: SafeArea(
                 child: _panelCampaignId == null
                     ? CampaignFormScreen(onSaved: _closePanel)
-                    : CampaignDetailScreen(campaignId: _panelCampaignId!),
+                    : CampaignDetailScreen(
+                        campaignId: _panelCampaignId!,
+                        onClose: _closePanel,
+                      ),
               ),
             ),
           ),

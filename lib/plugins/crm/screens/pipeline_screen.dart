@@ -187,7 +187,10 @@ class _PipelineScreenState extends State<PipelineScreen> {
                   child: SafeArea(
                     child: _panelOppId == null
                         ? OpportunityFormScreen(onSaved: _closePanel)
-                        : OpportunityDetailScreen(opportunityId: _panelOppId!),
+                        : OpportunityDetailScreen(
+                            opportunityId: _panelOppId!,
+                            onClose: _closePanel,
+                          ),
                   ),
                 ),
               ),

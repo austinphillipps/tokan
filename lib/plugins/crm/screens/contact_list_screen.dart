@@ -186,7 +186,10 @@ class _ContactListScreenState extends State<ContactListScreen> {
               child: SafeArea(
                 child: _panelContactId == null
                     ? ContactFormScreen(onSaved: _closePanel)
-                    : ContactDetailScreen(contactId: _panelContactId!),
+                    : ContactDetailScreen(
+                        contactId: _panelContactId!,
+                        onClose: _closePanel,
+                      ),
               ),
             ),
           ),

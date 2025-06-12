@@ -9,7 +9,9 @@ import 'support_form_screen.dart';
 
 class SupportDetailScreen extends StatefulWidget {
   final String ticketId;
-  const SupportDetailScreen({Key? key, required this.ticketId}) : super(key: key);
+  final VoidCallback? onClose;
+  const SupportDetailScreen({Key? key, required this.ticketId, this.onClose})
+      : super(key: key);
 
   @override
   _SupportDetailScreenState createState() => _SupportDetailScreenState();
@@ -65,6 +67,11 @@ class _SupportDetailScreenState extends State<SupportDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.glassBackground,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Colors.white),
+          onPressed: widget.onClose ?? () => Navigator.of(context).pop(),
+        ),
         backgroundColor: AppColors.glassHeader,
         elevation: 0,
         title: Text(_ticket!.title),
@@ -81,7 +88,11 @@ class _SupportDetailScreenState extends State<SupportDetailScreen> {
             icon: const Icon(Icons.delete, color: Colors.white),
             onPressed: () async {
               await context.read<SupportTicketProvider>().delete(widget.ticketId);
-              Navigator.of(context).pop();
+              if (widget.onClose != null) {
+                widget.onClose!();
+              } else {
+                Navigator.of(context).pop();
+              }
             },
           ),
         ],

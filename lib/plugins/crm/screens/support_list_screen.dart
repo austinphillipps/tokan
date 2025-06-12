@@ -102,7 +102,10 @@ class _SupportListScreenState extends State<SupportListScreen> {
               child: SafeArea(
                 child: _panelTicketId == null
                     ? SupportFormScreen(onSaved: _closePanel)
-                    : SupportDetailScreen(ticketId: _panelTicketId!),
+                    : SupportDetailScreen(
+                        ticketId: _panelTicketId!,
+                        onClose: _closePanel,
+                      ),
               ),
             ),
           ),

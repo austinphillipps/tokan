@@ -10,7 +10,8 @@ import 'package:tokan/plugins/crm/screens/opportunity_form_screen.dart';
 
 class OpportunityDetailScreen extends StatefulWidget {
   final String opportunityId;
-  const OpportunityDetailScreen({Key? key, required this.opportunityId})
+  final VoidCallback? onClose;
+  const OpportunityDetailScreen({Key? key, required this.opportunityId, this.onClose})
       : super(key: key);
 
   @override
@@ -45,6 +46,11 @@ class _OpportunityDetailScreenState extends State<OpportunityDetailScreen> {
       extendBodyBehindAppBar: true,
 
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Colors.white),
+          onPressed: widget.onClose ?? () => Navigator.of(context).pop(),
+        ),
         backgroundColor: AppColors.glassHeader,
         elevation: 0,
         title: const Text(
@@ -109,7 +115,11 @@ class _OpportunityDetailScreenState extends State<OpportunityDetailScreen> {
                     await context
                         .read<OpportunityProvider>()
                         .delete(widget.opportunityId);
-                    Navigator.of(context).pop();
+                    if (widget.onClose != null) {
+                      widget.onClose!();
+                    } else {
+                      Navigator.of(context).pop();
+                    }
                   },
                 ),
               ),
