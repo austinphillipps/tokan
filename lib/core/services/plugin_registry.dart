@@ -2,7 +2,6 @@
 
 import '../contract/plugin_contract.dart';
 import '../../plugins/crm/services/crm_plugin.dart';
-// import '../../plugins/stock/services/stock_plugin.dart';
 // import '../../plugins/fsm/services/fsm_plugin.dart';
 // import '../../plugins/esp/services/esp_plugin.dart';
 
@@ -12,7 +11,6 @@ class PluginRegistry {
   /// Liste de tous les plugins installés dans l’application.
   List<PluginContract> get availablePlugins => [
     CrmPlugin(),
-    // StockPlugin(),
     // FsmPlugin(),
     // EspPlugin(),
   ];
