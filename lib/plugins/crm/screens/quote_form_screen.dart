@@ -7,6 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:tokan/main.dart'; // pour AppColors
 import 'package:tokan/plugins/crm/models/quote.dart';
 import 'package:tokan/plugins/crm/providers/quote_provider.dart';
+import 'package:tokan/plugins/crm/providers/contact_provider.dart';
+import 'package:tokan/plugins/crm/models/contact.dart';
 
 class QuoteFormScreen extends StatefulWidget {
   /// Si quoteId est null, on est en création, sinon en édition
@@ -35,6 +37,9 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ContactProvider>().fetchAll();
+    });
     if (_isEditing) {
       context.read<QuoteProvider>().fetchById(widget.quoteId!).then((q) {
         if (q != null) {
@@ -158,10 +163,24 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
                   onChanged: (v) => setState(() => _status = v!),
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  initialValue: _customer,
-                  decoration: const InputDecoration(labelText: 'Client'),
-                  onSaved: (v) => _customer = v,
+                Consumer<ContactProvider>(
+                  builder: (context, contactProv, child) {
+                    final contacts = contactProv.contacts;
+                    return DropdownButtonFormField<String>(
+                      value: _customer,
+                      decoration: const InputDecoration(labelText: 'Client'),
+                      items: contacts
+                          .map(
+                            (c) => DropdownMenuItem(
+                              value: '${c.firstName} ${c.name}',
+                              child: Text('${c.firstName} ${c.name}'),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (val) => setState(() => _customer = val),
+                      onSaved: (val) => _customer = val,
+                    );
+                  },
                 ),
                 const SizedBox(height: 16),
                 TextFormField(

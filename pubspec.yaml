@@ -69,6 +69,7 @@ flutter:
   assets:
     - assets/images/tokan.svg
     - assets/images/sequoia.jpeg
+    - assets/images/tokan_logotype_black.png
 
 flutter_icons:
   android: true
