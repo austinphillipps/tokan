@@ -8,7 +8,9 @@ import 'contact_form_screen.dart';  // ← import du formulaire
 
 class ContactDetailScreen extends StatefulWidget {
   final String contactId;
-  const ContactDetailScreen({Key? key, required this.contactId}) : super(key: key);
+  final VoidCallback? onClose;
+  const ContactDetailScreen({Key? key, required this.contactId, this.onClose})
+      : super(key: key);
 
   @override
   State<ContactDetailScreen> createState() => _ContactDetailScreenState();
@@ -64,10 +66,12 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
             Text('Nom : ${_contact!.name}',
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
+            Text('Prénom : ${_contact!.firstName}'),
+            const SizedBox(height: 8),
             Text('Email : ${_contact!.email}'),
             if (_contact!.phone != null && _contact!.phone!.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text('Téléphone : ${_contact!.phone}'),
+              Text('Téléphone : ${_contact!.phonePrefix} ${_contact!.phone}'),
             ],
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -78,7 +82,11 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
               ),
               onPressed: () async {
                 await context.read<ContactProvider>().delete(widget.contactId);
-                Navigator.of(context).pop();
+                if (widget.onClose != null) {
+                  widget.onClose!();
+                } else {
+                  Navigator.of(context).pop();
+                }
               },
             ),
           ],

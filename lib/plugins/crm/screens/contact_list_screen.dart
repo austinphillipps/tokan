@@ -148,7 +148,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
               itemBuilder: (ctx, i) {
                 final Contact c = prov.contacts[i];
                 return ListTile(
-                  title: Text(c.name),
+                  title: Text('${c.firstName} ${c.name}'),
                   subtitle: Text(c.email),
                   onTap: () => _openPanel(contactId: c.id),
                 );
@@ -178,8 +178,8 @@ class _ContactListScreenState extends State<ContactListScreen> {
               color: AppColors.glassBackground,
               child: SafeArea(
                 child: _panelContactId == null
-                    ? const ContactFormScreen()
-                    : ContactDetailScreen(contactId: _panelContactId!),
+                    ? ContactFormScreen(onClose: _closePanel)
+                    : ContactDetailScreen(contactId: _panelContactId!, onClose: _closePanel),
               ),
             ),
           ),
