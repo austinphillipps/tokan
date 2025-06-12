@@ -14,6 +14,7 @@ class NotificationService {
 
   StreamSubscription<QuerySnapshot>? _incomingReqSub;
   StreamSubscription<QuerySnapshot>? _acceptedReqSub;
+  StreamSubscription<QuerySnapshot>? _messageConvSub;
 
   Future<void> init() async {
     // Initialisation des notifications locales
@@ -23,6 +24,7 @@ class NotificationService {
     );
     _listenFriendRequests();
     _listenFriendAcceptances();
+    _listenMessages();
   }
 
   void _listenFriendRequests() {
@@ -123,8 +125,54 @@ class NotificationService {
     });
   }
 
+  void _listenMessages() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    _messageConvSub = _firestore
+        .collection('conversations')
+        .where('participants', arrayContains: uid)
+        .snapshots()
+        .listen((snap) {
+      for (var change in snap.docChanges) {
+        if (change.type == DocumentChangeType.modified) {
+          final data = change.doc.data();
+          final sender = data?['lastSenderId'] as String?;
+          final msg = data?['lastMessage'] as String? ?? '';
+          if (sender == null || sender == uid) continue;
+
+          _firestore.collection('notifications').add({
+            'recipientId': uid,
+            'type': 'message',
+            'title': 'Nouveau message',
+            'body': msg,
+            'conversationId': change.doc.id,
+            'timestamp': FieldValue.serverTimestamp(),
+            'read': false,
+          });
+
+          _localNotif.show(
+            2,
+            'Nouveau message',
+            msg,
+            const NotificationDetails(
+              android: AndroidNotificationDetails(
+                'message_channel',
+                'Messages',
+                channelDescription: 'Nouveaux messages',
+                importance: Importance.max,
+                priority: Priority.high,
+              ),
+            ),
+          );
+        }
+      }
+    });
+  }
+
   void dispose() {
     _incomingReqSub?.cancel();
     _acceptedReqSub?.cancel();
+    _messageConvSub?.cancel();
   }
 }
