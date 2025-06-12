@@ -49,9 +49,15 @@ class _PipelineScreenState extends State<PipelineScreen> {
   Widget build(BuildContext context) {
     final prov = context.watch<OpportunityProvider>();
 
-    return Container(
-      color: AppColors.glassBackground,
-      child: LayoutBuilder(
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Pipeline'),
+        automaticallyImplyLeading: false,
+        leading: const SizedBox.shrink(),
+      ),
+      body: Container(
+        color: AppColors.glassBackground,
+        child: LayoutBuilder(
         builder: (context, constraints) {
           // hauteur disponible pour nos colonnes
           final height = constraints.maxHeight;
@@ -142,18 +148,6 @@ class _PipelineScreenState extends State<PipelineScreen> {
                                 ),
                               ),
 
-                              // Bouton "Nouveau"
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton.icon(
-                                    icon: const Icon(Icons.add),
-                                    label: const Text('Nouveau'),
-                                    onPressed: () => _openPanel(),
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
                         ),
@@ -195,6 +189,14 @@ class _PipelineScreenState extends State<PipelineScreen> {
           );
         },
       ),
+    ),
+      floatingActionButton: !_showPanel
+          ? FloatingActionButton(
+        tooltip: 'Nouvelle opportunité',
+        child: const Icon(Icons.add),
+        onPressed: () => _openPanel(),
+      )
+          : null,
     );
   }
 }
