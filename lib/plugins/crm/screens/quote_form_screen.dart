@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import 'package:tokan/main.dart'; // pour AppColors
 import 'package:tokan/plugins/crm/models/quote.dart';
+import 'package:tokan/plugins/crm/models/quote_item.dart';
 import 'package:tokan/plugins/crm/providers/quote_provider.dart';
 
 class QuoteFormScreen extends StatefulWidget {
@@ -28,6 +29,11 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
   String? _dueDateStr;
   double? _discount;
   String? _notes;
+  List<QuoteItem> _items = [QuoteItem(designation: '', quantity: 1, unitPrice: 0)];
+  double _vatRate = 0;
+  String? _iban;
+  String? _bic;
+  double? _depositPercent;
   bool _loading = false;
 
   bool get _isEditing => widget.quoteId != null;
@@ -49,6 +55,17 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
                 : DateFormat('yyyy-MM-dd').format(q.dueDate!);
             _discount = q.discount;
             _notes = q.notes;
+            _items = q.items.isEmpty
+                ? [QuoteItem(designation: '', quantity: 1, unitPrice: 0)]
+                : q.items.map((e) => QuoteItem(
+              designation: e.designation,
+              quantity: e.quantity,
+              unitPrice: e.unitPrice,
+            )).toList();
+            _vatRate = q.vatRate;
+            _iban = q.iban;
+            _bic = q.bic;
+            _depositPercent = q.depositPercent;
           });
         }
       });
@@ -58,6 +75,8 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
   Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
+    _total = _items.fold<double>(0,
+        (prev, e) => prev + e.quantity * e.unitPrice) - (_discount ?? 0);
     setState(() => _loading = true);
 
     final provider = context.read<QuoteProvider>();
@@ -75,6 +94,11 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
               : DateTime.tryParse(_dueDateStr!),
           discount: _discount,
           notes: _notes,
+          items: _items,
+          vatRate: _vatRate,
+          iban: _iban,
+          bic: _bic,
+          depositPercent: _depositPercent,
         ),
       );
     } else {
@@ -90,6 +114,11 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
               : DateTime.tryParse(_dueDateStr!),
           discount: _discount,
           notes: _notes,
+          items: _items,
+          vatRate: _vatRate,
+          iban: _iban,
+          bic: _bic,
+          depositPercent: _depositPercent,
         ),
       );
     }
@@ -131,14 +160,57 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
                   onSaved: (v) => _reference = v,
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  initialValue: _total?.toStringAsFixed(2),
-                  decoration: const InputDecoration(labelText: 'Total (€)'),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  validator: (v) => (v == null || double.tryParse(v) == null)
-                      ? 'Montant invalide'
-                      : null,
-                  onSaved: (v) => _total = double.parse(v!),
+                Text(
+                  'Lignes de devis',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                ..._items.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final item = entry.value;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 4,
+                          child: TextFormField(
+                            initialValue: item.designation,
+                            decoration: const InputDecoration(labelText: 'Désignation'),
+                            onChanged: (v) => item.designation = v,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextFormField(
+                            initialValue: item.quantity.toString(),
+                            decoration: const InputDecoration(labelText: 'Qté'),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            onChanged: (v) => item.quantity = double.tryParse(v) ?? 0,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextFormField(
+                            initialValue: item.unitPrice.toStringAsFixed(2),
+                            decoration: const InputDecoration(labelText: 'P.U'),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            onChanged: (v) => item.unitPrice = double.tryParse(v) ?? 0,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () => setState(() => _items.removeAt(index)),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                TextButton.icon(
+                  onPressed: () => setState(() => _items.add(
+                      QuoteItem(designation: '', quantity: 1, unitPrice: 0))),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Ajouter une ligne'),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -183,6 +255,32 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
                   decoration: const InputDecoration(labelText: 'Notes'),
                   maxLines: 3,
                   onSaved: (v) => _notes = v,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _vatRate.toStringAsFixed(2),
+                  decoration: const InputDecoration(labelText: 'Taux TVA (%)'),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  onChanged: (v) => _vatRate = double.tryParse(v) ?? 0,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _iban,
+                  decoration: const InputDecoration(labelText: 'IBAN'),
+                  onChanged: (v) => _iban = v,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _bic,
+                  decoration: const InputDecoration(labelText: 'BIC/SWIFT'),
+                  onChanged: (v) => _bic = v,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _depositPercent?.toStringAsFixed(2),
+                  decoration: const InputDecoration(labelText: 'Acompte (%)'),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  onChanged: (v) => _depositPercent = double.tryParse(v),
                 ),
               ],
             ),
