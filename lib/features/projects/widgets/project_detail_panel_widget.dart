@@ -10,8 +10,6 @@ import '../../tasks/views/tasks_screen.dart';
 import '../views/project_settings_screen.dart';
 import 'discussion_screen.dart';
 
-import '../../../plugins/stock/views/stock_screen.dart';
-import '../../../plugins/stock/views/commande_screen.dart';
 import '../../../plugins/crm/services/crm_plugin.dart'; // CrmPlugin
 
 class ProjectDetailPanel extends StatefulWidget {
@@ -317,14 +315,6 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
           ProjectDiscussionScreen(projectId: widget.project.id),
         ];
 
-        if (live.contains('stock')) {
-          tabs.add('Stock');
-          views.add(const StockScreen());
-        }
-        if (live.contains('commande')) {
-          tabs.add('Commandes');
-          views.add(const CommandeScreen());
-        }
         if (live.contains('crm')) {
           tabs.add('CRM');
           views.add(CrmPlugin().buildContent(context));
@@ -425,12 +415,6 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
                                     break;
                                   case 'Discussion générale':
                                     icon = Icons.forum_outlined;
-                                    break;
-                                  case 'Stock':
-                                    icon = Icons.store_outlined;
-                                    break;
-                                  case 'Commandes':
-                                    icon = Icons.shopping_cart_outlined;
                                     break;
                                   case 'CRM':
                                     icon = Icons.business_center_outlined;

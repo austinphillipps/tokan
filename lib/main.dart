@@ -11,7 +11,6 @@ import 'package:provider/provider.dart';
 
 // Vos providers existants
 import 'core/providers/plugin_provider.dart';
-import 'plugins/stock/providers/stock_provider.dart';
 import 'plugins/crm/providers/contact_provider.dart';
 import 'plugins/crm/providers/opportunity_provider.dart';
 import 'plugins/crm/providers/quote_provider.dart';
@@ -202,7 +201,6 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => PluginProvider()),
-        ChangeNotifierProvider(create: (_) => StockProvider()),
         ChangeNotifierProvider(create: (_) => ContactProvider()),
         ChangeNotifierProvider(create: (_) => OpportunityProvider()),
         ChangeNotifierProvider(create: (_) => QuoteProvider()),
