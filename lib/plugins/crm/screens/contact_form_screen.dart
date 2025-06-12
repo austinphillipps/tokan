@@ -143,6 +143,7 @@ class _ContactFormScreenState extends State<ContactFormScreen> {
                       flex: 2,
                       child: DropdownButtonFormField<String>(
                         value: _dialCode,
+                        isExpanded: true,
                         decoration: const InputDecoration(labelText: 'Indicatif'),
                         items: [
                           for (final c in countryCodes)

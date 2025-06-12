@@ -20,6 +20,10 @@ class Contact {
   /// Date de création dans la base
   DateTime createdAt;
 
+  /// Nom complet "Prénom Nom" pour l'affichage
+  String get fullName =>
+      [firstName, name].where((p) => p.trim().isNotEmpty).join(' ');
+
   Contact({
     this.id,
     required this.firstName,
@@ -38,7 +42,7 @@ class Contact {
       name: data['name'] as String? ?? '',
       email: data['email'] as String? ?? '',
       phone: data['phone'] as String?,
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 

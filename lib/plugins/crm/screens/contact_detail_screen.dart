@@ -61,10 +61,10 @@ class _ContactDetailScreenState extends State<ContactDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Prénom : ${_contact!.firstName}',
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text('Nom : ${_contact!.name}'),
+            Text(
+              _contact!.fullName,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
             Text('Email : ${_contact!.email}'),
             if (_contact!.phone != null && _contact!.phone!.isNotEmpty) ...[
