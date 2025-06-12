@@ -65,6 +65,7 @@ class ChatRepository {
         'projectId': conversationId,
         'lastMessage': text,
         'lastMessageTime': now,
+        'lastSenderId': currentUid,
       },
       SetOptions(merge: true),
     );
@@ -111,6 +112,7 @@ class ChatRepository {
         'projectId': conversationId,
         'lastMessage': '[${type.toUpperCase()}]',
         'lastMessageTime': now,
+        'lastSenderId': currentUid,
       },
       SetOptions(merge: true),
     );
@@ -200,6 +202,7 @@ class ChatRepository {
       'participants': [currentUid, otherUid],
       'lastMessage': '',
       'lastMessageTime': FieldValue.serverTimestamp(),
+      'lastSenderId': '',
     });
     return ref.id;
   }
