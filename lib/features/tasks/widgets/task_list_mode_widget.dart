@@ -11,9 +11,9 @@ import '../../tasks/models/custom_task_model.dart';
 class TasksListView extends StatelessWidget {
   final List<CustomTask> tasks;
   final Function(CustomTask) onToggleStatus;
-  final Function(CustomTask, String) onCollaboratorChanged;
-  final Function(CustomTask, String) onProjectChanged;
-  final Function(CustomTask, DateTime) onDeadlineChanged;
+  final Function(CustomTask, String?) onCollaboratorChanged;
+  final Function(CustomTask, String?) onProjectChanged;
+  final Function(CustomTask, DateTime?) onDeadlineChanged;
   final Function(CustomTask) onOpenDetail;
   final VoidCallback onAddTask;
   final Function(CustomTask) onDeleteTask;
@@ -382,9 +382,9 @@ class TasksListView extends StatelessWidget {
 class _TaskRow extends StatefulWidget {
   final CustomTask task;
   final Function(CustomTask) onToggle;
-  final Function(CustomTask, String) onCollaboratorChanged;
-  final Function(CustomTask, String) onProjectChanged;
-  final Function(CustomTask, DateTime) onDeadlineChanged;
+  final Function(CustomTask, String?) onCollaboratorChanged;
+  final Function(CustomTask, String?) onProjectChanged;
+  final Function(CustomTask, DateTime?) onDeadlineChanged;
   final Function(CustomTask) onOpenDetail;
   final Function(CustomTask) onDelete;
 
@@ -787,66 +787,123 @@ class _TaskRowState extends State<_TaskRow> {
             // 3) Échéance → ouvre date picker
             Expanded(
               flex: 2,
-              child: GestureDetector(
-                onTap: _pickDeadline,
-                child: Text(
-                  deadlineStr ?? 'Ajouter',
-                  style: TextStyle(
-                    color: deadlineStr != null
-                        ? (isDark
-                        ? Theme.of(context)
-                        .colorScheme
-                        .onBackground
-                        .withOpacity(0.7)
-                        : Colors.black54)
-                        : AppColors.blue,
-                    fontSize: 14,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _pickDeadline,
+                      child: Text(
+                        deadlineStr ?? 'Ajouter',
+                        style: TextStyle(
+                          color: deadlineStr != null
+                              ? (isDark
+                                  ? Theme.of(context)
+                                      .colorScheme
+                                      .onBackground
+                                      .withOpacity(0.7)
+                                  : Colors.black54)
+                              : AppColors.blue,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  if (deadlineStr != null)
+                    IconButton(
+                      icon: const Icon(Icons.clear, size: 16),
+                      tooltip: 'Retirer l\'\u00e9ch\u00e9ance',
+                      onPressed: () {
+                        widget.onDeadlineChanged(widget.task, null);
+                        setState(() {});
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                ],
               ),
             ),
             _vDiv(context),
             // 4) Responsable → ouvre dialog de sélection
             Expanded(
               flex: 2,
-              child: GestureDetector(
-                onTap: _showCollaboratorDialog,
-                child: Text(
-                  _loadingCollaborator ? '...' : (_collaboratorName ?? 'Ajouter'),
-                  style: TextStyle(
-                    color: _collaboratorName != null
-                        ? (isDark
-                        ? Theme.of(context)
-                        .colorScheme
-                        .onBackground
-                        .withOpacity(0.7)
-                        : Colors.black54)
-                        : AppColors.blue,
-                    fontSize: 12,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _showCollaboratorDialog,
+                      child: Text(
+                        _loadingCollaborator
+                            ? '...'
+                            : (_collaboratorName ?? 'Ajouter'),
+                        style: TextStyle(
+                          color: _collaboratorName != null
+                              ? (isDark
+                                  ? Theme.of(context)
+                                      .colorScheme
+                                      .onBackground
+                                      .withOpacity(0.7)
+                                  : Colors.black54)
+                              : AppColors.blue,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  if (!_loadingCollaborator && _collaboratorName != null)
+                    IconButton(
+                      icon: const Icon(Icons.clear, size: 16),
+                      tooltip: 'Retirer le responsable',
+                      onPressed: () {
+                        widget.onCollaboratorChanged(widget.task, null);
+                        setState(() {
+                          _collaboratorName = null;
+                        });
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                ],
               ),
             ),
             _vDiv(context),
             // 5) Projet → ouvre dialog de sélection
             Expanded(
               flex: 2,
-              child: GestureDetector(
-                onTap: _showProjectDialog,
-                child: Text(
-                  _loadingProject ? '...' : (_projectName ?? 'Ajouter'),
-                  style: TextStyle(
-                    color: _projectName != null
-                        ? (isDark
-                        ? Theme.of(context)
-                        .colorScheme
-                        .onBackground
-                        .withOpacity(0.7)
-                        : Colors.black54)
-                        : AppColors.blue,
-                    fontSize: 12,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _showProjectDialog,
+                      child: Text(
+                        _loadingProject ? '...' : (_projectName ?? 'Ajouter'),
+                        style: TextStyle(
+                          color: _projectName != null
+                              ? (isDark
+                                  ? Theme.of(context)
+                                      .colorScheme
+                                      .onBackground
+                                      .withOpacity(0.7)
+                                  : Colors.black54)
+                              : AppColors.blue,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  if (!_loadingProject && _projectName != null)
+                    IconButton(
+                      icon: const Icon(Icons.clear, size: 16),
+                      tooltip: 'Retirer le projet',
+                      onPressed: () {
+                        widget.onProjectChanged(widget.task, null);
+                        setState(() {
+                          _projectName = null;
+                        });
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                ],
               ),
             ),
             _vDiv(context),
