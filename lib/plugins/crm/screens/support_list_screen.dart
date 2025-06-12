@@ -57,7 +57,13 @@ class _SupportListScreenState extends State<SupportListScreen> {
           if (ticketsProv.isLoading)
             const Center(child: CircularProgressIndicator())
           else if (ticketsProv.tickets.isEmpty)
-            const Center(child: Text('Aucun ticket pour le moment.'))
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () => _openPanel(ticketId: null),
+                icon: const Icon(Icons.add),
+                label: const Text('Ajouter votre premier ticket'),
+              ),
+            )
           else
             ListView.separated(
               itemCount: ticketsProv.tickets.length,

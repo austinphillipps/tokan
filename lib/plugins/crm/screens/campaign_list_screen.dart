@@ -56,7 +56,13 @@ class _CampaignListScreenState extends State<CampaignListScreen> {
           if (prov.isLoading)
             const Center(child: CircularProgressIndicator())
           else if (prov.campaigns.isEmpty)
-            const Center(child: Text('Aucune campagne pour le moment.'))
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () => _openPanel(campaignId: null),
+                icon: const Icon(Icons.add),
+                label: const Text('Ajouter votre première campagne'),
+              ),
+            )
           else
             ListView.builder(
               itemCount: prov.campaigns.length,
