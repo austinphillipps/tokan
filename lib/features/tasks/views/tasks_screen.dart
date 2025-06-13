@@ -376,48 +376,44 @@ class _TasksPageState extends State<TasksPage> {
 
   Stream<List<CustomTask>> _getTasksStream() {
     final db = FirebaseFirestore.instance;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return const Stream.empty();
+    }
+
+    Query<Map<String, dynamic>> query =
+        db.collection('tasks').where('createdBy', isEqualTo: user.uid);
 
     if (widget.projectId != null && widget.projectId!.isNotEmpty) {
-      return db
-          .collection('tasks')
-          .where('project', isEqualTo: widget.projectId)
-          .snapshots()
-          .map((snap) {
-        final list = snap.docs
-            .map((d) =>
-            CustomTask.fromMap(d.data() as Map<String, dynamic>, d.id))
-            .toList();
-        list.sort((a, b) =>
-            (a.deadline ?? DateTime(1970))
-                .compareTo(b.deadline ?? DateTime(1970)));
-        return list;
-      });
-    } else {
-      return db
-          .collection('tasks')
-          .snapshots()
-          .map((snap) {
-        var list = snap.docs
-            .map((d) =>
-            CustomTask.fromMap(d.data() as Map<String, dynamic>, d.id))
-            .toList();
+      query = query.where('project', isEqualTo: widget.projectId);
+    }
 
+    return query.snapshots().map((snap) {
+      var list = snap.docs
+          .map(
+            (d) => CustomTask.fromMap(d.data() as Map<String, dynamic>, d.id),
+          )
+          .toList();
+
+      if (widget.projectId == null || widget.projectId!.isEmpty) {
         if (filterCollaborator?.isNotEmpty == true) {
           list =
               list.where((t) => t.responsable == filterCollaborator).toList();
         }
         if (filterDate != null) {
           list = list
-              .where((t) =>
-          t.deadline != null && _sameDay(t.deadline!, filterDate!))
+              .where(
+                (t) => t.deadline != null && _sameDay(t.deadline!, filterDate!),
+              )
               .toList();
         }
-        list.sort((a, b) =>
-            (a.deadline ?? DateTime(1970))
-                .compareTo(b.deadline ?? DateTime(1970)));
-        return list;
-      });
-    }
+      }
+
+      list.sort((a, b) =>
+          (a.deadline ?? DateTime(1970))
+              .compareTo(b.deadline ?? DateTime(1970)));
+      return list;
+    });
   }
 
   Stream<List<TaskFolder>> _getFoldersStream() {
