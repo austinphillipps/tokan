@@ -211,45 +211,71 @@ class TasksListView extends StatelessWidget {
                 ],
                 // Sections dossiers
                 ...folders.map((folder) {
-                  final list = tasks.where((t) => t.folderId == folder.id).toList();
-                  if (list.isEmpty) return const SizedBox.shrink();
+                  final list =
+                      tasks.where((t) => t.folderId == folder.id).toList();
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 4),
                         child: Text(
                           folder.name,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onBackground
+                                    .withOpacity(0.7),
                                 fontWeight: FontWeight.bold,
                               ),
                         ),
                       ),
-                      ...list.map((task) => Column(
-                            children: [
-                              _TaskRow(
-                                key: ValueKey(task.id),
-                                task: task,
-                                onToggle: onToggleStatus,
-                                onCollaboratorChanged: onCollaboratorChanged,
-                                onProjectChanged: onProjectChanged,
-                                onDeadlineChanged: onDeadlineChanged,
-                                onOpenDetail: onOpenDetail,
-                                onDelete: onDeleteTask,
-                                multiSelectMode: multiSelectMode,
-                                isSelected: selectedTaskIds.contains(task.id),
-                                onTaskSelectToggle: onTaskSelectToggle,
-                              ),
-                              Divider(
-                                height: 1,
-                                color: Theme.of(context).colorScheme.onBackground.withOpacity(0.3),
-                              ),
-                            ],
-                          )),
+                      if (list.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          child: Text(
+                            'Aucune tâche',
+                            style: TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onBackground
+                                  .withOpacity(0.6),
+                            ),
+                          ),
+                        )
+                      else
+                        ...list.map((task) => Column(
+                              children: [
+                                _TaskRow(
+                                  key: ValueKey(task.id),
+                                  task: task,
+                                  onToggle: onToggleStatus,
+                                  onCollaboratorChanged: onCollaboratorChanged,
+                                  onProjectChanged: onProjectChanged,
+                                  onDeadlineChanged: onDeadlineChanged,
+                                  onOpenDetail: onOpenDetail,
+                                  onDelete: onDeleteTask,
+                                  multiSelectMode: multiSelectMode,
+                                  isSelected:
+                                      selectedTaskIds.contains(task.id),
+                                  onTaskSelectToggle: onTaskSelectToggle,
+                                ),
+                                Divider(
+                                  height: 1,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onBackground
+                                      .withOpacity(0.3),
+                                ),
+                              ],
+                            )),
                     ],
                   );
-                }).whereType<Widget>().toList(),
+                }).toList(),
                 // Boutons pour ajouter une tâche ou un dossier
                 Padding(
                   padding:
