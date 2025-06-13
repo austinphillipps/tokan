@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+
 import 'package:tokan/core/contract/plugin_contract.dart';
+
+import '../../../core/contract/plugin_contract.dart';
+
 
 class PluginCard extends StatelessWidget {
   final PluginContract plugin;
