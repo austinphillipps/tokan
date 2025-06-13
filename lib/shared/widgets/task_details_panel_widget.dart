@@ -52,6 +52,7 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
   /// Réplication / récurrence
   late String _recurrence;
   late bool _recurrenceIncludePast;
+  List<int> _recurrenceDays = [];
 
   /// Sélection du responsable
   String? selectedResponsableId;
@@ -122,6 +123,7 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
 
     _recurrence = t.recurrenceType ?? 'none';
     _recurrenceIncludePast = t.recurrenceIncludePast ?? false;
+    _recurrenceDays = List<int>.from(t.recurrenceDays ?? []);
   }
 
   Future<void> _loadSelectedResponsableName() async {
@@ -205,11 +207,13 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
 
     t.recurrenceType = _recurrence;
     t.recurrenceIncludePast = _recurrenceIncludePast;
+    t.recurrenceDays = _recurrenceDays.isNotEmpty ? List<int>.from(_recurrenceDays) : null;
   }
 
   Future<void> _openRecurrenceDialog() async {
     String tempRecurrence = _recurrence;
     bool tempIncludePast = _recurrenceIncludePast;
+    List<int> tempRecDays = List<int>.from(_recurrenceDays);
 
     await showDialog(
       context: context,
@@ -225,22 +229,11 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                     value: tempRecurrence,
                     isExpanded: true,
                     items: const [
-                      DropdownMenuItem(
-                        value: 'none',
-                        child: Text('Aucune'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'sameDay',
-                        child: Text('Tous les mêmes jours'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'weekdays',
-                        child: Text('Jours de semaine (lun–ven)'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'weekends',
-                        child: Text('Week‐ends (sam–dim)'),
-                      ),
+                      DropdownMenuItem(value: 'none', child: Text('Aucune')),
+                      DropdownMenuItem(value: 'sameDay', child: Text('Tous les mêmes jours')),
+                      DropdownMenuItem(value: 'weekdays', child: Text('Jours de semaine (lun–ven)')),
+                      DropdownMenuItem(value: 'weekends', child: Text('Week‐ends (sam–dim)')),
+                      DropdownMenuItem(value: 'customDays', child: Text('Choisir les jours')),
                     ],
                     onChanged: (value) {
                       if (value != null) {
@@ -248,6 +241,26 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                       }
                     },
                   ),
+                  if (tempRecurrence == 'customDays')
+                    Column(
+                      children: List.generate(7, (i) {
+                        const dayNames = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+                        return CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(dayNames[i]),
+                          value: tempRecDays.contains(i),
+                          onChanged: (v) {
+                            setState2(() {
+                              if (v == true) {
+                                if (!tempRecDays.contains(i)) tempRecDays.add(i);
+                              } else {
+                                tempRecDays.remove(i);
+                              }
+                            });
+                          },
+                        );
+                      }),
+                    ),
                   const SizedBox(height: 12),
                   CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
@@ -273,6 +286,7 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                 setState(() {
                   _recurrence = tempRecurrence;
                   _recurrenceIncludePast = tempIncludePast;
+                  _recurrenceDays = tempRecurrence == 'customDays' ? List<int>.from(tempRecDays) : [];
                 });
                 Navigator.of(ctx).pop();
               },
@@ -470,12 +484,24 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                             _recurrence == 'none'
                                 ? "Aucune"
                                 : _recurrence == 'sameDay'
-                                ? "Tous les mêmes jours"
-                                : _recurrence == 'weekdays'
-                                ? "Jours de semaine"
-                                : _recurrence == 'weekends'
-                                ? "Week‐ends"
-                                : "Personnalisé",
+                                    ? "Tous les mêmes jours"
+                                    : _recurrence == 'weekdays'
+                                        ? "Jours de semaine"
+                                        : _recurrence == 'weekends'
+                                            ? "Week‐ends"
+                                            : _recurrence == 'customDays'
+                                                ? _recurrenceDays
+                                                        .map((i) => [
+                                                              'Lun',
+                                                              'Mar',
+                                                              'Mer',
+                                                              'Jeu',
+                                                              'Ven',
+                                                              'Sam',
+                                                              'Dim'
+                                                            ][i])
+                                                        .join(', ')
+                                                : "Personnalisé",
                             style: TextStyle(color: onBg),
                           ),
                           if (_recurrenceIncludePast)
