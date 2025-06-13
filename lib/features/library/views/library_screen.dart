@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tokan/core/providers/plugin_provider.dart';
 import 'package:tokan/core/contract/plugin_contract.dart';
+import '../widgets/plugin_card.dart';
 
 class LibraryPage extends StatefulWidget {
   const LibraryPage({Key? key}) : super(key: key);
@@ -35,20 +36,23 @@ class _LibraryPageState extends State<LibraryPage> {
           ),
         ),
         Expanded(
-          child: ListView.builder(
+          child: GridView.builder(
+            padding: const EdgeInsets.all(8),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              childAspectRatio: 4 / 5,
+            ),
             itemCount: filtered.length,
             itemBuilder: (_, i) {
               final p = filtered[i];
               final installed = pluginProv.isInstalled(p.id);
-              return ListTile(
-                leading: Icon(p.iconData), // utilise iconData ici
-                title: Text(p.displayName),
-                trailing: ElevatedButton(
-                  child: Text(installed ? 'Désinstaller' : 'Installer'),
-                  onPressed: () => installed
-                      ? pluginProv.uninstall(p.id)
-                      : pluginProv.install(p.id),
-                ),
+              return PluginCard(
+                plugin: p,
+                installed: installed,
+                onInstall: () => pluginProv.install(p.id),
+                onUninstall: () => pluginProv.uninstall(p.id),
               );
             },
           ),

@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/plugin_registry.dart';
-import '../contract/plugin_contract.dart';
+import 'package:tokan/core/contract/plugin_contract.dart';
 
 /// Gère la liste des plugins installés (persistés avec SharedPreferences).
 class PluginProvider extends ChangeNotifier {

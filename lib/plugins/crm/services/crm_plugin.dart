@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/contract/plugin_contract.dart';
+import 'package:tokan/core/contract/plugin_contract.dart';
 
 import '../providers/contact_provider.dart';
 import '../providers/opportunity_provider.dart';
