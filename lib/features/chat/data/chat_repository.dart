@@ -59,6 +59,11 @@ class ChatRepository {
     });
 
     // 2) Mise à jour ou création du doc conversation avec merge
+    final convSnap = await convRef.get();
+    final participants =
+        List<String>.from(convSnap.data()?['participants'] ?? []);
+    final others = participants.where((u) => u != currentUid).toList();
+
     batch.set(
       convRef,
       {
@@ -66,6 +71,7 @@ class ChatRepository {
         'lastMessage': text,
         'lastMessageTime': now,
         'lastSenderId': currentUid,
+        'unreadBy': FieldValue.arrayUnion(others),
       },
       SetOptions(merge: true),
     );
@@ -106,6 +112,11 @@ class ChatRepository {
     });
 
     // 2) Mise à jour ou création du doc conversation avec merge
+    final convSnap = await convRef.get();
+    final participants =
+        List<String>.from(convSnap.data()?['participants'] ?? []);
+    final others = participants.where((u) => u != currentUid).toList();
+
     batch.set(
       convRef,
       {
@@ -113,6 +124,7 @@ class ChatRepository {
         'lastMessage': '[${type.toUpperCase()}]',
         'lastMessageTime': now,
         'lastSenderId': currentUid,
+        'unreadBy': FieldValue.arrayUnion(others),
       },
       SetOptions(merge: true),
     );
@@ -184,6 +196,16 @@ class ChatRepository {
     });
   }
 
+  /// Marque une conversation comme lue par l'utilisateur courant.
+  Future<void> markConversationRead(String conversationId) {
+    return _firestore
+        .collection('conversations')
+        .doc(conversationId)
+        .update({
+      'unreadBy': FieldValue.arrayRemove([currentUid])
+    });
+  }
+
   /// Crée ou récupère l'ID d'une conversation entre deux utilisateurs.
   Future<String> createOrGetConversation(String otherUid) async {
     // 1) Cherche une conversation existante où currentUid est participant
@@ -203,6 +225,7 @@ class ChatRepository {
       'lastMessage': '',
       'lastMessageTime': FieldValue.serverTimestamp(),
       'lastSenderId': '',
+      'unreadBy': [],
     });
     return ref.id;
   }
