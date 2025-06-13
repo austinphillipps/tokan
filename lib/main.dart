@@ -11,9 +11,6 @@ import 'package:provider/provider.dart';
 
 // Vos providers existants
 import 'core/providers/plugin_provider.dart';
-import 'plugins/crm/providers/contact_provider.dart';
-import 'plugins/crm/providers/opportunity_provider.dart';
-import 'plugins/crm/providers/quote_provider.dart';
 
 import 'features/auth/services/auth_service.dart';
 import 'features/auth/views/login_screen.dart';
@@ -202,10 +199,8 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => PluginProvider()),
-        ChangeNotifierProvider(create: (_) => ContactProvider()),
-        ChangeNotifierProvider(create: (_) => OpportunityProvider()),
-        ChangeNotifierProvider(create: (_) => QuoteProvider()),
-        // … ajoutez d’autres providers si besoin …
+        // Les providers dépendant de l'utilisateur seront instanciés
+        // plus tard, une fois authentifié, pour éviter les erreurs.
       ],
       child: const MyApp(),
     ),

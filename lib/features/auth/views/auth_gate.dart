@@ -1,7 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'package:provider/provider.dart';
+
 import '../../../shared/interface/interface.dart';
+import '../../../plugins/crm/providers/contact_provider.dart';
+import '../../../plugins/crm/providers/opportunity_provider.dart';
+import '../../../plugins/crm/providers/quote_provider.dart';
 import 'login_screen.dart';
 
 /// Widget qui écoute l'état d'authentification pour
@@ -22,7 +27,18 @@ class AuthGate extends StatelessWidget {
         if (snapshot.data == null) {
           return const LoginPage();
         }
-        return const HomeScreen();
+
+        // L'utilisateur est connecté : on instancie ici les providers
+        // dépendant de son UID afin d'éviter des erreurs avant authentification.
+        return MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => ContactProvider()),
+            ChangeNotifierProvider(create: (_) => OpportunityProvider()),
+            ChangeNotifierProvider(create: (_) => QuoteProvider()),
+            // … ajoutez d'autres providers liés à l'utilisateur ici …
+          ],
+          child: const HomeScreen(),
+        );
       },
     );
   }
