@@ -7,9 +7,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../main.dart'; // Pour accéder à AppColors
 
 import '../../tasks/models/custom_task_model.dart';
+import '../../tasks/models/task_folder_model.dart';
 
 class TasksListView extends StatelessWidget {
   final List<CustomTask> tasks;
+  final List<TaskFolder> folders;
   final Function(CustomTask) onToggleStatus;
   final Function(CustomTask, String?) onCollaboratorChanged;
   final Function(CustomTask, String?) onProjectChanged;
@@ -27,6 +29,7 @@ class TasksListView extends StatelessWidget {
   const TasksListView({
     Key? key,
     required this.tasks,
+    required this.folders,
     required this.onToggleStatus,
     required this.onCollaboratorChanged,
     required this.onProjectChanged,
@@ -71,9 +74,9 @@ class TasksListView extends StatelessWidget {
       );
     }
 
-    // Séparer les tâches "En cours" et "Terminées" selon le statut 'completed'
-    final enCours = tasks.where((t) => t.status != 'completed').toList();
-    final terminees = tasks.where((t) => t.status == 'completed').toList();
+    final rootTasks = tasks.where((t) => t.folderId == null || t.folderId!.isEmpty).toList();
+    final enCours = rootTasks.where((t) => t.status != 'completed').toList();
+    final terminees = rootTasks.where((t) => t.status == 'completed').toList();
 
     // On enveloppe le Column principal dans un GestureDetector transparent :
     return GestureDetector(
@@ -157,7 +160,7 @@ class TasksListView extends StatelessWidget {
                       ),
                     ),
                   ),
-                  ...terminees.map((task) => Column(
+                ...terminees.map((task) => Column(
                     children: [
                       _TaskRow(
                         key: ValueKey(task.id),
@@ -184,6 +187,47 @@ class TasksListView extends StatelessWidget {
                     ],
                   )),
                 ],
+                // Sections dossiers
+                ...folders.map((folder) {
+                  final list = tasks.where((t) => t.folderId == folder.id).toList();
+                  if (list.isEmpty) return const SizedBox.shrink();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        child: Text(
+                          folder.name,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ),
+                      ...list.map((task) => Column(
+                            children: [
+                              _TaskRow(
+                                key: ValueKey(task.id),
+                                task: task,
+                                onToggle: onToggleStatus,
+                                onCollaboratorChanged: onCollaboratorChanged,
+                                onProjectChanged: onProjectChanged,
+                                onDeadlineChanged: onDeadlineChanged,
+                                onOpenDetail: onOpenDetail,
+                                onDelete: onDeleteTask,
+                                multiSelectMode: multiSelectMode,
+                                isSelected: selectedTaskIds.contains(task.id),
+                                onTaskSelectToggle: onTaskSelectToggle,
+                              ),
+                              Divider(
+                                height: 1,
+                                color: Theme.of(context).colorScheme.onBackground.withOpacity(0.3),
+                              ),
+                            ],
+                          )),
+                    ],
+                  );
+                }).whereType<Widget>().toList(),
                 // Bouton pour ajouter une nouvelle tâche
                 Padding(
                   padding:

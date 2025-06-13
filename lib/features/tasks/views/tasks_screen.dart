@@ -9,6 +9,9 @@ import 'package:intl/intl.dart';
 import '../widgets/task_list_mode_widget.dart';
 import '../widgets/task_calendar_mode_widget.dart';
 
+import '../models/task_folder_model.dart';
+import '../services/task_folder_service.dart';
+
 // Import du panneau de détails de tâche
 import '../../../shared/widgets/task_details_panel_widget.dart';
 
@@ -62,34 +65,58 @@ class _TasksPageState extends State<TasksPage> {
               ),
             ),
 
-          StreamBuilder<List<CustomTask>>(
-            stream: _getTasksStream(),
-            builder: (context, snap) {
-              if (snap.hasError) {
+          StreamBuilder<List<TaskFolder>>(
+            stream: _getFoldersStream(),
+            builder: (context, folderSnap) {
+              if (folderSnap.hasError) {
                 return Center(
                   child: Text(
-                    'Erreur : ${snap.error}',
+                    'Erreur : ${folderSnap.error}',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onBackground,
                     ),
                   ),
                 );
               }
-              if (!snap.hasData) {
+              if (!folderSnap.hasData) {
                 return Center(
                   child: CircularProgressIndicator(
                     valueColor:
-                    AlwaysStoppedAnimation<Color>(AppColors.green),
+                        AlwaysStoppedAnimation<Color>(AppColors.green),
                   ),
                 );
               }
-              final tasks = snap.data!;
+              final folders = folderSnap.data!;
 
-              return Column(
-                children: [
-                  _buildHorizontalMenu(tasks),
-                  Expanded(child: _buildView(tasks)),
-                ],
+              return StreamBuilder<List<CustomTask>>(
+                stream: _getTasksStream(),
+                builder: (context, snap) {
+                  if (snap.hasError) {
+                    return Center(
+                      child: Text(
+                        'Erreur : ${snap.error}',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onBackground,
+                        ),
+                      ),
+                    );
+                  }
+                  if (!snap.hasData) {
+                    return Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.green),
+                      ),
+                    );
+                  }
+                  final tasks = snap.data!;
+
+                  return Column(
+                    children: [
+                      _buildHorizontalMenu(tasks, folders),
+                      Expanded(child: _buildView(tasks, folders)),
+                    ],
+                  );
+                },
               );
             },
           ),
@@ -164,7 +191,7 @@ class _TasksPageState extends State<TasksPage> {
     );
   }
 
-  Widget _buildView(List<CustomTask> tasks) {
+  Widget _buildView(List<CustomTask> tasks, List<TaskFolder> folders) {
     if (_viewMode == TaskViewMode.calendar) {
       return TasksCalendarView(
         refreshNotifier: _calendarRefreshNotifier,
@@ -173,6 +200,7 @@ class _TasksPageState extends State<TasksPage> {
     } else {
       return TasksListView(
         tasks: tasks,
+        folders: folders,
         onToggleStatus: _toggleStatus,
         onCollaboratorChanged: (t, uid) async {
           t.responsable = uid ?? '';
@@ -239,7 +267,7 @@ class _TasksPageState extends State<TasksPage> {
     }
   }
 
-  Widget _buildHorizontalMenu(List<CustomTask> tasks) {
+  Widget _buildHorizontalMenu(List<CustomTask> tasks, List<TaskFolder> folders) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
       child: Row(
@@ -270,6 +298,12 @@ class _TasksPageState extends State<TasksPage> {
                 child: Text('Calendrier'),
               ),
             ],
+          ),
+          const SizedBox(width: 24),
+          ElevatedButton.icon(
+            onPressed: _showCreateFolderDialog,
+            icon: const Icon(Icons.create_new_folder),
+            label: const Text('Nouveau dossier'),
           ),
           const SizedBox(width: 24),
           if (_viewMode == TaskViewMode.list) ...[
@@ -386,6 +420,23 @@ class _TasksPageState extends State<TasksPage> {
     }
   }
 
+  Stream<List<TaskFolder>> _getFoldersStream() {
+    final db = FirebaseFirestore.instance;
+    if (widget.projectId != null && widget.projectId!.isNotEmpty) {
+      return db
+          .collection('taskFolders')
+          .where('projectId', isEqualTo: widget.projectId)
+          .snapshots()
+          .map((snap) => snap.docs
+              .map((d) => TaskFolder.fromMap(d.data() as Map<String, dynamic>, d.id))
+              .toList());
+    } else {
+      return db.collection('taskFolders').snapshots().map((snap) => snap.docs
+          .map((d) => TaskFolder.fromMap(d.data() as Map<String, dynamic>, d.id))
+          .toList());
+    }
+  }
+
   bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
@@ -398,6 +449,7 @@ class _TasksPageState extends State<TasksPage> {
     // Construire les données à enregistrer
     final data = task.toMap(user.uid)
       ..['project'] = task.project
+      ..['folderId'] = task.folderId
       ..['updatedBy'] = user.uid
       ..['updatedAt'] = FieldValue.serverTimestamp();
 
@@ -423,5 +475,41 @@ class _TasksPageState extends State<TasksPage> {
     final db = FirebaseFirestore.instance;
     await db.collection('tasks').doc(task.id).delete();
     _calendarRefreshNotifier.value++;
+  }
+
+  Future<void> _showCreateFolderDialog() async {
+    final nameController = TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Nouveau dossier'),
+          content: TextField(
+            controller: nameController,
+            decoration: const InputDecoration(labelText: 'Nom'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final name = nameController.text.trim();
+                if (name.isNotEmpty) {
+                  final folder = TaskFolder(
+                    name: name,
+                    projectId: widget.projectId ?? '',
+                  );
+                  await TaskFolderService().createFolder(folder);
+                }
+                Navigator.of(ctx).pop();
+              },
+              child: const Text('Créer'),
+            )
+          ],
+        );
+      },
+    );
   }
 }
