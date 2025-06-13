@@ -154,14 +154,21 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 24),
             // Items du haut
             for (var i = 0; i < pages.length - 3; i++)
-              _buildNavItem(
-                iconData: icons[i],
-                label: labels[i],
-                showLabel: _showLabels,
-                isSelected: _selectedIndex == i,
-                selectedBg: selectedBg,
-                onTap: () => setState(() => _selectedIndex = i),
-              ),
+              i == 4
+                  ? _buildMessagesNavItem(
+                      index: i,
+                      iconData: icons[i],
+                      label: labels[i],
+                      selectedBg: selectedBg,
+                    )
+                  : _buildNavItem(
+                      iconData: icons[i],
+                      label: labels[i],
+                      showLabel: _showLabels,
+                      isSelected: _selectedIndex == i,
+                      selectedBg: selectedBg,
+                      onTap: () => setState(() => _selectedIndex = i),
+                    ),
             const Spacer(),
             // Items fixes en bas
             for (var i = pages.length - 3; i < pages.length; i++)
@@ -209,6 +216,52 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
     return content;
+  }
+
+  Widget _buildMessagesNavItem({
+    required int index,
+    required IconData iconData,
+    required String label,
+    required Color selectedBg,
+  }) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      return _buildNavItem(
+        iconData: iconData,
+        label: label,
+        showLabel: _showLabels,
+        isSelected: _selectedIndex == index,
+        selectedBg: selectedBg,
+        onTap: () => setState(() => _selectedIndex = index),
+      );
+    }
+
+    final convStream = FirebaseFirestore.instance
+        .collection('conversations')
+        .where('participants', arrayContains: uid)
+        .snapshots();
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: convStream,
+      builder: (ctx, snap) {
+        final docs = snap.data?.docs ?? [];
+        int count = 0;
+        for (final d in docs) {
+          final data = d.data() as Map<String, dynamic>;
+          final unread = List<String>.from(data['unreadBy'] ?? []);
+          if (unread.contains(uid)) count++;
+        }
+        return _buildNavItem(
+          iconData: iconData,
+          label: label,
+          showLabel: _showLabels,
+          isSelected: _selectedIndex == index,
+          selectedBg: selectedBg,
+          badgeCount: count > 0 ? count : null,
+          onTap: () => setState(() => _selectedIndex = index),
+        );
+      },
+    );
   }
 
   Widget _buildNotificationsNavItem({
