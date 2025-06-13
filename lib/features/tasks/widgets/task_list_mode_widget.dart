@@ -7,9 +7,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../main.dart'; // Pour accéder à AppColors
 
 import '../../tasks/models/custom_task_model.dart';
+import '../../tasks/models/task_folder_model.dart';
+import '../../tasks/services/task_folder_service.dart';
 
 class TasksListView extends StatelessWidget {
   final List<CustomTask> tasks;
+  final List<TaskFolder> folders;
+  final String? projectId;
   final Function(CustomTask) onToggleStatus;
   final Function(CustomTask, String?) onCollaboratorChanged;
   final Function(CustomTask, String?) onProjectChanged;
@@ -27,6 +31,8 @@ class TasksListView extends StatelessWidget {
   const TasksListView({
     Key? key,
     required this.tasks,
+    required this.folders,
+    required this.projectId,
     required this.onToggleStatus,
     required this.onCollaboratorChanged,
     required this.onProjectChanged,
@@ -41,6 +47,199 @@ class TasksListView extends StatelessWidget {
     required this.onTaskSelectToggle,
     required this.onToggleMultiSelectMode,
   }) : super(key: key);
+
+  Future<void> _showCreateFolderDialog(BuildContext context,
+      {TaskFolder? parent}) async {
+    final nameController = TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(parent == null ? 'Nouveau dossier' : 'Nouveau sous-dossier'),
+        backgroundColor: Theme.of(ctx).colorScheme.surface,
+        titleTextStyle: Theme.of(ctx)
+            .textTheme
+            .titleLarge
+            ?.copyWith(color: Theme.of(ctx).colorScheme.onSurface),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(labelText: 'Nom'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Annuler',
+              style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              final name = nameController.text.trim();
+              if (name.isNotEmpty) {
+                final folder = TaskFolder(
+                  name: name,
+                  projectId: projectId ?? '',
+                  parentId: parent?.id,
+                );
+                await TaskFolderService().createFolder(folder);
+              }
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Créer'),
+          )
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showRenameFolderDialog(
+      BuildContext context, TaskFolder folder) async {
+    final nameController = TextEditingController(text: folder.name);
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Renommer le dossier'),
+        backgroundColor: Theme.of(ctx).colorScheme.surface,
+        titleTextStyle: Theme.of(ctx)
+            .textTheme
+            .titleLarge
+            ?.copyWith(color: Theme.of(ctx).colorScheme.onSurface),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(labelText: 'Nom'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Annuler',
+              style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              final name = nameController.text.trim();
+              if (name.isNotEmpty) {
+                folder.name = name;
+                await TaskFolderService().updateFolder(folder);
+              }
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Enregistrer'),
+          )
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteFolder(
+      BuildContext context, TaskFolder folder) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Supprimer le dossier'),
+        content: Text('Voulez-vous supprimer "${folder.name}" ?'),
+        backgroundColor: Theme.of(ctx).colorScheme.surface,
+        titleTextStyle: Theme.of(ctx)
+            .textTheme
+            .titleLarge
+            ?.copyWith(color: Theme.of(ctx).colorScheme.onSurface),
+        contentTextStyle: Theme.of(ctx)
+            .textTheme
+            .bodyMedium
+            ?.copyWith(color: Theme.of(ctx).colorScheme.onSurface),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(
+              'Annuler',
+              style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Supprimer'),
+          )
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await TaskFolderService().deleteFolder(folder.id);
+    }
+  }
+
+  List<Widget> _buildFolderWidgets(
+      BuildContext context, String? parentId, int depth) {
+    final sub = folders.where((f) => f.parentId == parentId).toList();
+    return sub.map((folder) {
+      final list = tasks.where((t) => t.folderId == folder.id).toList();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(
+                left: 16.0 * depth, right: 16, top: 4, bottom: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    folder.name,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onBackground
+                              .withOpacity(0.7),
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.create_new_folder_outlined),
+                  tooltip: 'Nouveau sous-dossier',
+                  onPressed: () => _showCreateFolderDialog(context, parent: folder),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  tooltip: 'Renommer',
+                  onPressed: () => _showRenameFolderDialog(context, folder),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  tooltip: 'Supprimer',
+                  onPressed: () => _confirmDeleteFolder(context, folder),
+                ),
+              ],
+            ),
+          ),
+          ...list.map((task) => Column(
+                children: [
+                  _TaskRow(
+                    key: ValueKey(task.id),
+                    task: task,
+                    onToggle: onToggleStatus,
+                    onCollaboratorChanged: onCollaboratorChanged,
+                    onProjectChanged: onProjectChanged,
+                    onDeadlineChanged: onDeadlineChanged,
+                    onOpenDetail: onOpenDetail,
+                    onDelete: onDeleteTask,
+                    multiSelectMode: multiSelectMode,
+                    isSelected: selectedTaskIds.contains(task.id),
+                    onTaskSelectToggle: onTaskSelectToggle,
+                  ),
+                  Divider(
+                    height: 1,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onBackground
+                        .withOpacity(0.3),
+                  ),
+                ],
+              )),
+          ..._buildFolderWidgets(context, folder.id, depth + 1),
+        ],
+      );
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,9 +270,9 @@ class TasksListView extends StatelessWidget {
       );
     }
 
-    // Séparer les tâches "En cours" et "Terminées" selon le statut 'completed'
-    final enCours = tasks.where((t) => t.status != 'completed').toList();
-    final terminees = tasks.where((t) => t.status == 'completed').toList();
+    final rootTasks = tasks.where((t) => t.folderId == null || t.folderId!.isEmpty).toList();
+    final enCours = rootTasks.where((t) => t.status != 'completed').toList();
+    final terminees = rootTasks.where((t) => t.status == 'completed').toList();
 
     // On enveloppe le Column principal dans un GestureDetector transparent :
     return GestureDetector(
@@ -87,6 +286,14 @@ class TasksListView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(context),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: TextButton.icon(
+              onPressed: () => _showCreateFolderDialog(context),
+              icon: const Icon(Icons.create_new_folder),
+              label: const Text('Nouveau dossier'),
+            ),
+          ),
           Divider(
             height: 1,
             color: Theme.of(context).colorScheme.onBackground.withOpacity(0.3),
@@ -157,7 +364,7 @@ class TasksListView extends StatelessWidget {
                       ),
                     ),
                   ),
-                  ...terminees.map((task) => Column(
+                ...terminees.map((task) => Column(
                     children: [
                       _TaskRow(
                         key: ValueKey(task.id),
@@ -184,6 +391,8 @@ class TasksListView extends StatelessWidget {
                     ],
                   )),
                 ],
+                // Sections dossiers
+                ..._buildFolderWidgets(context, null, 0),
                 // Bouton pour ajouter une nouvelle tâche
                 Padding(
                   padding:
