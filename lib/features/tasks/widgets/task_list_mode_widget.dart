@@ -18,6 +18,7 @@ class TasksListView extends StatelessWidget {
   final Function(CustomTask, DateTime?) onDeadlineChanged;
   final Function(CustomTask) onOpenDetail;
   final VoidCallback onAddTask;
+  final Future<void> Function() onCreateFolder;
   final Function(CustomTask) onDeleteTask;
 
   // ← Paramètres pour la sélection multiple
@@ -36,6 +37,7 @@ class TasksListView extends StatelessWidget {
     required this.onDeadlineChanged,
     required this.onOpenDetail,
     required this.onAddTask,
+    required this.onCreateFolder,
     required this.onDeleteTask,
 
     // ← Nouveaux paramètres :
@@ -55,19 +57,39 @@ class TasksListView extends StatelessWidget {
           margin: const EdgeInsets.all(24),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
-            child: TextButton.icon(
-              onPressed: onAddTask,
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.purple,
-              ),
-              icon: const Icon(Icons.add),
-              label: Text(
-                'Ajouter une tâche',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Theme.of(context).colorScheme.onSurface,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton.icon(
+                  onPressed: onAddTask,
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.purple,
+                  ),
+                  icon: const Icon(Icons.add),
+                  label: Text(
+                    'Ajouter une tâche',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 16),
+                TextButton.icon(
+                  onPressed: () => onCreateFolder(),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.primary,
+                  ),
+                  icon: const Icon(Icons.create_new_folder),
+                  label: Text(
+                    'Nouveau dossier',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -228,28 +250,51 @@ class TasksListView extends StatelessWidget {
                     ],
                   );
                 }).whereType<Widget>().toList(),
-                // Bouton pour ajouter une nouvelle tâche
+                // Boutons pour ajouter une tâche ou un dossier
                 Padding(
                   padding:
-                  const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      icon: const Icon(Icons.add),
-                      label: Text(
-                        "Ajouter une tâche...",
-                        style: TextStyle(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onBackground
-                              .withOpacity(0.7),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextButton.icon(
+                          icon: const Icon(Icons.add),
+                          label: Text(
+                            "Ajouter une tâche...",
+                            style: TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onBackground
+                                  .withOpacity(0.7),
+                            ),
+                          ),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 16),
+                          ),
+                          onPressed: onAddTask,
                         ),
-                      ),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 16),
-                      ),
-                      onPressed: onAddTask,
+                        const SizedBox(width: 16),
+                        TextButton.icon(
+                          icon: const Icon(Icons.create_new_folder),
+                          label: Text(
+                            "Nouveau dossier",
+                            style: TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onBackground
+                                  .withOpacity(0.7),
+                            ),
+                          ),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 16),
+                          ),
+                          onPressed: () => onCreateFolder(),
+                        ),
+                      ],
                     ),
                   ),
                 ),
