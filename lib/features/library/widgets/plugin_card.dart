@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:tokan/core/contract/plugin_contract.dart';
 
+/// Display a single plugin as a card in the library grid.
+
 class PluginCard extends StatelessWidget {
   final PluginContract plugin;
   final bool installed;
