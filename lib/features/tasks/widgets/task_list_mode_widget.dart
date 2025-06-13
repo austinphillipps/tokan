@@ -18,7 +18,7 @@ class TasksListView extends StatelessWidget {
   final Function(CustomTask, DateTime?) onDeadlineChanged;
   final Function(CustomTask) onOpenDetail;
   final VoidCallback onAddTask;
-  final VoidCallback onCreateFolder;
+  final Future<void> Function() onCreateFolder;
   final Function(CustomTask) onDeleteTask;
 
   // ← Paramètres pour la sélection multiple
@@ -76,7 +76,7 @@ class TasksListView extends StatelessWidget {
                 ),
                 const SizedBox(width: 16),
                 TextButton.icon(
-                  onPressed: onCreateFolder,
+                  onPressed: () => onCreateFolder(),
                   style: TextButton.styleFrom(
                     foregroundColor: Theme.of(context).colorScheme.primary,
                   ),
@@ -292,7 +292,7 @@ class TasksListView extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 vertical: 12, horizontal: 16),
                           ),
-                          onPressed: onCreateFolder,
+                          onPressed: () => onCreateFolder(),
                         ),
                       ],
                     ),
