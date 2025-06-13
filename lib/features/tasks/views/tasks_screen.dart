@@ -242,6 +242,7 @@ class _TasksPageState extends State<TasksPage> {
           );
           showTaskPanel = true;
         }),
+        onCreateFolder: _showCreateFolderDialog,
         onDeleteTask: _deleteTask,
 
         multiSelectMode: _multiSelectMode,
@@ -300,12 +301,7 @@ class _TasksPageState extends State<TasksPage> {
             ],
           ),
           const SizedBox(width: 24),
-          ElevatedButton.icon(
-            onPressed: _showCreateFolderDialog,
-            icon: const Icon(Icons.create_new_folder),
-            label: const Text('Nouveau dossier'),
-          ),
-          const SizedBox(width: 24),
+          // Bouton "Nouveau dossier" déplacé dans la liste des tâches
           if (_viewMode == TaskViewMode.list) ...[
             DropdownButton<String>(
               hint: const Text('Filtrer par collaborateur'),
