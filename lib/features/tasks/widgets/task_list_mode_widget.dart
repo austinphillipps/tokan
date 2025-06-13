@@ -270,7 +270,16 @@ class TasksListView extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const SizedBox(width: 40), // Pour la colonne statut (cercle)
+          SizedBox(
+            width: 40,
+            child: IconButton(
+              icon: const Icon(Icons.folder, size: 20),
+              tooltip: 'Dossiers',
+              onPressed: () {},
+              padding: EdgeInsets.zero,
+              splashRadius: 20,
+            ),
+          ), // Pour la colonne statut (cercle)
           _vDiv(context),
           Expanded(
             flex: 3,
