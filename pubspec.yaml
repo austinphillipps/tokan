@@ -30,6 +30,9 @@ dependencies:
   csv: ^6.0.0
   share_plus: ^11.0.0
   path_provider: ^2.1.5
+  package_info_plus: ^5.0.1
+  ota_update: ^4.0.0
+  http: ^1.1.0
 
   # PDF generation & printing
   pdf: ^3.10.4
