@@ -1,6 +1,6 @@
 // lib/plugins/plugin_registry.dart
 
-import '../contract/plugin_contract.dart';
+import 'package:tokan/core/contract/plugin_contract.dart';
 import '../../plugins/crm/services/crm_plugin.dart';
 // import '../../plugins/fsm/services/fsm_plugin.dart';
 // import '../../plugins/esp/services/esp_plugin.dart';

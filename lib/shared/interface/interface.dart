@@ -6,7 +6,7 @@ import 'package:flutter/gestures.dart';      // Pour PointerEnterEvent / Pointer
 import 'package:provider/provider.dart';
 
 import '../../core/providers/plugin_provider.dart';
-import '../../core/contract/plugin_contract.dart';
+import 'package:tokan/core/contract/plugin_contract.dart';
 
 import '../../features/dashboard/views/dashboard_screen.dart';
 import '../../features/tasks/views/tasks_screen.dart';
