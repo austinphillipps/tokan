@@ -3,7 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../utils/update_util.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../main.dart'; // Pour AppTheme et themeNotifier
 import 'profile_screen.dart'; // Import de la page Profil
@@ -19,12 +21,21 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   late AppTheme _selectedTheme;
+  String _appVersion = '';
 
   @override
   void initState() {
     super.initState();
     // Récupère l’état actuel du themeNotifier
     _selectedTheme = themeNotifier.value;
+    _loadVersion();
+  }
+
+  Future<void> _loadVersion() async {
+    final info = await PackageInfo.fromPlatform();
+    setState(() {
+      _appVersion = info.version;
+    });
   }
 
   /// Sauvegarde et applique le thème sélectionné
@@ -175,12 +186,20 @@ class _SettingsPageState extends State<SettingsPage> {
             iconColor: tileIconColor,
             textColor: tileTextColor,
             trailing: Text(
-              '0.1.0',
+              _appVersion,
               style: TextStyle(
                 color: isDarkStyle ? Colors.white54 : Colors.black54,
               ),
             ),
             onTap: () {},
+          ),
+          _SettingTile(
+            icon: Icons.system_update_alt,
+            label: 'Mise à jour',
+            tileBgColor: tileBgColor,
+            iconColor: tileIconColor,
+            textColor: tileTextColor,
+            onTap: () => checkForUpdate(context),
           ),
           _SettingTile(
             icon: Icons.support_agent,
