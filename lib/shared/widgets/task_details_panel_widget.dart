@@ -406,17 +406,8 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                 ],
               ),
 
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // --- Champ nom de tâche ---
-                        TextField(
+              // --- Champ nom de tâche ---
+              TextField(
                 controller: nameController,
                 style: TextStyle(
                   fontSize: 24,
@@ -445,7 +436,16 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
               ),
               const SizedBox(height: 8),
 
-              // --- Champ Récurrence (ouvre un dialogue) ---
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+
+                        // --- Champ Récurrence (ouvre un dialogue) ---
               Text(
                 "Récurrence :",
                 style: TextStyle(
@@ -506,7 +506,6 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
 
               // --- Sélecteur de responsable ---
               Padding(
@@ -830,7 +829,8 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                               hintText: "HH",
                               hintStyle: TextStyle(color: onBgFadedLight),
                               counterText: "",
-                              contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                               enabledBorder: UnderlineInputBorder(
                                 borderSide: BorderSide(color: borderColor),
                               ),
@@ -856,7 +856,8 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                               hintText: "MM",
                               hintStyle: TextStyle(color: onBgFadedLight),
                               counterText: "",
-                              contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                               enabledBorder: UnderlineInputBorder(
                                 borderSide: BorderSide(color: borderColor),
                               ),
@@ -882,7 +883,8 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                               hintText: "HH",
                               hintStyle: TextStyle(color: onBgFadedLight),
                               counterText: "",
-                              contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                               enabledBorder: UnderlineInputBorder(
                                 borderSide: BorderSide(color: borderColor),
                               ),
@@ -908,7 +910,8 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                               hintText: "MM",
                               hintStyle: TextStyle(color: onBgFadedLight),
                               counterText: "",
-                              contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                               enabledBorder: UnderlineInputBorder(
                                 borderSide: BorderSide(color: borderColor),
                               ),
