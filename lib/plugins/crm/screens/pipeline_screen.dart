@@ -2,11 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 
 import 'package:tokan/main.dart'; // pour AppColors
 import '../providers/opportunity_provider.dart';
-import '../models/opportunity.dart';
+import '../widgets/opportunity_progress_card.dart';
 import 'opportunity_detail_screen.dart';
 import 'opportunity_form_screen.dart';
 
@@ -59,102 +58,23 @@ class _PipelineScreenState extends State<PipelineScreen> {
         color: AppColors.glassBackground,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // hauteur disponible pour nos colonnes
-            final height = constraints.maxHeight;
-
             if (prov.isLoading) {
               return const Center(child: CircularProgressIndicator());
             }
 
             return Stack(
               children: [
-                // --- 1) Kanban horizontal, prend toute la hauteur ---
-                SizedBox(
-                  height: height,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: <String>[
-                        'Prospect',
-                        'Qualification',
-                        'Négociation',
-                        'Gagné',
-                        'Perdu',
-                      ].map((stage) {
-                        final items = prov.opportunities
-                            .where((o) => o.stage == stage)
-                            .toList();
-
-                        return SizedBox(
-                          width: 280,
-                          height: height,
-                          child: Card(
-                            margin: const EdgeInsets.all(8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
-                              side: BorderSide(
-                                color: Theme.of(context).dividerColor,
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                // En-tête de colonne
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.glassHeader,
-                                    borderRadius: const BorderRadius.vertical(
-                                        top: Radius.circular(4)),
-                                  ),
-                                  child: Text(
-                                    stage,
-                                    textAlign: TextAlign.center,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-
-                                // Liste des opportunités
-                                Expanded(
-                                  child: items.isEmpty
-                                      ? const Center(child: Text('—'))
-                                      : ListView.builder(
-                                    padding: EdgeInsets.zero,
-                                    itemCount: items.length,
-                                    itemBuilder: (_, i) {
-                                      final opp = items[i];
-                                      return Card(
-                                        margin: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
-                                        child: ListTile(
-                                          title: Text(opp.name),
-                                          subtitle: Text(
-                                            '${NumberFormat.currency(symbol: '€', decimalDigits: 0).format(opp.amount)} • '
-                                                '${DateFormat.yMd().format(opp.createdAt)}',
-                                          ),
-                                          onTap: () => _openPanel(
-                                              opportunityId: opp.id),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-
-                              ],
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
+                // --- 1) Liste moderne axée sur la progression ---
+                ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: prov.opportunities.length,
+                  itemBuilder: (_, i) {
+                    final opp = prov.opportunities[i];
+                    return OpportunityProgressCard(
+                      opportunity: opp,
+                      onTap: () => _openPanel(opportunityId: opp.id),
+                    );
+                  },
                 ),
 
                 // --- 2) Overlay pour fermer au clic en dehors ---
