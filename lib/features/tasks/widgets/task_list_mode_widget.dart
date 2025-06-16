@@ -88,21 +88,9 @@ class TasksListView extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
-                TextButton.icon(
-                  onPressed: onCreateFolder,
-                  style: TextButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.primary,
-                  ),
-                  icon: const Icon(Icons.create_new_folder),
-                  label: Text(
-                    'Nouveau dossier',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                ),
+                // Lorsque la liste est vide, seul le bouton pour ajouter une
+                // tâche doit être affiché. Le bouton de création de dossier a
+                // été retiré pour simplifier l'interface dans ce cas précis.
               ],
             ),
           ),
@@ -1190,6 +1178,7 @@ class _FolderHeaderState extends State<_FolderHeader> {
                         fontWeight: FontWeight.bold,
                       ),
                 ),
+
                 if (_hover) ...[
                   IconButton(
                     icon: const Icon(Icons.add, size: 16),
@@ -1211,6 +1200,25 @@ class _FolderHeaderState extends State<_FolderHeader> {
           ),
         );
       },
+
+          ),
+          IconButton(
+            icon: const Icon(Icons.add, size: 16),
+            tooltip: 'Ajouter une tâche',
+            onPressed: widget.onAddTask,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          if (_hover)
+            IconButton(
+              icon: const Icon(Icons.close, size: 16),
+              tooltip: 'Supprimer ce dossier',
+              onPressed: widget.onDelete,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+        ],
+      ),
     );
   }
 }

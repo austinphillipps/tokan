@@ -10,7 +10,7 @@ import '../../tasks/views/tasks_screen.dart';
 import '../views/project_settings_screen.dart';
 import 'discussion_screen.dart';
 
-import '../../../shared/interface/interface.dart';
+import 'package:tokan/shared/interface/interface.dart';
 
 import '../../../plugins/crm/services/crm_plugin.dart'; // CrmPlugin
 
