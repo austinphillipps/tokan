@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart'
 import 'package:firebase_auth/firebase_auth.dart';
 import 'register_screen.dart';
 import '../../../shared/interface/interface.dart'; // Ajuste le chemin si besoin
+import '../../../shared/interface/mobile_interface.dart';
+import '../../../shared/interface/adaptive_home_screen.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -31,7 +33,7 @@ class _LoginPageState extends State<LoginPage> {
     if (user != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          MaterialPageRoute(builder: (_) => const AdaptiveHomeScreen()),
         );
       });
     }
@@ -55,7 +57,7 @@ class _LoginPageState extends State<LoginPage> {
       );
       // FirebaseAuth conserve automatiquement la session
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => const AdaptiveHomeScreen()),
       );
     } on FirebaseAuthException catch (e, st) {
       debugPrint('🔥 FirebaseAuthException: code=${e.code} message=${e.message}');
