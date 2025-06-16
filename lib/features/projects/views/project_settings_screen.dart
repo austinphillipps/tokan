@@ -101,30 +101,22 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
 
           pluginToggles.add(const Divider(color: Colors.white24));
 
-          pluginToggles.add(
-            ListTile(
-              enabled: crmInstalled,
-              leading: Icon(Icons.business_center,
-                  color: crmInstalled ? Colors.white : Colors.grey),
-              title: const Text('CRM',
-                  style: TextStyle(color: Colors.white)),
-              subtitle: crmInstalled
-                  ? null
-                  : const Text(
-              'Le plugin CRM n\'est pas installé',
-              style: TextStyle(color: Colors.grey),
-            ),
-              onTap: crmInstalled
-                  ? () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => CrmPlugin().buildMainScreen(context),
-                  ),
-                );
-              }
-                  : null,
-            ),
-          );
+          if (crmInstalled) {
+            pluginToggles.add(
+              ListTile(
+                leading: const Icon(Icons.business_center, color: Colors.white),
+                title:
+                    const Text('CRM', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => CrmPlugin().buildMainScreen(context),
+                    ),
+                  );
+                },
+              ),
+            );
+          }
 
           return ListView(children: pluginToggles);
         },
