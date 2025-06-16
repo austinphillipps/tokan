@@ -1079,14 +1079,14 @@ class _FolderHeaderState extends State<_FolderHeader> {
                   fontWeight: FontWeight.bold,
                 ),
           ),
-          if (_hover) ...[
-            IconButton(
-              icon: const Icon(Icons.add, size: 16),
-              tooltip: 'Ajouter une tâche',
-              onPressed: widget.onAddTask,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
+          IconButton(
+            icon: const Icon(Icons.add, size: 16),
+            tooltip: 'Ajouter une tâche',
+            onPressed: widget.onAddTask,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          if (_hover)
             IconButton(
               icon: const Icon(Icons.close, size: 16),
               tooltip: 'Supprimer ce dossier',
@@ -1094,7 +1094,6 @@ class _FolderHeaderState extends State<_FolderHeader> {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
             ),
-          ],
         ],
       ),
     );
