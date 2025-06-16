@@ -684,6 +684,12 @@ class _TaskRowState extends State<_TaskRow> {
                 child: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection('collaborations')
+                      .where(
+                        Filter.or(
+                          Filter('from', isEqualTo: FirebaseAuth.instance.currentUser!.uid),
+                          Filter('to', isEqualTo: FirebaseAuth.instance.currentUser!.uid),
+                        ),
+                      )
                       .where('status', isEqualTo: 'accepted')
                       .snapshots(),
                   builder: (ctx2, snap) {

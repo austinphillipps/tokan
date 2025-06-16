@@ -144,6 +144,12 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
     if (user == null) return Stream.value([]);
     return FirebaseFirestore.instance
         .collection('collaborations')
+        .where(
+          Filter.or(
+            Filter('from', isEqualTo: user.uid),
+            Filter('to', isEqualTo: user.uid),
+          ),
+        )
         .where('status', isEqualTo: 'accepted')
         .snapshots()
         .asyncMap((snap) async {

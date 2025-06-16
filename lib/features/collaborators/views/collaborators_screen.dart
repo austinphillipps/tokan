@@ -190,6 +190,12 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
       String currentUid) {
     return FirebaseFirestore.instance
         .collection('collaborations')
+        .where(
+          Filter.or(
+            Filter('from', isEqualTo: currentUid),
+            Filter('to', isEqualTo: currentUid),
+          ),
+        )
         .where('status', isEqualTo: 'accepted')
         .snapshots()
         .asyncMap((snapshot) async {

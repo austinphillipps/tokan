@@ -39,6 +39,12 @@ class _MessagesPageState extends State<MessagesPage> with TickerProviderStateMix
   Stream<List<Map<String, dynamic>>> _getAcceptedCollaborators(String meUid) {
     return FirebaseFirestore.instance
         .collection('collaborations')
+        .where(
+          Filter.or(
+            Filter('from', isEqualTo: meUid),
+            Filter('to', isEqualTo: meUid),
+          ),
+        )
         .where('status', isEqualTo: 'accepted')
         .snapshots()
         .asyncMap((snap) async {
