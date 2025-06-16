@@ -271,6 +271,7 @@ class _TasksPageState extends State<TasksPage> {
         onDeleteTask: _deleteTask,
         onDeleteFolder: _deleteFolder,
         onReorderTask: _reorderTask,
+        onMoveTaskToFolder: _moveTaskToFolder,
 
         multiSelectMode: _multiSelectMode,
         selectedTaskIds: _selectedTaskIds,
@@ -516,6 +517,12 @@ class _TasksPageState extends State<TasksPage> {
 
     task.createdAt = between(before, after);
     await _saveTask(task);
+  }
+
+  Future<void> _moveTaskToFolder(CustomTask task, TaskFolder? folder) async {
+    task.folderId = folder?.id;
+    await _saveTask(task);
+    setState(() {});
   }
 
   Future<void> _showCreateFolderDialog() async {

@@ -23,6 +23,9 @@ class TasksListView extends StatelessWidget {
   final Function(CustomTask) onDeleteTask;
   final Function(TaskFolder) onDeleteFolder;
 
+  /// Callback lorsqu'une tâche est déplacée vers un dossier
+  final Function(CustomTask, TaskFolder?) onMoveTaskToFolder;
+
   /// Callback lors du réordonnancement d'une tâche
   final Future<void> Function(
       CustomTask task, List<CustomTask> list, int oldIndex, int newIndex)
@@ -49,6 +52,7 @@ class TasksListView extends StatelessWidget {
     required this.onDeleteTask,
     required this.onDeleteFolder,
     required this.onReorderTask,
+    required this.onMoveTaskToFolder,
 
     // ← Nouveaux paramètres :
     required this.multiSelectMode,
@@ -124,16 +128,30 @@ class TasksListView extends StatelessWidget {
                   Padding(
                     padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: Text(
-                      "EN COURS",
-                      style:
-                      Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onBackground
-                            .withOpacity(0.7),
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: DragTarget<CustomTask>(
+                      onAccept: (task) => onMoveTaskToFolder(task, null),
+                      builder: (context, candidateData, rejectedData) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                          decoration: candidateData.isNotEmpty
+                              ? BoxDecoration(
+                                  color: AppColors.blue.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                )
+                              : null,
+                          child: Text(
+                            "EN COURS",
+                            style:
+                            Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onBackground
+                                  .withOpacity(0.7),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                   ReorderableListView.builder(
@@ -178,16 +196,30 @@ class TasksListView extends StatelessWidget {
                   Padding(
                     padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: Text(
-                      "TERMINÉES",
-                      style:
-                      Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onBackground
-                            .withOpacity(0.7),
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: DragTarget<CustomTask>(
+                      onAccept: (task) => onMoveTaskToFolder(task, null),
+                      builder: (context, candidateData, rejectedData) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                          decoration: candidateData.isNotEmpty
+                              ? BoxDecoration(
+                                  color: AppColors.blue.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                )
+                              : null,
+                          child: Text(
+                            "TERMINÉES",
+                            style:
+                            Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onBackground
+                                  .withOpacity(0.7),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                   ReorderableListView.builder(
@@ -241,6 +273,7 @@ class TasksListView extends StatelessWidget {
                           folder: folder,
                           onAddTask: () => onAddTaskToFolder(folder),
                           onDelete: () => onDeleteFolder(folder),
+                          onTaskDropped: (task) => onMoveTaskToFolder(task, folder),
                         ),
                       ),
                       if (list.isEmpty)
@@ -546,6 +579,20 @@ class _TaskRowState extends State<_TaskRow> {
   bool _loadingCollaborator = true;
   String? _projectName;
   bool _loadingProject = true;
+
+  Widget _taskNameWidget(bool isDark) {
+    return Text(
+      widget.task.name,
+      style: TextStyle(
+        color: isDark
+            ? Theme.of(context).colorScheme.onBackground
+            : Colors.black87,
+        fontSize: 14,
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
 
   @override
   void initState() {
@@ -896,18 +943,32 @@ class _TaskRowState extends State<_TaskRow> {
             // 2) Nom de la tâche → ouvre le panneau de détails
             Expanded(
               flex: 3,
-              child: GestureDetector(
-                onTap: () => widget.onOpenDetail(widget.task),
-                child: Text(
-                  widget.task.name,
-                  style: TextStyle(
-                    color: isDark
-                        ? Theme.of(context).colorScheme.onBackground
-                        : Colors.black87,
-                    fontSize: 14,
+              child: LongPressDraggable<CustomTask>(
+                data: widget.task,
+                feedback: Material(
+                  color: Colors.transparent,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.glassHeader,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      widget.task.name,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onBackground,
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                ),
+                childWhenDragging: Opacity(
+                  opacity: 0.5,
+                  child: _taskNameWidget(isDark),
+                ),
+                child: GestureDetector(
+                  onTap: () => widget.onOpenDetail(widget.task),
+                  child: _taskNameWidget(isDark),
                 ),
               ),
             ),
@@ -1070,12 +1131,14 @@ class _FolderHeader extends StatefulWidget {
   final TaskFolder folder;
   final VoidCallback onAddTask;
   final VoidCallback onDelete;
+  final Function(CustomTask) onTaskDropped;
 
   const _FolderHeader({
     Key? key,
     required this.folder,
     required this.onAddTask,
     required this.onDelete,
+    required this.onTaskDropped,
   }) : super(key: key);
 
   @override
@@ -1087,21 +1150,57 @@ class _FolderHeaderState extends State<_FolderHeader> {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            widget.folder.name,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onBackground
-                      .withOpacity(0.7),
-                  fontWeight: FontWeight.bold,
+    return DragTarget<CustomTask>(
+      onWillAccept: (task) => task!.folderId != widget.folder.id,
+      onAccept: widget.onTaskDropped,
+      builder: (context, candidateData, rejectedData) {
+        return MouseRegion(
+          onEnter: (_) => setState(() => _hover = true),
+          onExit: (_) => setState(() => _hover = false),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+            decoration: candidateData.isNotEmpty
+                ? BoxDecoration(
+                    color: AppColors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  )
+                : null,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.folder.name,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onBackground
+                            .withOpacity(0.7),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
+
+                if (_hover) ...[
+                  IconButton(
+                    icon: const Icon(Icons.add, size: 16),
+                    tooltip: 'Ajouter une tâche',
+                    onPressed: widget.onAddTask,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 16),
+                    tooltip: 'Supprimer ce dossier',
+                    onPressed: widget.onDelete,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+
           ),
           IconButton(
             icon: const Icon(Icons.add, size: 16),
