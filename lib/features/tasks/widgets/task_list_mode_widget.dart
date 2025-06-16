@@ -18,8 +18,10 @@ class TasksListView extends StatelessWidget {
   final Function(CustomTask, DateTime?) onDeadlineChanged;
   final Function(CustomTask) onOpenDetail;
   final VoidCallback onAddTask;
+  final Function(TaskFolder) onAddTaskToFolder;
   final VoidCallback onCreateFolder;
   final Function(CustomTask) onDeleteTask;
+  final Function(TaskFolder) onDeleteFolder;
 
   // ← Paramètres pour la sélection multiple
   final bool multiSelectMode;
@@ -37,8 +39,10 @@ class TasksListView extends StatelessWidget {
     required this.onDeadlineChanged,
     required this.onOpenDetail,
     required this.onAddTask,
+    required this.onAddTaskToFolder,
     required this.onCreateFolder,
     required this.onDeleteTask,
+    required this.onDeleteFolder,
 
     // ← Nouveaux paramètres :
     required this.multiSelectMode,
@@ -219,18 +223,10 @@ class TasksListView extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 4),
-                        child: Text(
-                          folder.name,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onBackground
-                                .withOpacity(0.7),
-                            fontWeight: FontWeight.bold,
-                          ),
+                        child: _FolderHeader(
+                          folder: folder,
+                          onAddTask: () => onAddTaskToFolder(folder),
+                          onDelete: () => onDeleteFolder(folder),
                         ),
                       ),
                       if (list.isEmpty)
@@ -1041,6 +1037,66 @@ class _TaskRowState extends State<_TaskRow> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _FolderHeader extends StatefulWidget {
+  final TaskFolder folder;
+  final VoidCallback onAddTask;
+  final VoidCallback onDelete;
+
+  const _FolderHeader({
+    Key? key,
+    required this.folder,
+    required this.onAddTask,
+    required this.onDelete,
+  }) : super(key: key);
+
+  @override
+  State<_FolderHeader> createState() => _FolderHeaderState();
+}
+
+class _FolderHeaderState extends State<_FolderHeader> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              widget.folder.name,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onBackground
+                        .withOpacity(0.7),
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          ),
+          if (_hover) ...[
+            IconButton(
+              icon: const Icon(Icons.add, size: 16),
+              tooltip: 'Ajouter une tâche',
+              onPressed: widget.onAddTask,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close, size: 16),
+              tooltip: 'Supprimer ce dossier',
+              onPressed: widget.onDelete,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+          ],
+        ],
       ),
     );
   }
