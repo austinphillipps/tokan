@@ -253,7 +253,9 @@ class _ResizableTaskCellState extends State<ResizableTaskCell> {
         _notifyParentEndDrag();
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
+        duration: (_dragSide != null || _isDraggingVertically)
+            ? Duration.zero
+            : const Duration(milliseconds: 150),
         curve: Curves.easeOut,
         width: widget.availableWidth,
         height: _height,
