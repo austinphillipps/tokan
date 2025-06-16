@@ -18,6 +18,7 @@ class TasksListView extends StatelessWidget {
   final Function(CustomTask, DateTime?) onDeadlineChanged;
   final Function(CustomTask) onOpenDetail;
   final VoidCallback onAddTask;
+  final void Function(String folderId) onAddTaskToFolder;
   final VoidCallback onCreateFolder;
   final Function(CustomTask) onDeleteTask;
 
@@ -38,6 +39,7 @@ class TasksListView extends StatelessWidget {
     required this.onOpenDetail,
     required this.onAddTask,
     required this.onCreateFolder,
+    required this.onAddTaskToFolder,
     required this.onDeleteTask,
 
     // ← Nouveaux paramètres :
@@ -217,20 +219,30 @@ class TasksListView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 4),
-                        child: Text(
-                          folder.name,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onBackground
-                                .withOpacity(0.7),
-                            fontWeight: FontWeight.bold,
-                          ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                folder.name,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onBackground
+                                          .withOpacity(0.7),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.add, size: 18),
+                              tooltip: 'Ajouter une tâche',
+                              onPressed: () => onAddTaskToFolder(folder.id),
+                            )
+                          ],
                         ),
                       ),
                       if (list.isEmpty)
