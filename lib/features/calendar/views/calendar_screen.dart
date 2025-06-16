@@ -988,6 +988,7 @@ class _CalendarPageState extends State<CalendarPage> {
                       ? AppColors.darkBackground
                       : Colors.white,
                   borderRadius: BorderRadius.circular(12),
+                  clipBehavior: Clip.antiAlias,
                   child: SizedBox(
                     width: 500,
                     height: MediaQuery.of(context).size.height * 0.8,

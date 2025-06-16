@@ -136,6 +136,7 @@ class _TasksPageState extends State<TasksPage> {
               child: Material(
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
+                clipBehavior: Clip.antiAlias,
                 child: SizedBox(
                   width: MediaQuery.of(context).size.width * 0.6,
                   height: MediaQuery.of(context).size.height * 0.8,
