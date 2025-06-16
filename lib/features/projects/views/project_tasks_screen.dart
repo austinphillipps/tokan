@@ -539,45 +539,55 @@ class _ProjectTasksPageState extends State<ProjectTasksPage> {
               title: Text(widget.project.name),
             ),
             Expanded(
-              child: showTaskPanel && activeTask != null
-                  ? Row(
+              child: Stack(
                 children: [
-                  Expanded(child: buildTasksContent()),
-                  Container(
-                    width: 400,
-                    color: isDark
-                        ? AppColors.darkBackground
-                        : Theme.of(context).colorScheme.surface,
-                    child: TaskDetailPanel(
-                      task: activeTask!,
-                      onSave: (updatedTask) async {
-                        await saveTaskToFirestore(updatedTask);
-                        setState(() {
-                          showTaskPanel = false;
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content: Text(
-                                  "Tâche '${updatedTask.name}' sauvegardée")),
-                        );
-                      },
-                      onClose: () {
-                        setState(() {
-                          showTaskPanel = false;
-                        });
-                      },
-                      onMarkAsDone: () async {
-                        activeTask!.status = 'terminée';
-                        await saveTaskToFirestore(activeTask!);
-                        setState(() {
-                          showTaskPanel = false;
-                        });
-                      },
+                  buildTasksContent(),
+                  if (showTaskPanel && activeTask != null) ...[
+                    Positioned.fill(
+                      child: GestureDetector(
+                        onTap: () => setState(() => showTaskPanel = false),
+                        child: Container(color: Colors.black.withOpacity(0.5)),
+                      ),
                     ),
-                  ),
+                    Center(
+                      child: Material(
+                        color: isDark
+                            ? AppColors.darkBackground
+                            : Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        child: SizedBox(
+                          width: 500,
+                          height: MediaQuery.of(context).size.height * 0.8,
+                          child: TaskDetailPanel(
+                            task: activeTask!,
+                            onSave: (updatedTask) async {
+                              await saveTaskToFirestore(updatedTask);
+                              setState(() {
+                                showTaskPanel = false;
+                              });
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text("Tâche '${updatedTask.name}' sauvegardée")),
+                              );
+                            },
+                            onClose: () {
+                              setState(() {
+                                showTaskPanel = false;
+                              });
+                            },
+                            onMarkAsDone: () async {
+                              activeTask!.status = 'terminée';
+                              await saveTaskToFirestore(activeTask!);
+                              setState(() {
+                                showTaskPanel = false;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
-              )
-                  : buildTasksContent(),
+              ),
             ),
           ],
         ),
