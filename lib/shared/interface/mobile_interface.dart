@@ -16,6 +16,7 @@ import '../../features/library/views/library_screen.dart';
 import '../../features/projects/views/projects_screen.dart';
 import '../../settings/views/settings_screen.dart';
 import '../../features/notifications/services/notification_service.dart';
+import '../../main.dart'; // Pour AppColors
 
 class MobileHomeScreen extends StatefulWidget {
   const MobileHomeScreen({Key? key}) : super(key: key);
@@ -106,14 +107,14 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
     final showBottomNav = _selectedIndex < bottomItemsCount;
 
     return Scaffold(
-      body: Stack(
+      body: Column(
         children: [
-          pages[_selectedIndex],
           SafeArea(
-            child: Align(
-              alignment: Alignment.topRight,
+            child: Container(
+              color: AppColors.glassHeader,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   IconButton(
                     icon: _buildNotificationsIcon(Icons.notifications),
@@ -131,6 +132,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
               ),
             ),
           ),
+          Expanded(child: pages[_selectedIndex]),
         ],
       ),
       bottomNavigationBar: showBottomNav
