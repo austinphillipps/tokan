@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../chat/presentation/paginated_message_list.dart';
 import '../../chat/presentation/chat_composer.dart';
 import '../../../main.dart'; // Pour AppColors
+import '../data/chat_repository.dart';
 
 class ChatScreen extends StatefulWidget {
   final String conversationId;
@@ -22,6 +23,13 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
+  final ChatRepository _repo = ChatRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    _repo.markConversationRead(widget.conversationId);
+  }
 
   @override
   void dispose() {
@@ -91,7 +99,10 @@ class _ChatScreenState extends State<ChatScreen> {
             child: PaginatedMessageList(
               conversationId: widget.conversationId,
               scrollController: _scrollController,
-              onNewMessage: _scrollToBottom,
+              onNewMessage: () {
+                _scrollToBottom();
+                _repo.markConversationRead(widget.conversationId);
+              },
             ),
           ),
 

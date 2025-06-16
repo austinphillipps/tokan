@@ -10,7 +10,8 @@ import 'package:tokan/plugins/crm/providers/support_ticket_provider.dart';
 class SupportFormScreen extends StatefulWidget {
   /// Si ticketId est null, on crée un nouveau ticket, sinon on édite
   final String? ticketId;
-  const SupportFormScreen({Key? key, this.ticketId}) : super(key: key);
+  final VoidCallback? onSaved;
+  const SupportFormScreen({Key? key, this.ticketId, this.onSaved}) : super(key: key);
 
   @override
   _SupportFormScreenState createState() => _SupportFormScreenState();
@@ -71,7 +72,11 @@ class _SupportFormScreenState extends State<SupportFormScreen> {
       await provider.create(ticket);
     }
     setState(() => _loading = false);
-    Navigator.of(context).pop();
+    if (widget.onSaved != null) {
+      widget.onSaved!();
+    } else {
+      Navigator.of(context).pop();
+    }
   }
 
   @override

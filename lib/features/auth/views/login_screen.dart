@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show TextInputAction;
 import 'package:flutter/foundation.dart'
     show kIsWeb, defaultTargetPlatform, TargetPlatform, debugPrint, debugPrintStack;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -116,6 +117,9 @@ class _LoginPageState extends State<LoginPage> {
                       label: 'Email',
                       controller: _emailCtrl,
                       obscure: false,
+                      inputAction: TextInputAction.next,
+                      onSubmitted: (_) =>
+                          FocusScope.of(context).nextFocus(),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return "Entrez un email.";
@@ -149,6 +153,8 @@ class _LoginPageState extends State<LoginPage> {
                         }
                         return null;
                       },
+                      inputAction: TextInputAction.done,
+                      onSubmitted: (_) => _login(),
                     ),
                     const SizedBox(height: 16),
 
@@ -205,11 +211,15 @@ class _LoginPageState extends State<LoginPage> {
     required bool obscure,
     Widget? suffix,
     String? Function(String?)? validator,
+    TextInputAction? inputAction,
+    void Function(String)? onSubmitted,
   }) {
     return TextFormField(
       controller: controller,
       obscureText: obscure,
       validator: validator,
+      textInputAction: inputAction,
+      onFieldSubmitted: onSubmitted,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,

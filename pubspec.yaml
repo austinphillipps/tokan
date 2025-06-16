@@ -13,11 +13,11 @@ dependencies:
   flutter_launcher_icons: ^0.14.4
 
   # Firebase
-  firebase_core: ^3.13.0
-  firebase_auth: ^5.5.3
-  cloud_firestore: ^5.6.7
-  firebase_messaging: ^15.2.5
-  firebase_storage: ^12.4.5
+  firebase_core: ^3.14.0
+  firebase_auth: ^5.6.0
+  cloud_firestore: ^5.6.9
+  firebase_messaging: ^15.2.7
+  firebase_storage: ^12.4.7
   firebase_database: ^11.3.5
   flutter_secure_storage: ^8.0.0
   record: ^6.0.0
@@ -32,7 +32,9 @@ dependencies:
   path_provider: ^2.1.5
 
 
-
+  # PDF generation & printing
+  pdf: ^3.11.3
+  printing: ^5.14.2
 
 
   # Fichiers, graphiques, notifications

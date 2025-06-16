@@ -16,6 +16,7 @@ class CustomTask extends Equatable {
   int? duration;         // Durée estimée en minutes
   String? client;        // Nom du client (optionnel)
   String? project;       // Projet d’appartenance (optionnel)
+  String? folderId;      // Dossier auquel la tâche appartient
 
   /// ID du projet avant édition, pour détecter les changements de projet
   String? originalProjectId;
@@ -43,6 +44,7 @@ class CustomTask extends Equatable {
     this.duration,
     this.client,
     this.project,
+    this.folderId,
     this.originalProjectId,
     this.recurrenceType,
     this.recurrenceDays,
@@ -76,6 +78,7 @@ class CustomTask extends Equatable {
       'duration': duration,
       'client': client,
       'project': project,
+      'folderId': folderId,
       // Champs de récurrence
       'recurrenceType': recurrenceType,
       'recurrenceDays': recurrenceDays,
@@ -100,6 +103,7 @@ class CustomTask extends Equatable {
       'duration': duration,
       'client': client,
       'project': project,
+      'folderId': folderId,
       'recurrenceType': recurrenceType,
       'recurrenceDays': recurrenceDays,
       'recurrenceIncludePast': recurrenceIncludePast ?? false,
@@ -170,6 +174,7 @@ class CustomTask extends Equatable {
       duration: map['duration'] as int?,
       client: map['client'] as String?,
       project: proj,
+      folderId: map['folderId'] as String?,
       originalProjectId: proj,
       recurrenceType: map['recurrenceType'] as String?,
       recurrenceDays: _mapToRecurrenceDays(map['recurrenceDays']),
@@ -198,6 +203,7 @@ class CustomTask extends Equatable {
       duration: map['duration'] as int?,
       client: map['client'] as String?,
       project: proj,
+      folderId: map['folderId'] as String?,
       originalProjectId: proj,
       recurrenceType: map['recurrenceType'] as String?,
       recurrenceDays: _mapToRecurrenceDays(map['recurrenceDays']),
@@ -225,6 +231,7 @@ class CustomTask extends Equatable {
     int? duration,
     String? client,
     String? project,
+    String? folderId,
     String? originalProjectId,
     String? recurrenceType,
     List<int>? recurrenceDays,
@@ -243,6 +250,7 @@ class CustomTask extends Equatable {
       duration: duration ?? this.duration,
       client: client ?? this.client,
       project: project ?? this.project,
+      folderId: folderId ?? this.folderId,
       originalProjectId: originalProjectId ?? this.originalProjectId,
       recurrenceType: recurrenceType ?? this.recurrenceType,
       recurrenceDays: recurrenceDays != null ? List<int>.from(recurrenceDays) : this.recurrenceDays,
@@ -266,6 +274,7 @@ class CustomTask extends Equatable {
     duration,
     client,
     project,
+    folderId,
     originalProjectId,
     recurrenceType,
     recurrenceDays,

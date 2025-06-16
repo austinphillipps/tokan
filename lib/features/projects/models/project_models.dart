@@ -46,7 +46,7 @@ class Project {
     this.objective,
     List<Collaborator>? collaborators,
     this.color,
-    this.plugins, // ← prend en charge la liste des plugins (ex: ['stock', ...])
+    this.plugins, // ← prend en charge la liste des plugins (ex: ['crm', ...])
   }) : collaborators = collaborators ?? [];
 
   /// Clone le projet en ne modifiant que certains champs

@@ -19,6 +19,13 @@ class ContactListScreen extends StatefulWidget {
 class _ContactListScreenState extends State<ContactListScreen> {
   bool _showPanel = false;
   String? _panelContactId;
+  final TextEditingController _searchCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
 
   /// Ouvre le panneau (form si [contactId]==null, sinon détail)
   void _openPanel({String? contactId}) {
@@ -34,6 +41,73 @@ class _ContactListScreenState extends State<ContactListScreen> {
       _showPanel = false;
       _panelContactId = null;
     });
+  }
+
+  /// Affiche une boîte de dialogue pour rechercher un contact par son nom
+  void _showSearchDialog() {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) {
+        String query = '';
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final contacts = context
+                .read<ContactProvider>()
+                .contacts
+                .where((c) =>
+                ('${c.firstName} ${c.name}').toLowerCase().contains(query))
+                .toList();
+
+            return AlertDialog(
+              title: const Text('Rechercher un contact'),
+              content: SizedBox(
+                width: 400,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: _searchCtrl,
+                      autofocus: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Nom du contact',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      onChanged: (val) =>
+                          setState(() => query = val.toLowerCase()),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 200,
+                      child: contacts.isEmpty
+                          ? const Center(child: Text('Aucun résultat'))
+                          : ListView.builder(
+                        itemCount: contacts.length,
+                        itemBuilder: (ctx, i) {
+                          final c = contacts[i];
+                          return ListTile(
+                            title: Text(c.name),
+                            onTap: () {
+                              Navigator.of(dialogCtx).pop();
+                              _openPanel(contactId: c.id);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogCtx).pop(),
+                  child: const Text('Fermer'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -58,9 +132,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
-            onPressed: () {
-              // TODO: implémenter recherche
-            },
+            onPressed: _showSearchDialog,
           ),
         ],
       ),
@@ -70,14 +142,20 @@ class _ContactListScreenState extends State<ContactListScreen> {
           if (prov.isLoading)
             const Center(child: CircularProgressIndicator())
           else if (prov.contacts.isEmpty)
-            const Center(child: Text('Aucun contact trouvé'))
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () => _openPanel(contactId: null),
+                icon: const Icon(Icons.add),
+                label: const Text('Ajouter votre premier contact'),
+              ),
+            )
           else
             ListView.builder(
               itemCount: prov.contacts.length,
               itemBuilder: (ctx, i) {
                 final Contact c = prov.contacts[i];
                 return ListTile(
-                  title: Text(c.name),
+                  title: Text('${c.firstName} ${c.name}'),
                   subtitle: Text(c.email),
                   onTap: () => _openPanel(contactId: c.id),
                 );
@@ -107,7 +185,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
               color: AppColors.glassBackground,
               child: SafeArea(
                 child: _panelContactId == null
-                    ? const ContactFormScreen()
+                    ? ContactFormScreen(onSaved: _closePanel)
                     : ContactDetailScreen(contactId: _panelContactId!),
               ),
             ),

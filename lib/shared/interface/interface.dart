@@ -6,7 +6,7 @@ import 'package:flutter/gestures.dart';      // Pour PointerEnterEvent / Pointer
 import 'package:provider/provider.dart';
 
 import '../../core/providers/plugin_provider.dart';
-import '../../core/contract/plugin_contract.dart';
+import 'package:tokan/core/contract/plugin_contract.dart';
 
 import '../../features/dashboard/views/dashboard_screen.dart';
 import '../../features/tasks/views/tasks_screen.dart';
@@ -17,8 +17,11 @@ import '../../features/notifications/views/notifications_screen.dart';
 import '../../features/library/views/library_screen.dart';
 import '../../features/projects/views/projects_screen.dart';
 import '../../settings/views/settings_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../main.dart'; // Pour AppTheme, themeNotifier et AppColors
+import '../../features/notifications/services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -32,10 +35,18 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _showLabels = false;
   Timer? _labelTimer;
   final ValueNotifier<int> _calendarRefreshNotifier = ValueNotifier<int>(0);
+  final NotificationService _notifService = NotificationService();
+
+  @override
+  void initState() {
+    super.initState();
+    _notifService.init();
+  }
 
   @override
   void dispose() {
     _labelTimer?.cancel();
+    _notifService.dispose();
     super.dispose();
   }
 
@@ -143,7 +154,14 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 24),
             // Items du haut
             for (var i = 0; i < pages.length - 3; i++)
-              _buildNavItem(
+              i == 4
+                  ? _buildMessagesNavItem(
+                index: i,
+                iconData: icons[i],
+                label: labels[i],
+                selectedBg: selectedBg,
+              )
+                  : _buildNavItem(
                 iconData: icons[i],
                 label: labels[i],
                 showLabel: _showLabels,
@@ -154,7 +172,14 @@ class _HomeScreenState extends State<HomeScreen> {
             const Spacer(),
             // Items fixes en bas
             for (var i = pages.length - 3; i < pages.length; i++)
-              _buildNavItem(
+              i == pages.length - 3
+                  ? _buildNotificationsNavItem(
+                index: i,
+                iconData: icons[i],
+                label: labels[i],
+                selectedBg: selectedBg,
+              )
+                  : _buildNavItem(
                 iconData: icons[i],
                 label: labels[i],
                 showLabel: _showLabels,
@@ -193,6 +218,105 @@ class _HomeScreenState extends State<HomeScreen> {
     return content;
   }
 
+  Widget _buildMessagesNavItem({
+    required int index,
+    required IconData iconData,
+    required String label,
+    required Color selectedBg,
+  }) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      return _buildNavItem(
+        iconData: iconData,
+        label: label,
+        showLabel: _showLabels,
+        isSelected: _selectedIndex == index,
+        selectedBg: selectedBg,
+        onTap: () => setState(() => _selectedIndex = index),
+      );
+    }
+
+    final convStream = FirebaseFirestore.instance
+        .collection('conversations')
+        .where('participants', arrayContains: uid)
+        .snapshots();
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: convStream,
+      builder: (ctx, snap) {
+        final docs = snap.data?.docs ?? [];
+        int count = 0;
+        for (final d in docs) {
+          final data = d.data() as Map<String, dynamic>;
+          final unread = List<String>.from(data['unreadBy'] ?? []);
+          if (unread.contains(uid)) count++;
+        }
+        return _buildNavItem(
+          iconData: iconData,
+          label: label,
+          showLabel: _showLabels,
+          isSelected: _selectedIndex == index,
+          selectedBg: selectedBg,
+          badgeCount: count > 0 ? count : null,
+          onTap: () => setState(() => _selectedIndex = index),
+        );
+      },
+    );
+  }
+
+  Widget _buildNotificationsNavItem({
+    required int index,
+    required IconData iconData,
+    required String label,
+    required Color selectedBg,
+  }) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      return _buildNavItem(
+        iconData: iconData,
+        label: label,
+        showLabel: _showLabels,
+        isSelected: _selectedIndex == index,
+        selectedBg: selectedBg,
+        onTap: () => setState(() => _selectedIndex = index),
+      );
+    }
+
+    final pendingStream = FirebaseFirestore.instance
+        .collection('collaborations')
+        .where('to', isEqualTo: uid)
+        .where('status', isEqualTo: 'pending')
+        .snapshots();
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: pendingStream,
+      builder: (ctx, pendSnap) {
+        final pending = pendSnap.data?.size ?? 0;
+        final notifStream = FirebaseFirestore.instance
+            .collection('notifications')
+            .where('recipientId', isEqualTo: uid)
+            .where('read', isEqualTo: false)
+            .snapshots();
+
+        return StreamBuilder<QuerySnapshot>(
+          stream: notifStream,
+          builder: (ctx2, notifSnap) {
+            final count = (notifSnap.data?.size ?? 0) + pending;
+            return _buildNavItem(
+              iconData: iconData,
+              label: label,
+              showLabel: _showLabels,
+              isSelected: _selectedIndex == index,
+              selectedBg: selectedBg,
+              badgeCount: count > 0 ? count : null,
+              onTap: () => setState(() => _selectedIndex = index),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildNavItem({
     required IconData iconData,
     required String label,
@@ -200,6 +324,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required bool isSelected,
     required Color selectedBg,
     required VoidCallback onTap,
+    int? badgeCount,
   }) {
     final color = isSelected
         ? Theme.of(context).colorScheme.primary
@@ -212,7 +337,29 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
           child: Row(
             children: [
-              Icon(iconData, size: 24, color: color),
+              Stack(
+                children: [
+                  Icon(iconData, size: 24, color: color),
+                  if (badgeCount != null && badgeCount > 0)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        child: Text(
+                          '$badgeCount',
+                          style: const TextStyle(color: Colors.white, fontSize: 10),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
               if (showLabel) ...[
                 const SizedBox(width: 12),
                 Text(label, style: TextStyle(color: color)),

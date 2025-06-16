@@ -10,8 +10,6 @@ import '../../tasks/views/tasks_screen.dart';
 import '../views/project_settings_screen.dart';
 import 'discussion_screen.dart';
 
-import '../../../plugins/stock/views/stock_screen.dart';
-import '../../../plugins/stock/views/commande_screen.dart';
 import '../../../plugins/crm/services/crm_plugin.dart'; // CrmPlugin
 
 class ProjectDetailPanel extends StatefulWidget {
@@ -180,6 +178,112 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
     }
   }
 
+  Future<void> _showAddCollaboratorDialog() async {
+    String search = '';
+    final ctrl = TextEditingController();
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSt) => AlertDialog(
+          title: const Text('Ajouter un collaborateur'),
+          backgroundColor: Theme.of(ctx).colorScheme.surface,
+          titleTextStyle: Theme.of(ctx)
+              .textTheme
+              .titleLarge
+              ?.copyWith(color: Theme.of(ctx).colorScheme.onSurface),
+          content: SizedBox(
+            width: 300,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: ctrl,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: 'Rechercher…',
+                    hintStyle: TextStyle(
+                      color:
+                      Theme.of(ctx).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(ctx)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.3),
+                      ),
+                    ),
+                    focusedBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.blue),
+                    ),
+                  ),
+                  onChanged: (v) => setSt(() => search = v.trim().toLowerCase()),
+                  style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 200,
+                  child: StreamBuilder<List<Map<String, String>>>(
+                    stream: _friendsStream,
+                    builder: (ctx2, snap) {
+                      if (!snap.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      final list = snap.data!
+                          .where((u) => u['displayName']!
+                          .toLowerCase()
+                          .contains(search))
+                          .toList();
+                      if (list.isEmpty) {
+                        return Text(
+                          'Aucun ami trouvé',
+                          style: TextStyle(
+                              color: Theme.of(ctx2).colorScheme.onSurface),
+                        );
+                      }
+                      return ListView.builder(
+                        itemCount: list.length,
+                        itemBuilder: (ctx3, i) {
+                          final u = list[i];
+                          return ListTile(
+                            title: Text(
+                              u['displayName']!,
+                              style: TextStyle(
+                                  color: Theme.of(ctx3).colorScheme.onSurface),
+                            ),
+                            onTap: () => Navigator.pop(ctx, u['uid']),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(
+                'Fermer',
+                style:
+                TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (selected != null &&
+        !_collaborators.any((c) => c.uid == selected)) {
+      setState(() {
+        _collaborators.add(Collaborator(uid: selected, role: 'viewer'));
+      });
+      await _loadCollaboratorNames();
+      _autoSave();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -211,14 +315,6 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
           ProjectDiscussionScreen(projectId: widget.project.id),
         ];
 
-        if (live.contains('stock')) {
-          tabs.add('Stock');
-          views.add(const StockScreen());
-        }
-        if (live.contains('commande')) {
-          tabs.add('Commandes');
-          views.add(const CommandeScreen());
-        }
         if (live.contains('crm')) {
           tabs.add('CRM');
           views.add(CrmPlugin().buildContent(context));
@@ -276,6 +372,11 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
                             ),
                           ),
                           IconButton(
+                            icon: Icon(Icons.person_add, color: onSurface),
+                            tooltip: 'Ajouter un collaborateur',
+                            onPressed: _showAddCollaboratorDialog,
+                          ),
+                          IconButton(
                             icon: Icon(Icons.settings, color: onSurface),
                             tooltip: 'Paramètres du projet',
                             onPressed: () => Navigator.of(context).push(
@@ -314,12 +415,6 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
                                     break;
                                   case 'Discussion générale':
                                     icon = Icons.forum_outlined;
-                                    break;
-                                  case 'Stock':
-                                    icon = Icons.store_outlined;
-                                    break;
-                                  case 'Commandes':
-                                    icon = Icons.shopping_cart_outlined;
                                     break;
                                   case 'CRM':
                                     icon = Icons.business_center_outlined;

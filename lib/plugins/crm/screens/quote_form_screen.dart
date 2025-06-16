@@ -6,12 +6,14 @@ import 'package:intl/intl.dart';
 
 import 'package:tokan/main.dart'; // pour AppColors
 import 'package:tokan/plugins/crm/models/quote.dart';
+import 'package:tokan/plugins/crm/models/quote_item.dart';
 import 'package:tokan/plugins/crm/providers/quote_provider.dart';
 
 class QuoteFormScreen extends StatefulWidget {
   /// Si quoteId est null, on est en création, sinon en édition
   final String? quoteId;
-  const QuoteFormScreen({Key? key, this.quoteId}) : super(key: key);
+  final VoidCallback? onSaved;
+  const QuoteFormScreen({Key? key, this.quoteId, this.onSaved}) : super(key: key);
 
   @override
   State<QuoteFormScreen> createState() => _QuoteFormScreenState();
@@ -22,6 +24,16 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
   String? _reference;
   double? _total;
   String _status = 'Brouillon';
+  String? _customer;
+  String? _description;
+  String? _dueDateStr;
+  double? _discount;
+  String? _notes;
+  List<QuoteItem> _items = [QuoteItem(designation: '', quantity: 1, unitPrice: 0)];
+  double _vatRate = 0;
+  String? _iban;
+  String? _bic;
+  double? _depositPercent;
   bool _loading = false;
 
   bool get _isEditing => widget.quoteId != null;
@@ -36,6 +48,24 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             _reference = q.reference;
             _total = q.total;
             _status = q.status;
+            _customer = q.customer;
+            _description = q.description;
+            _dueDateStr = q.dueDate == null
+                ? null
+                : DateFormat('yyyy-MM-dd').format(q.dueDate!);
+            _discount = q.discount;
+            _notes = q.notes;
+            _items = q.items.isEmpty
+                ? [QuoteItem(designation: '', quantity: 1, unitPrice: 0)]
+                : q.items.map((e) => QuoteItem(
+              designation: e.designation,
+              quantity: e.quantity,
+              unitPrice: e.unitPrice,
+            )).toList();
+            _vatRate = q.vatRate;
+            _iban = q.iban;
+            _bic = q.bic;
+            _depositPercent = q.depositPercent;
           });
         }
       });
@@ -45,6 +75,8 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
   Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
+    _total = _items.fold<double>(0,
+            (prev, e) => prev + e.quantity * e.unitPrice) - (_discount ?? 0);
     setState(() => _loading = true);
 
     final provider = context.read<QuoteProvider>();
@@ -55,6 +87,18 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
           reference: _reference!,
           total: _total!,
           status: _status,
+          customer: _customer,
+          description: _description,
+          dueDate: _dueDateStr == null || _dueDateStr!.isEmpty
+              ? null
+              : DateTime.tryParse(_dueDateStr!),
+          discount: _discount,
+          notes: _notes,
+          items: _items,
+          vatRate: _vatRate,
+          iban: _iban,
+          bic: _bic,
+          depositPercent: _depositPercent,
         ),
       );
     } else {
@@ -63,12 +107,28 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
           reference: _reference!,
           total: _total!,
           status: _status,
+          customer: _customer,
+          description: _description,
+          dueDate: _dueDateStr == null || _dueDateStr!.isEmpty
+              ? null
+              : DateTime.tryParse(_dueDateStr!),
+          discount: _discount,
+          notes: _notes,
+          items: _items,
+          vatRate: _vatRate,
+          iban: _iban,
+          bic: _bic,
+          depositPercent: _depositPercent,
         ),
       );
     }
 
     setState(() => _loading = false);
-    Navigator.of(context).pop();
+    if (widget.onSaved != null) {
+      widget.onSaved!();
+    } else {
+      Navigator.of(context).pop();
+    }
   }
 
   @override
@@ -100,14 +160,65 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
                   onSaved: (v) => _reference = v,
                 ),
                 const SizedBox(height: 16),
+                Text(
+                  'Lignes de devis',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                ..._items.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final item = entry.value;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 4,
+                          child: TextFormField(
+                            initialValue: item.designation,
+                            decoration: const InputDecoration(labelText: 'Désignation'),
+                            onChanged: (v) => item.designation = v,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextFormField(
+                            initialValue: item.quantity.toString(),
+                            decoration: const InputDecoration(labelText: 'Qté'),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            onChanged: (v) => item.quantity = double.tryParse(v) ?? 0,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextFormField(
+                            initialValue: item.unitPrice.toStringAsFixed(2),
+                            decoration: const InputDecoration(labelText: 'P.U'),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            onChanged: (v) => item.unitPrice = double.tryParse(v) ?? 0,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () => setState(() => _items.removeAt(index)),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                TextButton.icon(
+                  onPressed: () => setState(() => _items.add(
+                      QuoteItem(designation: '', quantity: 1, unitPrice: 0))),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Ajouter une ligne'),
+                ),
+                const SizedBox(height: 16),
                 TextFormField(
-                  initialValue: _total?.toStringAsFixed(2),
-                  decoration: const InputDecoration(labelText: 'Total (€)'),
+                  initialValue: _discount?.toStringAsFixed(2),
+                  decoration: const InputDecoration(labelText: 'Remise (%)'),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  validator: (v) => (v == null || double.tryParse(v) == null)
-                      ? 'Montant invalide'
-                      : null,
-                  onSaved: (v) => _total = double.parse(v!),
+                  onSaved: (v) => _discount =
+                  v == null || v.isEmpty ? null : double.tryParse(v),
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
@@ -117,6 +228,59 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
                       .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                       .toList(),
                   onChanged: (v) => setState(() => _status = v!),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _customer,
+                  decoration: const InputDecoration(labelText: 'Client'),
+                  onSaved: (v) => _customer = v,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _dueDateStr,
+                  decoration: const InputDecoration(labelText: 'Échéance (YYYY-MM-DD)'),
+                  keyboardType: TextInputType.datetime,
+                  onSaved: (v) => _dueDateStr = v,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _description,
+                  decoration: const InputDecoration(labelText: 'Description'),
+                  maxLines: 2,
+                  onSaved: (v) => _description = v,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _notes,
+                  decoration: const InputDecoration(labelText: 'Notes'),
+                  maxLines: 3,
+                  onSaved: (v) => _notes = v,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _vatRate.toStringAsFixed(2),
+                  decoration: const InputDecoration(labelText: 'Taux TVA (%)'),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  onChanged: (v) => _vatRate = double.tryParse(v) ?? 0,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _iban,
+                  decoration: const InputDecoration(labelText: 'IBAN'),
+                  onChanged: (v) => _iban = v,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _bic,
+                  decoration: const InputDecoration(labelText: 'BIC/SWIFT'),
+                  onChanged: (v) => _bic = v,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _depositPercent?.toStringAsFixed(2),
+                  decoration: const InputDecoration(labelText: 'Acompte (%)'),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  onChanged: (v) => _depositPercent = double.tryParse(v),
                 ),
               ],
             ),

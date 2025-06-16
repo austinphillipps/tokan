@@ -23,11 +23,11 @@ class NotificationsPage extends StatelessWidget {
       );
     }
 
-    // Stream des demandes d'ami en attente
-    final pendingReqsStream = FirebaseFirestore.instance
+    // Stream des demandes d'ami (tous statuts) pour conserver un historique
+    final requestsStream = FirebaseFirestore.instance
         .collection('collaborations')
         .where('to', isEqualTo: me.uid)
-        .where('status', isEqualTo: 'pending')
+        .orderBy('timestamp', descending: true)
         .snapshots();
 
     // Stream des notifications déjà créées
@@ -58,12 +58,12 @@ class NotificationsPage extends StatelessWidget {
         // On laisse AppBar prendre la couleur par défaut du thème
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: pendingReqsStream,
+        stream: requestsStream,
         builder: (ctx, snapReq) {
           if (snapReq.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          final pendingDocs = snapReq.data?.docs ?? [];
+          final requestDocs = snapReq.data?.docs ?? [];
 
           return StreamBuilder<QuerySnapshot>(
             stream: notificationsStream,
@@ -76,7 +76,7 @@ class NotificationsPage extends StatelessWidget {
               final List<Widget> items = [];
 
               // --- Section "Demandes d'ami" ---
-              if (pendingDocs.isNotEmpty) {
+              if (requestDocs.isNotEmpty) {
                 items.add(
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 0, 8),
@@ -89,9 +89,10 @@ class NotificationsPage extends StatelessWidget {
                     ),
                   ),
                 );
-                for (var doc in pendingDocs) {
+                for (var doc in requestDocs) {
                   final data = doc.data() as Map<String, dynamic>? ?? {};
                   final fromUid = data['from'] as String? ?? '';
+                  final status = data['status'] as String? ?? 'pending';
                   final timestamp = data['timestamp'] as Timestamp?;
                   final time = timestamp != null
                       ? DateFormat('HH:mm').format(timestamp.toDate())
@@ -110,8 +111,73 @@ class NotificationsPage extends StatelessWidget {
                         final name =
                             udata['displayName'] as String? ?? 'Utilisateur';
 
+                        final tileColor =
+                        status == 'pending' ? tileUnreadColor : tileReadColor;
+                        Widget trailing;
+                        if (status == 'pending') {
+                          trailing = Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.check,
+                                    color: theme.colorScheme.secondary),
+                                onPressed: () async {
+                                  // Accepter la demande
+                                  await doc.reference
+                                      .update({'status': 'accepted'});
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Vous êtes maintenant ami avec $name.',
+                                        style: TextStyle(
+                                            color: theme.colorScheme.onSecondary),
+                                      ),
+                                      backgroundColor:
+                                      theme.colorScheme.secondary,
+                                    ),
+                                  );
+                                },
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.close,
+                                    color: theme.colorScheme.error),
+                                onPressed: () async {
+                                  // Refuser la demande
+                                  await doc.reference
+                                      .update({'status': 'refused'});
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Demande d’ami de $name refusée.',
+                                        style: TextStyle(
+                                            color: theme.colorScheme.onError),
+                                      ),
+                                      backgroundColor:
+                                      theme.colorScheme.error,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          );
+                        } else if (status == 'accepted') {
+                          trailing = Text(
+                            'Acceptée',
+                            style: TextStyle(
+                                color: theme.colorScheme.secondary,
+                                fontWeight: FontWeight.bold),
+                          );
+                        } else {
+                          trailing = Text(
+                            'Refusée',
+                            style: TextStyle(
+                                color: theme.colorScheme.error,
+                                fontWeight: FontWeight.bold),
+                          );
+                        }
+
                         return Container(
-                          color: tileUnreadColor,
+                          color: tileColor,
                           child: ListTile(
                             leading: Icon(Icons.person_add,
                                 color: theme.colorScheme.primary),
@@ -121,45 +187,10 @@ class NotificationsPage extends StatelessWidget {
                             ),
                             subtitle: Text(
                               time,
-                              style: TextStyle(color: textSecondaryColor, fontSize: 12),
+                              style: TextStyle(
+                                  color: textSecondaryColor, fontSize: 12),
                             ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.check, color: theme.colorScheme.secondary),
-                                  onPressed: () async {
-                                    // Accepter la demande
-                                    await doc.reference.update({'status': 'accepted'});
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Vous êtes maintenant ami avec $name.',
-                                          style: TextStyle(color: theme.colorScheme.onSecondary),
-                                        ),
-                                        backgroundColor: theme.colorScheme.secondary,
-                                      ),
-                                    );
-                                  },
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.close, color: theme.colorScheme.error),
-                                  onPressed: () async {
-                                    // Refuser la demande
-                                    await doc.reference.update({'status': 'refused'});
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Demande d’ami de $name refusée.',
-                                          style: TextStyle(color: theme.colorScheme.onError),
-                                        ),
-                                        backgroundColor: theme.colorScheme.error,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
+                            trailing: trailing,
                           ),
                         );
                       },
