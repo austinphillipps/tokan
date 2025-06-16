@@ -48,6 +48,9 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
   Widget build(BuildContext context) {
     final prov = context.watch<QuoteProvider>();
     final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final panelWidth = screenWidth * 0.6;
+    final panelHeight = screenHeight * 0.8;
 
     return Scaffold(
       appBar: AppBar(
@@ -101,13 +104,14 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOut,
-            top: 0,
-            bottom: 0,
-            right: _showPanel ? 0 : -screenWidth * 0.75,
-            width: screenWidth * 0.25,
+            top: _showPanel ? (screenHeight - panelHeight) / 2 : screenHeight,
+            left: (screenWidth - panelWidth) / 2,
+            width: panelWidth,
+            height: panelHeight,
             child: Material(
               elevation: 16,
               color: AppColors.glassBackground,
+              borderRadius: BorderRadius.circular(16),
               child: SafeArea(
                 child: _panelQuoteId == null
                     ? QuoteFormScreen(onSaved: _closePanel)
