@@ -39,7 +39,7 @@ class _LibraryPageState extends State<LibraryPage> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final width = constraints.maxWidth;
-              final crossAxisCount = (width / 220).floor().clamp(1, 4);
+              final crossAxisCount = (width / 110).floor().clamp(1, 8);
               return GridView.builder(
                 padding: const EdgeInsets.all(8),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -59,7 +59,7 @@ class _LibraryPageState extends State<LibraryPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Icon(p.iconData, size: 48),
+                          Icon(p.iconData, size: 24),
                           Text(
                             p.displayName,
                             textAlign: TextAlign.center,
