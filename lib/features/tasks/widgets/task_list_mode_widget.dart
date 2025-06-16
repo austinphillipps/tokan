@@ -23,6 +23,11 @@ class TasksListView extends StatelessWidget {
   final Function(CustomTask) onDeleteTask;
   final Function(TaskFolder) onDeleteFolder;
 
+  /// Callback lors du réordonnancement d'une tâche
+  final Future<void> Function(
+      CustomTask task, List<CustomTask> list, int oldIndex, int newIndex)
+      onReorderTask;
+
   // ← Paramètres pour la sélection multiple
   final bool multiSelectMode;
   final Set<String> selectedTaskIds;
@@ -43,6 +48,7 @@ class TasksListView extends StatelessWidget {
     required this.onCreateFolder,
     required this.onDeleteTask,
     required this.onDeleteFolder,
+    required this.onReorderTask,
 
     // ← Nouveaux paramètres :
     required this.multiSelectMode,
@@ -142,32 +148,42 @@ class TasksListView extends StatelessWidget {
                       ),
                     ),
                   ),
-                  ...enCours.map((task) => Column(
-                    children: [
-                      _TaskRow(
+                  ReorderableListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: enCours.length,
+                    onReorder: (oldIndex, newIndex) =>
+                        onReorderTask(enCours[oldIndex], enCours, oldIndex, newIndex),
+                    itemBuilder: (context, index) {
+                      final task = enCours[index];
+                      return Column(
                         key: ValueKey(task.id),
-                        task: task,
-                        onToggle: onToggleStatus,
-                        onCollaboratorChanged: onCollaboratorChanged,
-                        onProjectChanged: onProjectChanged,
-                        onDeadlineChanged: onDeadlineChanged,
-                        onOpenDetail: onOpenDetail,
-                        onDelete: onDeleteTask,
+                        children: [
+                          _TaskRow(
+                            task: task,
+                            onToggle: onToggleStatus,
+                            onCollaboratorChanged: onCollaboratorChanged,
+                            onProjectChanged: onProjectChanged,
+                            onDeadlineChanged: onDeadlineChanged,
+                            onOpenDetail: onOpenDetail,
+                            onDelete: onDeleteTask,
 
-                        // ← Paramètres multi-sélection
-                        multiSelectMode: multiSelectMode,
-                        isSelected: selectedTaskIds.contains(task.id),
-                        onTaskSelectToggle: onTaskSelectToggle,
-                      ),
-                      Divider(
-                        height: 1,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onBackground
-                            .withOpacity(0.3),
-                      ),
-                    ],
-                  )),
+                            // ← Paramètres multi-sélection
+                            multiSelectMode: multiSelectMode,
+                            isSelected: selectedTaskIds.contains(task.id),
+                            onTaskSelectToggle: onTaskSelectToggle,
+                          ),
+                          Divider(
+                            height: 1,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onBackground
+                                .withOpacity(0.3),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ],
                 // Section "Terminées"
                 if (terminees.isNotEmpty) ...[
@@ -186,32 +202,42 @@ class TasksListView extends StatelessWidget {
                       ),
                     ),
                   ),
-                  ...terminees.map((task) => Column(
-                    children: [
-                      _TaskRow(
+                  ReorderableListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: terminees.length,
+                    onReorder: (oldIndex, newIndex) =>
+                        onReorderTask(terminees[oldIndex], terminees, oldIndex, newIndex),
+                    itemBuilder: (context, index) {
+                      final task = terminees[index];
+                      return Column(
                         key: ValueKey(task.id),
-                        task: task,
-                        onToggle: onToggleStatus,
-                        onCollaboratorChanged: onCollaboratorChanged,
-                        onProjectChanged: onProjectChanged,
-                        onDeadlineChanged: onDeadlineChanged,
-                        onOpenDetail: onOpenDetail,
-                        onDelete: onDeleteTask,
+                        children: [
+                          _TaskRow(
+                            task: task,
+                            onToggle: onToggleStatus,
+                            onCollaboratorChanged: onCollaboratorChanged,
+                            onProjectChanged: onProjectChanged,
+                            onDeadlineChanged: onDeadlineChanged,
+                            onOpenDetail: onOpenDetail,
+                            onDelete: onDeleteTask,
 
-                        // ← Paramètres multi-sélection
-                        multiSelectMode: multiSelectMode,
-                        isSelected: selectedTaskIds.contains(task.id),
-                        onTaskSelectToggle: onTaskSelectToggle,
-                      ),
-                      Divider(
-                        height: 1,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onBackground
-                            .withOpacity(0.3),
-                      ),
-                    ],
-                  )),
+                            // ← Paramètres multi-sélection
+                            multiSelectMode: multiSelectMode,
+                            isSelected: selectedTaskIds.contains(task.id),
+                            onTaskSelectToggle: onTaskSelectToggle,
+                          ),
+                          Divider(
+                            height: 1,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onBackground
+                                .withOpacity(0.3),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ],
                 // Sections dossiers
                 ...folders.map((folder) {
@@ -244,31 +270,41 @@ class TasksListView extends StatelessWidget {
                           ),
                         )
                       else
-                        ...list.map((task) => Column(
-                          children: [
-                            _TaskRow(
+                        ReorderableListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: list.length,
+                          onReorder: (oldIndex, newIndex) => onReorderTask(
+                              list[oldIndex], list, oldIndex, newIndex),
+                          itemBuilder: (context, index) {
+                            final task = list[index];
+                            return Column(
                               key: ValueKey(task.id),
-                              task: task,
-                              onToggle: onToggleStatus,
-                              onCollaboratorChanged: onCollaboratorChanged,
-                              onProjectChanged: onProjectChanged,
-                              onDeadlineChanged: onDeadlineChanged,
-                              onOpenDetail: onOpenDetail,
-                              onDelete: onDeleteTask,
-                              multiSelectMode: multiSelectMode,
-                              isSelected:
-                              selectedTaskIds.contains(task.id),
-                              onTaskSelectToggle: onTaskSelectToggle,
-                            ),
-                            Divider(
-                              height: 1,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onBackground
-                                  .withOpacity(0.3),
-                            ),
-                          ],
-                        )),
+                              children: [
+                                _TaskRow(
+                                  task: task,
+                                  onToggle: onToggleStatus,
+                                  onCollaboratorChanged: onCollaboratorChanged,
+                                  onProjectChanged: onProjectChanged,
+                                  onDeadlineChanged: onDeadlineChanged,
+                                  onOpenDetail: onOpenDetail,
+                                  onDelete: onDeleteTask,
+                                  multiSelectMode: multiSelectMode,
+                                  isSelected:
+                                      selectedTaskIds.contains(task.id),
+                                  onTaskSelectToggle: onTaskSelectToggle,
+                                ),
+                                Divider(
+                                  height: 1,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onBackground
+                                      .withOpacity(0.3),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                     ],
                   );
                 }).toList(),
