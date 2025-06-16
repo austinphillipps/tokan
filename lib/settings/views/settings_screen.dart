@@ -64,13 +64,6 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundColor: isDarkStyle
           ? Colors.grey[900]
           : Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: isDarkStyle ? Colors.grey[850] : Colors.white,
-        foregroundColor: isDarkStyle ? Colors.white : Colors.black,
-        title: const Text('Paramètres'),
-        centerTitle: true,
-        elevation: 0,
-      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

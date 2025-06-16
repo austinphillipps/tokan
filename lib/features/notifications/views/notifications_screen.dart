@@ -53,10 +53,6 @@ class NotificationsPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        // On laisse AppBar prendre la couleur par défaut du thème
-      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: requestsStream,
         builder: (ctx, snapReq) {
