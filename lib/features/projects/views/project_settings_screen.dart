@@ -72,6 +72,18 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
           final pluginProv = context.watch<PluginProvider>();
           final bool crmInstalled = pluginProv.isInstalled('crm');
 
+
+          final List<Widget> pluginToggles = PluginRegistry()
+              .availablePlugins
+              .map((plugin) => SwitchListTile(
+                    title: Text(plugin.displayName,
+                        style: const TextStyle(color: Colors.white)),
+                    secondary: Icon(plugin.iconData, color: Colors.white),
+                    activeColor: AppColors.green,
+                    value: _activated[plugin.id] ?? false,
+                    onChanged: (val) => _toggle(plugin.id, val),
+                  ))
+
           final pluginToggles = PluginRegistry()
               .availablePlugins
               .map((plugin) => SwitchListTile(
@@ -82,6 +94,7 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
             value: _activated[plugin.id] ?? false,
             onChanged: (val) => _toggle(plugin.id, val),
           ))
+
               .toList();
 
           pluginToggles.add(const Divider(color: Colors.white24));
