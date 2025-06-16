@@ -944,30 +944,31 @@ class _CalendarPageState extends State<CalendarPage> {
                   child: Container(color: Colors.black.withOpacity(0.5)),
                 ),
               ),
-              Positioned(
-                top: 0,
-                bottom: 0,
-                right: 0,
-                width: 400,
-                child: Container(
+              Center(
+                child: Material(
                   color: Theme.of(context).brightness == Brightness.dark
                       ? AppColors.darkBackground
                       : Colors.white,
-                  child: TaskDetailPanel(
-                    task: _activeTask!,
-                    onSave: (updatedTask) async {
-                      await _saveTaskFromCalendar(updatedTask);
-                    },
-                    onClose: () => setState(() {
-                      _showTaskPanel = false;
-                      _activeTask = null;
-                    }),
-                    onMarkAsDone: () {
-                      // Optionnel : marquer terminé
-                    },
-                    onCalendarRefresh: () {
-                      _subscribeToTasks();
-                    },
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    width: 500,
+                    height: MediaQuery.of(context).size.height * 0.8,
+                    child: TaskDetailPanel(
+                      task: _activeTask!,
+                      onSave: (updatedTask) async {
+                        await _saveTaskFromCalendar(updatedTask);
+                      },
+                      onClose: () => setState(() {
+                        _showTaskPanel = false;
+                        _activeTask = null;
+                      }),
+                      onMarkAsDone: () {
+                        // Optionnel : marquer terminé
+                      },
+                      onCalendarRefresh: () {
+                        _subscribeToTasks();
+                      },
+                    ),
                   ),
                 ),
               ),

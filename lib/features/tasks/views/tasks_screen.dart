@@ -132,27 +132,28 @@ class _TasksPageState extends State<TasksPage> {
             ),
 
           if (showTaskPanel && activeTask != null)
-            Positioned(
-              right: 0,
-              top: 0,
-              bottom: 0,
-              child: Container(
-                width: MediaQuery.of(context).size.width / 3,
+            Center(
+              child: Material(
                 color: Theme.of(context).colorScheme.surface,
-                child: TaskDetailPanel(
-                  task: activeTask!,
-                  onSave: (updated) async {
-                    await _saveTask(updated);
-                    setState(() => showTaskPanel = false);
-                    _calendarRefreshNotifier.value++;
-                  },
-                  onClose: () => setState(() => showTaskPanel = false),
-                  onMarkAsDone: () {
-                    if (activeTask != null) _toggleStatus(activeTask!);
-                  },
-                  onCalendarRefresh: () {
-                    _calendarRefreshNotifier.value++;
-                  },
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.6,
+                  height: MediaQuery.of(context).size.height * 0.8,
+                  child: TaskDetailPanel(
+                    task: activeTask!,
+                    onSave: (updated) async {
+                      await _saveTask(updated);
+                      setState(() => showTaskPanel = false);
+                      _calendarRefreshNotifier.value++;
+                    },
+                    onClose: () => setState(() => showTaskPanel = false),
+                    onMarkAsDone: () {
+                      if (activeTask != null) _toggleStatus(activeTask!);
+                    },
+                    onCalendarRefresh: () {
+                      _calendarRefreshNotifier.value++;
+                    },
+                  ),
                 ),
               ),
             ),
