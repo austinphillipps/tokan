@@ -18,8 +18,18 @@ class TasksListView extends StatelessWidget {
   final Function(CustomTask, DateTime?) onDeadlineChanged;
   final Function(CustomTask) onOpenDetail;
   final VoidCallback onAddTask;
+  final Function(TaskFolder) onAddTaskToFolder;
   final VoidCallback onCreateFolder;
   final Function(CustomTask) onDeleteTask;
+  final Function(TaskFolder) onDeleteFolder;
+
+  /// Callback lorsqu'une tâche est déplacée vers un dossier
+  final Function(CustomTask, TaskFolder?) onMoveTaskToFolder;
+
+  /// Callback lors du réordonnancement d'une tâche
+  final Future<void> Function(
+      CustomTask task, List<CustomTask> list, int oldIndex, int newIndex)
+      onReorderTask;
 
   // ← Paramètres pour la sélection multiple
   final bool multiSelectMode;
@@ -37,8 +47,12 @@ class TasksListView extends StatelessWidget {
     required this.onDeadlineChanged,
     required this.onOpenDetail,
     required this.onAddTask,
+    required this.onAddTaskToFolder,
     required this.onCreateFolder,
     required this.onDeleteTask,
+    required this.onDeleteFolder,
+    required this.onReorderTask,
+    required this.onMoveTaskToFolder,
 
     // ← Nouveaux paramètres :
     required this.multiSelectMode,
@@ -74,21 +88,9 @@ class TasksListView extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
-                TextButton.icon(
-                  onPressed: onCreateFolder,
-                  style: TextButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.primary,
-                  ),
-                  icon: const Icon(Icons.create_new_folder),
-                  label: Text(
-                    'Nouveau dossier',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                ),
+                // Lorsque la liste est vide, seul le bouton pour ajouter une
+                // tâche doit être affiché. Le bouton de création de dossier a
+                // été retiré pour simplifier l'interface dans ce cas précis.
               ],
             ),
           ),
@@ -126,88 +128,136 @@ class TasksListView extends StatelessWidget {
                   Padding(
                     padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: Text(
-                      "En cours",
-                      style:
-                      Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onBackground
-                            .withOpacity(0.7),
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: DragTarget<CustomTask>(
+                      onAccept: (task) => onMoveTaskToFolder(task, null),
+                      builder: (context, candidateData, rejectedData) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                          decoration: candidateData.isNotEmpty
+                              ? BoxDecoration(
+                                  color: AppColors.blue.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                )
+                              : null,
+                          child: Text(
+                            "EN COURS",
+                            style:
+                            Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onBackground
+                                  .withOpacity(0.7),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
-                  ...enCours.map((task) => Column(
-                    children: [
-                      _TaskRow(
+                  ReorderableListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: enCours.length,
+                    onReorder: (oldIndex, newIndex) =>
+                        onReorderTask(enCours[oldIndex], enCours, oldIndex, newIndex),
+                    itemBuilder: (context, index) {
+                      final task = enCours[index];
+                      return Column(
                         key: ValueKey(task.id),
-                        task: task,
-                        onToggle: onToggleStatus,
-                        onCollaboratorChanged: onCollaboratorChanged,
-                        onProjectChanged: onProjectChanged,
-                        onDeadlineChanged: onDeadlineChanged,
-                        onOpenDetail: onOpenDetail,
-                        onDelete: onDeleteTask,
+                        children: [
+                          _TaskRow(
+                            task: task,
+                            onToggle: onToggleStatus,
+                            onCollaboratorChanged: onCollaboratorChanged,
+                            onProjectChanged: onProjectChanged,
+                            onDeadlineChanged: onDeadlineChanged,
+                            onOpenDetail: onOpenDetail,
+                            onDelete: onDeleteTask,
 
-                        // ← Paramètres multi-sélection
-                        multiSelectMode: multiSelectMode,
-                        isSelected: selectedTaskIds.contains(task.id),
-                        onTaskSelectToggle: onTaskSelectToggle,
-                      ),
-                      Divider(
-                        height: 1,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onBackground
-                            .withOpacity(0.3),
-                      ),
-                    ],
-                  )),
+                            // ← Paramètres multi-sélection
+                            multiSelectMode: multiSelectMode,
+                            isSelected: selectedTaskIds.contains(task.id),
+                            onTaskSelectToggle: onTaskSelectToggle,
+                          ),
+                          Divider(
+                            height: 1,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onBackground
+                                .withOpacity(0.3),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ],
                 // Section "Terminées"
                 if (terminees.isNotEmpty) ...[
                   Padding(
                     padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: Text(
-                      "Terminées",
-                      style:
-                      Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onBackground
-                            .withOpacity(0.7),
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: DragTarget<CustomTask>(
+                      onAccept: (task) => onMoveTaskToFolder(task, null),
+                      builder: (context, candidateData, rejectedData) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                          decoration: candidateData.isNotEmpty
+                              ? BoxDecoration(
+                                  color: AppColors.blue.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                )
+                              : null,
+                          child: Text(
+                            "TERMINÉES",
+                            style:
+                            Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onBackground
+                                  .withOpacity(0.7),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
-                  ...terminees.map((task) => Column(
-                    children: [
-                      _TaskRow(
+                  ReorderableListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: terminees.length,
+                    onReorder: (oldIndex, newIndex) =>
+                        onReorderTask(terminees[oldIndex], terminees, oldIndex, newIndex),
+                    itemBuilder: (context, index) {
+                      final task = terminees[index];
+                      return Column(
                         key: ValueKey(task.id),
-                        task: task,
-                        onToggle: onToggleStatus,
-                        onCollaboratorChanged: onCollaboratorChanged,
-                        onProjectChanged: onProjectChanged,
-                        onDeadlineChanged: onDeadlineChanged,
-                        onOpenDetail: onOpenDetail,
-                        onDelete: onDeleteTask,
+                        children: [
+                          _TaskRow(
+                            task: task,
+                            onToggle: onToggleStatus,
+                            onCollaboratorChanged: onCollaboratorChanged,
+                            onProjectChanged: onProjectChanged,
+                            onDeadlineChanged: onDeadlineChanged,
+                            onOpenDetail: onOpenDetail,
+                            onDelete: onDeleteTask,
 
-                        // ← Paramètres multi-sélection
-                        multiSelectMode: multiSelectMode,
-                        isSelected: selectedTaskIds.contains(task.id),
-                        onTaskSelectToggle: onTaskSelectToggle,
-                      ),
-                      Divider(
-                        height: 1,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onBackground
-                            .withOpacity(0.3),
-                      ),
-                    ],
-                  )),
+                            // ← Paramètres multi-sélection
+                            multiSelectMode: multiSelectMode,
+                            isSelected: selectedTaskIds.contains(task.id),
+                            onTaskSelectToggle: onTaskSelectToggle,
+                          ),
+                          Divider(
+                            height: 1,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onBackground
+                                .withOpacity(0.3),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ],
                 // Sections dossiers
                 ...folders.map((folder) {
@@ -219,18 +269,11 @@ class TasksListView extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 4),
-                        child: Text(
-                          folder.name,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onBackground
-                                .withOpacity(0.7),
-                            fontWeight: FontWeight.bold,
-                          ),
+                        child: _FolderHeader(
+                          folder: folder,
+                          onAddTask: () => onAddTaskToFolder(folder),
+                          onDelete: () => onDeleteFolder(folder),
+                          onTaskDropped: (task) => onMoveTaskToFolder(task, folder),
                         ),
                       ),
                       if (list.isEmpty)
@@ -248,31 +291,41 @@ class TasksListView extends StatelessWidget {
                           ),
                         )
                       else
-                        ...list.map((task) => Column(
-                          children: [
-                            _TaskRow(
+                        ReorderableListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: list.length,
+                          onReorder: (oldIndex, newIndex) => onReorderTask(
+                              list[oldIndex], list, oldIndex, newIndex),
+                          itemBuilder: (context, index) {
+                            final task = list[index];
+                            return Column(
                               key: ValueKey(task.id),
-                              task: task,
-                              onToggle: onToggleStatus,
-                              onCollaboratorChanged: onCollaboratorChanged,
-                              onProjectChanged: onProjectChanged,
-                              onDeadlineChanged: onDeadlineChanged,
-                              onOpenDetail: onOpenDetail,
-                              onDelete: onDeleteTask,
-                              multiSelectMode: multiSelectMode,
-                              isSelected:
-                              selectedTaskIds.contains(task.id),
-                              onTaskSelectToggle: onTaskSelectToggle,
-                            ),
-                            Divider(
-                              height: 1,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onBackground
-                                  .withOpacity(0.3),
-                            ),
-                          ],
-                        )),
+                              children: [
+                                _TaskRow(
+                                  task: task,
+                                  onToggle: onToggleStatus,
+                                  onCollaboratorChanged: onCollaboratorChanged,
+                                  onProjectChanged: onProjectChanged,
+                                  onDeadlineChanged: onDeadlineChanged,
+                                  onOpenDetail: onOpenDetail,
+                                  onDelete: onDeleteTask,
+                                  multiSelectMode: multiSelectMode,
+                                  isSelected:
+                                      selectedTaskIds.contains(task.id),
+                                  onTaskSelectToggle: onTaskSelectToggle,
+                                ),
+                                Divider(
+                                  height: 1,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onBackground
+                                      .withOpacity(0.3),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                     ],
                   );
                 }).toList(),
@@ -302,24 +355,8 @@ class TasksListView extends StatelessWidget {
                           ),
                           onPressed: onAddTask,
                         ),
-                        const SizedBox(width: 16),
-                        TextButton.icon(
-                          icon: const Icon(Icons.create_new_folder),
-                          label: Text(
-                            "Nouveau dossier",
-                            style: TextStyle(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onBackground
-                                  .withOpacity(0.7),
-                            ),
-                          ),
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12, horizontal: 16),
-                          ),
-                          onPressed: onCreateFolder,
-                        ),
+                        // Bouton "Nouveau dossier" supprimé, la création se
+                        // fait désormais via l'icône du header
                       ],
                     ),
                   ),
@@ -344,9 +381,9 @@ class TasksListView extends StatelessWidget {
           SizedBox(
             width: 40,
             child: IconButton(
-              icon: const Icon(Icons.folder, size: 20),
-              tooltip: 'Dossiers',
-              onPressed: () {},
+              icon: const Icon(Icons.create_new_folder, size: 20),
+              tooltip: 'Nouveau dossier',
+              onPressed: onCreateFolder,
               padding: EdgeInsets.zero,
               splashRadius: 20,
             ),
@@ -542,6 +579,20 @@ class _TaskRowState extends State<_TaskRow> {
   bool _loadingCollaborator = true;
   String? _projectName;
   bool _loadingProject = true;
+
+  Widget _taskNameWidget(bool isDark) {
+    return Text(
+      widget.task.name,
+      style: TextStyle(
+        color: isDark
+            ? Theme.of(context).colorScheme.onBackground
+            : Colors.black87,
+        fontSize: 14,
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
 
   @override
   void initState() {
@@ -892,18 +943,32 @@ class _TaskRowState extends State<_TaskRow> {
             // 2) Nom de la tâche → ouvre le panneau de détails
             Expanded(
               flex: 3,
-              child: GestureDetector(
-                onTap: () => widget.onOpenDetail(widget.task),
-                child: Text(
-                  widget.task.name,
-                  style: TextStyle(
-                    color: isDark
-                        ? Theme.of(context).colorScheme.onBackground
-                        : Colors.black87,
-                    fontSize: 14,
+              child: LongPressDraggable<CustomTask>(
+                data: widget.task,
+                feedback: Material(
+                  color: Colors.transparent,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.glassHeader,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      widget.task.name,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onBackground,
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                ),
+                childWhenDragging: Opacity(
+                  opacity: 0.5,
+                  child: _taskNameWidget(isDark),
+                ),
+                child: GestureDetector(
+                  onTap: () => widget.onOpenDetail(widget.task),
+                  child: _taskNameWidget(isDark),
                 ),
               ),
             ),
@@ -1057,6 +1122,102 @@ class _TaskRowState extends State<_TaskRow> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _FolderHeader extends StatefulWidget {
+  final TaskFolder folder;
+  final VoidCallback onAddTask;
+  final VoidCallback onDelete;
+  final Function(CustomTask) onTaskDropped;
+
+  const _FolderHeader({
+    Key? key,
+    required this.folder,
+    required this.onAddTask,
+    required this.onDelete,
+    required this.onTaskDropped,
+  }) : super(key: key);
+
+  @override
+  State<_FolderHeader> createState() => _FolderHeaderState();
+}
+
+class _FolderHeaderState extends State<_FolderHeader> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return DragTarget<CustomTask>(
+      onWillAccept: (task) => task!.folderId != widget.folder.id,
+      onAccept: widget.onTaskDropped,
+      builder: (context, candidateData, rejectedData) {
+        return MouseRegion(
+          onEnter: (_) => setState(() => _hover = true),
+          onExit: (_) => setState(() => _hover = false),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+            decoration: candidateData.isNotEmpty
+                ? BoxDecoration(
+                    color: AppColors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  )
+                : null,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.folder.name,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onBackground
+                            .withOpacity(0.7),
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+
+                if (_hover) ...[
+                  IconButton(
+                    icon: const Icon(Icons.add, size: 16),
+                    tooltip: 'Ajouter une tâche',
+                    onPressed: widget.onAddTask,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 16),
+                    tooltip: 'Supprimer ce dossier',
+                    onPressed: widget.onDelete,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+
+          ),
+          IconButton(
+            icon: const Icon(Icons.add, size: 16),
+            tooltip: 'Ajouter une tâche',
+            onPressed: widget.onAddTask,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          if (_hover)
+            IconButton(
+              icon: const Icon(Icons.close, size: 16),
+              tooltip: 'Supprimer ce dossier',
+              onPressed: widget.onDelete,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+        ],
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tokan/core/providers/plugin_provider.dart';
 import 'package:tokan/core/contract/plugin_contract.dart';
+import '../../../main.dart'; // Pour AppColors
 
 class LibraryPage extends StatefulWidget {
   const LibraryPage({Key? key}) : super(key: key);
@@ -35,20 +36,47 @@ class _LibraryPageState extends State<LibraryPage> {
           ),
         ),
         Expanded(
-          child: ListView.builder(
-            itemCount: filtered.length,
-            itemBuilder: (_, i) {
-              final p = filtered[i];
-              final installed = pluginProv.isInstalled(p.id);
-              return ListTile(
-                leading: Icon(p.iconData), // utilise iconData ici
-                title: Text(p.displayName),
-                trailing: ElevatedButton(
-                  child: Text(installed ? 'Désinstaller' : 'Installer'),
-                  onPressed: () => installed
-                      ? pluginProv.uninstall(p.id)
-                      : pluginProv.install(p.id),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              final crossAxisCount = (width / 110).floor().clamp(1, 8);
+              return GridView.builder(
+                padding: const EdgeInsets.all(8),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  childAspectRatio: 4 / 3,
                 ),
+                itemCount: filtered.length,
+                itemBuilder: (_, i) {
+                  final p = filtered[i];
+                  final installed = pluginProv.isInstalled(p.id);
+                  return Card(
+                    color: AppColors.glassBackground,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Icon(p.iconData, size: 24),
+                          Text(
+                            p.displayName,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          ElevatedButton(
+                            onPressed: () => installed
+                                ? pluginProv.uninstall(p.id)
+                                : pluginProv.install(p.id),
+                            child:
+                                Text(installed ? 'Désinstaller' : 'Installer'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               );
             },
           ),

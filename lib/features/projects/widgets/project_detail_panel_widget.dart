@@ -10,6 +10,8 @@ import '../../tasks/views/tasks_screen.dart';
 import '../views/project_settings_screen.dart';
 import 'discussion_screen.dart';
 
+import 'package:tokan/shared/interface/interface.dart';
+
 import '../../../plugins/crm/services/crm_plugin.dart'; // CrmPlugin
 
 class ProjectDetailPanel extends StatefulWidget {
@@ -381,8 +383,12 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
                             tooltip: 'Paramètres du projet',
                             onPressed: () => Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (_) => ProjectSettingsScreen(
-                                    projectId: widget.project.id),
+                                builder: (_) => HomeScreen(
+                                  initialIndex: 5,
+                                  child: ProjectSettingsScreen(
+                                    projectId: widget.project.id,
+                                  ),
+                                ),
                               ),
                             ),
                           ),

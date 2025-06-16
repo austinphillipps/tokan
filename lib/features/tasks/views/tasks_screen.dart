@@ -177,6 +177,7 @@ class _TasksPageState extends State<TasksPage> {
               duration: null,
               client: null,
               project: widget.projectId,
+              createdAt: DateTime.now(),
               originalProjectId: null,
               recurrenceType: null,
               recurrenceDays: null,
@@ -235,6 +236,7 @@ class _TasksPageState extends State<TasksPage> {
             duration: null,
             client: null,
             project: widget.projectId,
+            createdAt: DateTime.now(),
             originalProjectId: null,
             recurrenceType: null,
             recurrenceDays: null,
@@ -243,8 +245,34 @@ class _TasksPageState extends State<TasksPage> {
           );
           showTaskPanel = true;
         }),
+        onAddTaskToFolder: (folder) => setState(() {
+          activeTask = CustomTask(
+            id: '',
+            name: '',
+            description: '',
+            status: '',
+            responsable: '',
+            deadline: null,
+            startTime: null,
+            endTime: null,
+            duration: null,
+            client: null,
+            project: widget.projectId,
+            createdAt: DateTime.now(),
+            originalProjectId: null,
+            recurrenceType: null,
+            recurrenceDays: null,
+            recurrenceIncludePast: null,
+            folderId: folder.id,
+            subTasks: [],
+          );
+          showTaskPanel = true;
+        }),
         onCreateFolder: _showCreateFolderDialog,
         onDeleteTask: _deleteTask,
+        onDeleteFolder: _deleteFolder,
+        onReorderTask: _reorderTask,
+        onMoveTaskToFolder: _moveTaskToFolder,
 
         multiSelectMode: _multiSelectMode,
         selectedTaskIds: _selectedTaskIds,
@@ -407,8 +435,8 @@ class _TasksPageState extends State<TasksPage> {
       }
 
       list.sort((a, b) =>
-          (a.deadline ?? DateTime(1970))
-              .compareTo(b.deadline ?? DateTime(1970)));
+          (a.createdAt ?? DateTime(1970))
+              .compareTo(b.createdAt ?? DateTime(1970)));
       return list;
     });
   }
@@ -470,6 +498,34 @@ class _TasksPageState extends State<TasksPage> {
     _calendarRefreshNotifier.value++;
   }
 
+  Future<void> _reorderTask(
+      CustomTask task,
+      List<CustomTask> currentList,
+      int oldIndex,
+      int newIndex,
+      ) async {
+    if (newIndex > oldIndex) newIndex -= 1;
+    final before = newIndex > 0 ? currentList[newIndex - 1].createdAt : null;
+    final after =
+        newIndex < currentList.length - 1 ? currentList[newIndex].createdAt : null;
+
+    DateTime between(DateTime? a, DateTime? b) {
+      if (a == null && b == null) return DateTime.now();
+      if (a == null) return b!.subtract(const Duration(milliseconds: 1));
+      if (b == null) return a.add(const Duration(milliseconds: 1));
+      return a.add(Duration(milliseconds: b.difference(a).inMilliseconds ~/ 2));
+    }
+
+    task.createdAt = between(before, after);
+    await _saveTask(task);
+  }
+
+  Future<void> _moveTaskToFolder(CustomTask task, TaskFolder? folder) async {
+    task.folderId = folder?.id;
+    await _saveTask(task);
+    setState(() {});
+  }
+
   Future<void> _showCreateFolderDialog() async {
     final nameController = TextEditingController();
     await showDialog(
@@ -504,5 +560,9 @@ class _TasksPageState extends State<TasksPage> {
         );
       },
     );
+  }
+
+  Future<void> _deleteFolder(TaskFolder folder) async {
+    await TaskFolderService().deleteFolder(folder.id);
   }
 }

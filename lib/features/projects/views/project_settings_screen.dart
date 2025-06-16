@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 
 import '../../../main.dart'; // pour AppColors
 import 'package:tokan/core/services/plugin_registry.dart';
+import 'package:tokan/core/providers/plugin_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:tokan/features/projects/services/project_service.dart';
+import '../../../plugins/crm/services/crm_plugin.dart';
 
 /// Écran de paramètres d’un projet,
 /// qui expose un toggle par plugin installé pour activer/désactiver son onglet.
@@ -64,18 +67,61 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : ListView(
-        children: PluginRegistry()
-            .availablePlugins
-            .map((plugin) => SwitchListTile(
-          title: Text(plugin.displayName,
-              style: const TextStyle(color: Colors.white)),
-          secondary: Icon(plugin.iconData, color: Colors.white),
-          activeColor: AppColors.green,
-          value: _activated[plugin.id] ?? false,
-          onChanged: (val) => _toggle(plugin.id, val),
-        ))
-            .toList(),
+          : Builder(
+        builder: (context) {
+          final pluginProv = context.watch<PluginProvider>();
+          final bool crmInstalled = pluginProv.isInstalled('crm');
+
+
+          final List<Widget> pluginToggles = List<Widget>.from(
+            PluginRegistry().availablePlugins
+                .where((plugin) => plugin.id != 'crm')
+                .map((plugin) {
+                final installed = pluginProv.isInstalled(plugin.id);
+                return SwitchListTile(
+                  title: Text(
+                    plugin.displayName,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  secondary: Icon(
+                    plugin.iconData,
+                    color: installed ? Colors.white : Colors.grey,
+                  ),
+                  activeColor: AppColors.green,
+                  value: _activated[plugin.id] ?? false,
+                  onChanged:
+                      installed ? (val) => _toggle(plugin.id, val) : null,
+                  subtitle: installed
+                      ? null
+                      : Text(
+                          "Le plugin ${plugin.displayName} n'est pas installé",
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                );
+              }),
+          );
+
+          pluginToggles.add(const Divider(color: Colors.white24));
+
+          if (crmInstalled) {
+            pluginToggles.add(
+              ListTile(
+                leading: const Icon(Icons.business_center, color: Colors.white),
+                title:
+                    const Text('CRM', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => CrmPlugin().buildMainScreen(context),
+                    ),
+                  );
+                },
+              ),
+            );
+          }
+
+          return ListView(children: pluginToggles);
+        },
       ),
     );
   }
