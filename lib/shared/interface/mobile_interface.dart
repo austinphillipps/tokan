@@ -8,9 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/providers/plugin_provider.dart';
 import '../../features/dashboard/views/dashboard_screen.dart';
 import '../../features/tasks/views/tasks_screen.dart';
-import '../../features/calendar/views/calendar_screen.dart';
 import '../../features/collaborators/views/collaborators_screen.dart';
-import '../../features/chat/views/messages_screen.dart';
 import '../../features/notifications/views/notifications_screen.dart';
 import '../../features/library/views/library_screen.dart';
 import '../../features/projects/views/projects_screen.dart';
@@ -27,7 +25,6 @@ class MobileHomeScreen extends StatefulWidget {
 
 class _MobileHomeScreenState extends State<MobileHomeScreen> {
   int _selectedIndex = 0;
-  final ValueNotifier<int> _calendarRefreshNotifier = ValueNotifier<int>(0);
   final NotificationService _notifService = NotificationService();
 
   @override
@@ -49,9 +46,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
     final basePages = <Widget>[
       const DashboardScreen(),
       const TasksPage(),
-      CalendarPage(refreshNotifier: _calendarRefreshNotifier),
       const CollaboratorsPage(),
-      const MessagesPage(),
       const NotificationsPage(),
       const LibraryPage(),
       ProjectsScreen(),
@@ -61,24 +56,20 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
     final plugins = pluginProv.installedPlugins;
 
     final pages = <Widget>[
-      basePages[0],
-      basePages[1],
-      basePages[2],
-      basePages[3],
-      basePages[4],
-      basePages[7],
+      basePages[0], // Dashboard
+      basePages[1], // Tasks
+      basePages[2], // Collaborators
+      basePages[5], // Projects
       for (final p in plugins) p.buildMainScreen(context),
-      basePages[5],
-      basePages[6],
-      basePages[8],
+      basePages[3], // Notifications
+      basePages[4], // Library
+      basePages[6], // Settings
     ];
 
     final icons = <IconData>[
       Icons.home,
       Icons.task_alt,
-      Icons.calendar_today,
       Icons.group,
-      Icons.message,
       Icons.work,
       for (final p in plugins) p.iconData,
       Icons.notifications,
@@ -89,9 +80,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
     final labels = <String>[
       'Accueil',
       'Tâches',
-      'Calendrier',
       'Collaborateurs',
-      'Messages',
       'Projets',
       for (final p in plugins) p.displayName,
       'Notifications',
@@ -99,7 +88,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
       'Paramètres',
     ];
 
-    final notifIndex = 6 + plugins.length;
+    final notifIndex = 4 + plugins.length;
     final libraryIndex = notifIndex + 1;
     final settingsIndex = notifIndex + 2;
 
@@ -153,59 +142,10 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
   }
 
   Widget _buildIcon(int index, IconData icon) {
-    if (icon == Icons.message) {
-      return _buildMessagesIcon(icon);
-    }
     if (icon == Icons.notifications) {
       return _buildNotificationsIcon(icon);
     }
     return Icon(icon);
-  }
-
-  Widget _buildMessagesIcon(IconData icon) {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return Icon(icon);
-
-    final convStream = FirebaseFirestore.instance
-        .collection('conversations')
-        .where('participants', arrayContains: uid)
-        .snapshots();
-
-    return StreamBuilder<QuerySnapshot>(
-      stream: convStream,
-      builder: (ctx, snap) {
-        final docs = snap.data?.docs ?? [];
-        int count = 0;
-        for (final d in docs) {
-          final data = d.data() as Map<String, dynamic>;
-          final unread = List<String>.from(data['unreadBy'] ?? []);
-          if (unread.contains(uid)) count++;
-        }
-        if (count == 0) return Icon(icon);
-        return Stack(
-          children: [
-            Icon(icon),
-            Positioned(
-              right: 0,
-              top: 0,
-              child: Container(
-                padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                ),
-                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                child: Text(
-                  '$count',
-                  style: const TextStyle(color: Colors.white, fontSize: 10),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   Widget _buildNotificationsIcon(IconData icon) {
