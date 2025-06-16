@@ -75,26 +75,29 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
 
           final List<Widget> pluginToggles = PluginRegistry()
               .availablePlugins
-              .map((plugin) => SwitchListTile(
-                    title: Text(plugin.displayName,
-                        style: const TextStyle(color: Colors.white)),
-                    secondary: Icon(plugin.iconData, color: Colors.white),
-                    activeColor: AppColors.green,
-                    value: _activated[plugin.id] ?? false,
-                    onChanged: (val) => _toggle(plugin.id, val),
-                  ))
-
-          final pluginToggles = PluginRegistry()
-              .availablePlugins
-              .map((plugin) => SwitchListTile(
-            title: Text(plugin.displayName,
-                style: const TextStyle(color: Colors.white)),
-            secondary: Icon(plugin.iconData, color: Colors.white),
-            activeColor: AppColors.green,
-            value: _activated[plugin.id] ?? false,
-            onChanged: (val) => _toggle(plugin.id, val),
-          ))
-
+              .map((plugin) {
+                final installed = pluginProv.isInstalled(plugin.id);
+                return SwitchListTile(
+                  title: Text(
+                    plugin.displayName,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  secondary: Icon(
+                    plugin.iconData,
+                    color: installed ? Colors.white : Colors.grey,
+                  ),
+                  activeColor: AppColors.green,
+                  value: _activated[plugin.id] ?? false,
+                  onChanged:
+                      installed ? (val) => _toggle(plugin.id, val) : null,
+                  subtitle: installed
+                      ? null
+                      : Text(
+                          "Le plugin ${plugin.displayName} n'est pas installé",
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                );
+              })
               .toList();
 
           pluginToggles.add(const Divider(color: Colors.white24));
