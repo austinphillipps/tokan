@@ -1067,20 +1067,20 @@ class _FolderHeaderState extends State<_FolderHeader> {
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Text(
-              widget.folder.name,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onBackground
-                        .withOpacity(0.7),
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
+          Text(
+            widget.folder.name,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onBackground
+                      .withOpacity(0.7),
+                  fontWeight: FontWeight.bold,
+                ),
           ),
           if (_hover) ...[
+            const SizedBox(width: 8),
             IconButton(
               icon: const Icon(Icons.add, size: 16),
               tooltip: 'Ajouter une tâche',
