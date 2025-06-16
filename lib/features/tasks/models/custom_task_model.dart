@@ -31,6 +31,12 @@ class CustomTask extends Equatable {
   /// Inclure ou non les occurrences antérieures
   bool? recurrenceIncludePast;
 
+  /// Ordre d'affichage des tâches
+  int? order;
+
+  /// Date de création de la tâche
+  DateTime? createdAt;
+
   CustomTask({
     this.id = '',
     required this.name,
@@ -49,6 +55,8 @@ class CustomTask extends Equatable {
     this.recurrenceType,
     this.recurrenceDays,
     this.recurrenceIncludePast,
+    this.order,
+    this.createdAt,
   }) : subTasks = subTasks ?? [];
 
   /// Retourne la DateTime de début en combinant la deadline et le startTime.
@@ -84,6 +92,7 @@ class CustomTask extends Equatable {
       'recurrenceDays': recurrenceDays,
       'recurrenceIncludePast': recurrenceIncludePast ?? false,
       'subTasks': subTasks.map((t) => t._toSubMap()).toList(),
+      'order': order,
       'createdBy': userId,
       'createdAt': FieldValue.serverTimestamp(),
     };
@@ -108,6 +117,8 @@ class CustomTask extends Equatable {
       'recurrenceDays': recurrenceDays,
       'recurrenceIncludePast': recurrenceIncludePast ?? false,
       'subTasks': subTasks.map((t) => t._toSubMap()).toList(),
+      'order': order,
+      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : null,
     };
   }
 
@@ -179,12 +190,14 @@ class CustomTask extends Equatable {
       recurrenceType: map['recurrenceType'] as String?,
       recurrenceDays: _mapToRecurrenceDays(map['recurrenceDays']),
       recurrenceIncludePast: map['recurrenceIncludePast'] as bool?,
+      order: map['order'] as int?,
+      createdAt: _mapToDate(map['createdAt']),
       subTasks: map['subTasks'] != null
           ? List<CustomTask>.from(
-        (map['subTasks'] as List).map(
-              (subMap) => CustomTask._fromSubMap(subMap as Map<String, dynamic>),
-        ),
-      )
+              (map['subTasks'] as List).map(
+                (subMap) => CustomTask._fromSubMap(subMap as Map<String, dynamic>),
+              ),
+            )
           : [],
     );
   }
@@ -208,12 +221,14 @@ class CustomTask extends Equatable {
       recurrenceType: map['recurrenceType'] as String?,
       recurrenceDays: _mapToRecurrenceDays(map['recurrenceDays']),
       recurrenceIncludePast: map['recurrenceIncludePast'] as bool?,
+      order: map['order'] as int?,
+      createdAt: _mapToDate(map['createdAt']),
       subTasks: map['subTasks'] != null
           ? List<CustomTask>.from(
-        (map['subTasks'] as List).map(
-              (subMap) => CustomTask._fromSubMap(subMap as Map<String, dynamic>),
-        ),
-      )
+              (map['subTasks'] as List).map(
+                (subMap) => CustomTask._fromSubMap(subMap as Map<String, dynamic>),
+              ),
+            )
           : [],
     );
   }
@@ -236,6 +251,8 @@ class CustomTask extends Equatable {
     String? recurrenceType,
     List<int>? recurrenceDays,
     bool? recurrenceIncludePast,
+    int? order,
+    DateTime? createdAt,
   }) {
     return CustomTask(
       id: id ?? this.id,
@@ -255,6 +272,8 @@ class CustomTask extends Equatable {
       recurrenceType: recurrenceType ?? this.recurrenceType,
       recurrenceDays: recurrenceDays != null ? List<int>.from(recurrenceDays) : this.recurrenceDays,
       recurrenceIncludePast: recurrenceIncludePast ?? this.recurrenceIncludePast,
+      order: order ?? this.order,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
@@ -279,5 +298,7 @@ class CustomTask extends Equatable {
     recurrenceType,
     recurrenceDays,
     recurrenceIncludePast,
+    order,
+    createdAt,
   ];
 }

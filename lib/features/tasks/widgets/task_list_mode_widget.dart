@@ -27,6 +27,7 @@ class TasksListView extends StatelessWidget {
   final Set<String> selectedTaskIds;
   final Function(CustomTask, bool) onTaskSelectToggle;
   final VoidCallback onToggleMultiSelectMode;
+  final Future<void> Function(CustomTask, CustomTask) onSwapOrder;
 
   const TasksListView({
     Key? key,
@@ -47,6 +48,7 @@ class TasksListView extends StatelessWidget {
     required this.selectedTaskIds,
     required this.onTaskSelectToggle,
     required this.onToggleMultiSelectMode,
+    required this.onSwapOrder,
   }) : super(key: key);
 
   @override
@@ -99,6 +101,11 @@ class TasksListView extends StatelessWidget {
     }
 
     final rootTasks = tasks.where((t) => t.folderId == null || t.folderId!.isEmpty).toList();
+    rootTasks.sort((a, b) {
+      final aOrder = a.order ?? -(a.createdAt?.millisecondsSinceEpoch ?? 0);
+      final bOrder = b.order ?? -(b.createdAt?.millisecondsSinceEpoch ?? 0);
+      return bOrder.compareTo(aOrder);
+    });
     final enCours = rootTasks.where((t) => t.status != 'completed').toList();
     final terminees = rootTasks.where((t) => t.status == 'completed').toList();
 
@@ -140,11 +147,11 @@ class TasksListView extends StatelessWidget {
                       ),
                     ),
                   ),
-                  ...enCours.map((task) => Column(
+                  ...enCours.asMap().entries.map((entry) => Column(
                     children: [
                       _TaskRow(
-                        key: ValueKey(task.id),
-                        task: task,
+                        key: ValueKey(entry.value.id),
+                        task: entry.value,
                         onToggle: onToggleStatus,
                         onCollaboratorChanged: onCollaboratorChanged,
                         onProjectChanged: onProjectChanged,
@@ -152,9 +159,16 @@ class TasksListView extends StatelessWidget {
                         onOpenDetail: onOpenDetail,
                         onDelete: onDeleteTask,
 
+                        onMoveUp: entry.key > 0
+                            ? () => onSwapOrder(entry.value, enCours[entry.key - 1])
+                            : null,
+                        onMoveDown: entry.key < enCours.length - 1
+                            ? () => onSwapOrder(entry.value, enCours[entry.key + 1])
+                            : null,
+
                         // ← Paramètres multi-sélection
                         multiSelectMode: multiSelectMode,
-                        isSelected: selectedTaskIds.contains(task.id),
+                        isSelected: selectedTaskIds.contains(entry.value.id),
                         onTaskSelectToggle: onTaskSelectToggle,
                       ),
                       Divider(
@@ -184,11 +198,11 @@ class TasksListView extends StatelessWidget {
                       ),
                     ),
                   ),
-                  ...terminees.map((task) => Column(
+                  ...terminees.asMap().entries.map((entry) => Column(
                     children: [
                       _TaskRow(
-                        key: ValueKey(task.id),
-                        task: task,
+                        key: ValueKey(entry.value.id),
+                        task: entry.value,
                         onToggle: onToggleStatus,
                         onCollaboratorChanged: onCollaboratorChanged,
                         onProjectChanged: onProjectChanged,
@@ -196,9 +210,16 @@ class TasksListView extends StatelessWidget {
                         onOpenDetail: onOpenDetail,
                         onDelete: onDeleteTask,
 
+                        onMoveUp: entry.key > 0
+                            ? () => onSwapOrder(entry.value, terminees[entry.key - 1])
+                            : null,
+                        onMoveDown: entry.key < terminees.length - 1
+                            ? () => onSwapOrder(entry.value, terminees[entry.key + 1])
+                            : null,
+
                         // ← Paramètres multi-sélection
                         multiSelectMode: multiSelectMode,
-                        isSelected: selectedTaskIds.contains(task.id),
+                        isSelected: selectedTaskIds.contains(entry.value.id),
                         onTaskSelectToggle: onTaskSelectToggle,
                       ),
                       Divider(
@@ -214,7 +235,12 @@ class TasksListView extends StatelessWidget {
                 // Sections dossiers
                 ...folders.map((folder) {
                   final list =
-                  tasks.where((t) => t.folderId == folder.id).toList();
+                      tasks.where((t) => t.folderId == folder.id).toList()
+                        ..sort((a, b) {
+                          final aOrder = a.order ?? -(a.createdAt?.millisecondsSinceEpoch ?? 0);
+                          final bOrder = b.order ?? -(b.createdAt?.millisecondsSinceEpoch ?? 0);
+                          return bOrder.compareTo(aOrder);
+                        });
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -260,11 +286,11 @@ class TasksListView extends StatelessWidget {
                           ),
                         )
                       else
-                        ...list.map((task) => Column(
+                        ...list.asMap().entries.map((entry) => Column(
                           children: [
                             _TaskRow(
-                              key: ValueKey(task.id),
-                              task: task,
+                              key: ValueKey(entry.value.id),
+                              task: entry.value,
                               onToggle: onToggleStatus,
                               onCollaboratorChanged: onCollaboratorChanged,
                               onProjectChanged: onProjectChanged,
@@ -273,7 +299,13 @@ class TasksListView extends StatelessWidget {
                               onDelete: onDeleteTask,
                               multiSelectMode: multiSelectMode,
                               isSelected:
-                              selectedTaskIds.contains(task.id),
+                              selectedTaskIds.contains(entry.value.id),
+                              onMoveUp: entry.key > 0
+                                  ? () => onSwapOrder(entry.value, list[entry.key - 1])
+                                  : null,
+                              onMoveDown: entry.key < list.length - 1
+                                  ? () => onSwapOrder(entry.value, list[entry.key + 1])
+                                  : null,
                               onTaskSelectToggle: onTaskSelectToggle,
                             ),
                             Divider(
@@ -528,6 +560,9 @@ class _TaskRow extends StatefulWidget {
   final Function(CustomTask) onOpenDetail;
   final Function(CustomTask) onDelete;
 
+  final VoidCallback? onMoveUp;
+  final VoidCallback? onMoveDown;
+
   // ← Nouveaux paramètres pour la sélection multiple
   final bool multiSelectMode;
   final bool isSelected;
@@ -542,6 +577,9 @@ class _TaskRow extends StatefulWidget {
     required this.onDeadlineChanged,
     required this.onOpenDetail,
     required this.onDelete,
+
+    this.onMoveUp,
+    this.onMoveDown,
 
     required this.multiSelectMode,
     required this.isSelected,
@@ -1131,27 +1169,43 @@ class _TaskRowState extends State<_TaskRow> {
             _vDiv(context),
             // 6) Zone de droite (checkbox ou bouton de suppression individuelle)
             SizedBox(
-              width: 40,
+              width: 80,
               child: widget.multiSelectMode
-              // Mode multi-sélection : afficher la checkbox
                   ? Checkbox(
-                value: widget.isSelected,
-                onChanged: (v) {
-                  widget.onTaskSelectToggle(widget.task, v!);
-                },
-              )
-                  : (_hoverRow
-              // Mode normal + survol : afficher la croix de suppression
-                  ? IconButton(
-                icon: const Icon(Icons.close, color: Colors.red),
-                tooltip: 'Supprimer cette tâche',
-                onPressed: () => widget.onDelete(widget.task),
-                padding: const EdgeInsets.all(8),
-                constraints:
-                const BoxConstraints(), // pour ne pas ajouter de padding supplémentaire
-              )
-              // Mode normal + pas de survol : espace vide
-                  : Container()),
+                      value: widget.isSelected,
+                      onChanged: (v) {
+                        widget.onTaskSelectToggle(widget.task, v!);
+                      },
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        if (_hoverRow && widget.onMoveUp != null)
+                          IconButton(
+                            icon: const Icon(Icons.arrow_upward, size: 16),
+                            tooltip: 'Monter',
+                            onPressed: widget.onMoveUp,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        if (_hoverRow && widget.onMoveDown != null)
+                          IconButton(
+                            icon: const Icon(Icons.arrow_downward, size: 16),
+                            tooltip: 'Descendre',
+                            onPressed: widget.onMoveDown,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        if (_hoverRow)
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.red),
+                            tooltip: 'Supprimer cette tâche',
+                            onPressed: () => widget.onDelete(widget.task),
+                            padding: const EdgeInsets.all(8),
+                            constraints: const BoxConstraints(),
+                          ),
+                      ],
+                    ),
             ),
           ],
         ),
