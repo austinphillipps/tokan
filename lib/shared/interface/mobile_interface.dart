@@ -25,6 +25,7 @@ class MobileHomeScreen extends StatefulWidget {
 
 class _MobileHomeScreenState extends State<MobileHomeScreen> {
   int _selectedIndex = 0;
+  int _bottomIndex = 0;
   final NotificationService _notifService = NotificationService();
 
   @override
@@ -93,7 +94,8 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
     final settingsIndex = notifIndex + 2;
 
     final bottomItemsCount = notifIndex;
-    final showBottomNav = _selectedIndex < bottomItemsCount;
+    final showBottomNav =
+        _selectedIndex < bottomItemsCount || _selectedIndex == libraryIndex;
 
     return Scaffold(
       body: Column(
@@ -126,8 +128,11 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
       ),
       bottomNavigationBar: showBottomNav
           ? BottomNavigationBar(
-              currentIndex: _selectedIndex,
-              onTap: (i) => setState(() => _selectedIndex = i),
+              currentIndex: _bottomIndex,
+              onTap: (i) => setState(() {
+                    _selectedIndex = i;
+                    _bottomIndex = i;
+                  }),
               type: BottomNavigationBarType.fixed,
               items: [
                 for (int i = 0; i < bottomItemsCount; i++)
