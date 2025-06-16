@@ -345,6 +345,10 @@ class TasksListView extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    // Hide the detailed header on small screens (mobile)
+    if (MediaQuery.of(context).size.width < 600) {
+      return const SizedBox.shrink();
+    }
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       decoration: BoxDecoration(
@@ -860,6 +864,7 @@ class _TaskRowState extends State<_TaskRow> {
         : null;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool isMobile = MediaQuery.of(context).size.width < 600;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -879,8 +884,83 @@ class _TaskRowState extends State<_TaskRow> {
             ),
           ],
         ),
-        child: Row(
-          children: [
+        child: isMobile
+            ? Row(
+                children: [
+                  InkWell(
+                    onTap: () => widget.onToggle(widget.task),
+                    child: CircleAvatar(
+                      radius: 12,
+                      backgroundColor: widget.task.status == 'completed'
+                          ? AppColors.green
+                          : (isDark
+                              ? Theme.of(context)
+                                  .colorScheme
+                                  .onBackground
+                                  .withOpacity(0.2)
+                              : Colors.grey[300]),
+                      child: Icon(
+                        Icons.check,
+                        size: 16,
+                        color: isDark
+                            ? Theme.of(context).colorScheme.onPrimary
+                            : Colors.black,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => widget.onOpenDetail(widget.task),
+                      child: Text(
+                        widget.task.name,
+                        style: TextStyle(
+                          color: isDark
+                              ? Theme.of(context).colorScheme.onBackground
+                              : Colors.black87,
+                          fontSize: 14,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    icon: Icon(Icons.more_vert,
+                        color: Theme.of(context).iconTheme.color),
+                    onSelected: (action) {
+                      switch (action) {
+                        case 'select':
+                          widget.onTaskSelectToggle(
+                              widget.task, !widget.isSelected);
+                          break;
+                        case 'edit':
+                          widget.onOpenDetail(widget.task);
+                          break;
+                        case 'delete':
+                          widget.onDelete(widget.task);
+                          break;
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                        value: 'select',
+                        child: const Text('Sélectionner'),
+                      ),
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: const Text('Modifier'),
+                      ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: const Text('Supprimer'),
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : Row(
+                children: [
             // 1) Point de statut (cercle vert si terminé, gris clair sinon)
             SizedBox(
               width: 40,
