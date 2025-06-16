@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 // 🔄 Redirection vers l’interface principale de Sequoia
 import '../../../shared/interface/interface.dart'; // ajuste le chemin si besoin
+import '../../../shared/interface/mobile_interface.dart';
+import '../../../shared/interface/adaptive_home_screen.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({Key? key}) : super(key: key);
@@ -31,12 +33,12 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void initState() {
     super.initState();
-    // Si déjà authentifié, on va direct sur HomeScreen
+    // Si déjà authentifié, on va direct sur l'interface adaptée
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          MaterialPageRoute(builder: (_) => const AdaptiveHomeScreen()),
         );
       });
     }
@@ -260,9 +262,9 @@ class _RegisterPageState extends State<RegisterPage> {
         });
       }
 
-      // 3️⃣ Redirection vers HomeScreen
+      // 3️⃣ Redirection vers l'interface adaptée
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => const AdaptiveHomeScreen()),
       );
     } on FirebaseAuthException catch (e) {
       setState(() {
