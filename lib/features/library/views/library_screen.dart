@@ -22,6 +22,13 @@ class _LibraryPageState extends State<LibraryPage> {
         p.displayName.toLowerCase().contains(_search.toLowerCase())
     ).toList();
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    const spacing = 16.0;
+    final gridWidth = screenWidth * 0.9;
+    // 2 colonnes sur mobile, 4 sur écrans larges
+    final columns = screenWidth < 600 ? 2 : 4;
+    final cardWidth = (gridWidth - (columns - 1) * spacing) / columns;
+
     return Column(
       children: [
         Padding(
@@ -35,25 +42,77 @@ class _LibraryPageState extends State<LibraryPage> {
           ),
         ),
         Expanded(
-          child: ListView.builder(
-            itemCount: filtered.length,
-            itemBuilder: (_, i) {
-              final p = filtered[i];
-              final installed = pluginProv.isInstalled(p.id);
-              return ListTile(
-                leading: Icon(p.iconData), // utilise iconData ici
-                title: Text(p.displayName),
-                trailing: ElevatedButton(
-                  child: Text(installed ? 'Désinstaller' : 'Installer'),
-                  onPressed: () => installed
-                      ? pluginProv.uninstall(p.id)
-                      : pluginProv.install(p.id),
-                ),
-              );
-            },
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(8),
+            child: Center(
+              child: Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: [
+                  for (final p in filtered)
+                    _PluginCard(
+                      plugin: p,
+                      installed: pluginProv.isInstalled(p.id),
+                      width: cardWidth,
+                      onInstall: () => pluginProv.install(p.id),
+                      onUninstall: () => pluginProv.uninstall(p.id),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _PluginCard extends StatelessWidget {
+  final PluginContract plugin;
+  final bool installed;
+  final double width;
+  final VoidCallback onInstall;
+  final VoidCallback onUninstall;
+
+  const _PluginCard({
+    Key? key,
+    required this.plugin,
+    required this.installed,
+    required this.width,
+    required this.onInstall,
+    required this.onUninstall,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: width,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(plugin.iconData, size: 40),
+              const SizedBox(height: 8),
+              Text(plugin.displayName, style: theme.textTheme.titleMedium),
+              const SizedBox(height: 8),
+              installed
+                  ? IconButton(
+                      icon: const Icon(Icons.delete),
+                      tooltip: 'Désinstaller',
+                      onPressed: onUninstall,
+                    )
+                  : IconButton(
+                      icon: const Icon(Icons.download),
+                      tooltip: 'Installer',
+                      onPressed: onInstall,
+                    ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
