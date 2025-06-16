@@ -381,7 +381,10 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
         }
       },
       child: Container(
-        color: bgColor,
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -433,30 +436,16 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
               ),
               const SizedBox(height: 8),
 
-              // --- Sélecteur de date d’échéance ---
-              InkWell(
-                onTap: _pickDeadline,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_today, color: onBg),
-                      const SizedBox(width: 8),
-                      Text("Échéance : ", style: TextStyle(color: onBg)),
-                      const SizedBox(width: 8),
-                      Text(
-                        _deadline == null
-                            ? DateFormat('yyyy-MM-dd').format(DateTime.now())
-                            : DateFormat('yyyy-MM-dd').format(_deadline!),
-                        style: TextStyle(color: onBgFaded),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
 
-              // --- Champ Récurrence (ouvre un dialogue) ---
+                        // --- Champ Récurrence (ouvre un dialogue) ---
               Text(
                 "Récurrence :",
                 style: TextStyle(
@@ -517,124 +506,6 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-
-              // --- Heures de début / fin ---
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  // Heure de début
-                  Row(
-                    children: [
-                      Text("Début: ", style: TextStyle(color: onBg)),
-                      SizedBox(
-                        width: 60,
-                        child: TextField(
-                          controller: startHourController,
-                          focusNode: startHourFocusNode,
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          decoration: InputDecoration(
-                            hintText: "HH",
-                            hintStyle: TextStyle(color: onBgFadedLight),
-                            counterText: "",
-                            contentPadding:
-                            const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: borderColor),
-                            ),
-                          ),
-                          maxLength: 2,
-                          style: TextStyle(color: onBg),
-                          onChanged: (v) {
-                            if (v.length >= 2) {
-                              FocusScope.of(context).requestFocus(startMinuteFocusNode);
-                            }
-                          },
-                        ),
-                      ),
-                      Text(":", style: TextStyle(color: onBgFaded)),
-                      SizedBox(
-                        width: 60,
-                        child: TextField(
-                          controller: startMinuteController,
-                          focusNode: startMinuteFocusNode,
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          decoration: InputDecoration(
-                            hintText: "MM",
-                            hintStyle: TextStyle(color: onBgFadedLight),
-                            counterText: "",
-                            contentPadding:
-                            const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: borderColor),
-                            ),
-                          ),
-                          maxLength: 2,
-                          style: TextStyle(color: onBg),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // Heure de fin
-                  Row(
-                    children: [
-                      Text("Fin: ", style: TextStyle(color: onBg)),
-                      SizedBox(
-                        width: 60,
-                        child: TextField(
-                          controller: endHourController,
-                          focusNode: endHourFocusNode,
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          decoration: InputDecoration(
-                            hintText: "HH",
-                            hintStyle: TextStyle(color: onBgFadedLight),
-                            counterText: "",
-                            contentPadding:
-                            const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: borderColor),
-                            ),
-                          ),
-                          maxLength: 2,
-                          style: TextStyle(color: onBg),
-                          onChanged: (v) {
-                            if (v.length >= 2) {
-                              FocusScope.of(context).requestFocus(endMinuteFocusNode);
-                            }
-                          },
-                        ),
-                      ),
-                      Text(":", style: TextStyle(color: onBgFaded)),
-                      SizedBox(
-                        width: 60,
-                        child: TextField(
-                          controller: endMinuteController,
-                          focusNode: endMinuteFocusNode,
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          decoration: InputDecoration(
-                            hintText: "MM",
-                            hintStyle: TextStyle(color: onBgFadedLight),
-                            counterText: "",
-                            contentPadding:
-                            const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: borderColor),
-                            ),
-                          ),
-                          maxLength: 2,
-                          style: TextStyle(color: onBg),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
 
               // --- Sélecteur de responsable ---
               Padding(
@@ -909,9 +780,157 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                 ],
               ),
             ],
+          ), // end left column
           ),
-        ),
+          const VerticalDivider(width: 32),
+          Expanded(
+            flex: 1,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // --- Sélecteur de date d’échéance ---
+                InkWell(
+                  onTap: _pickDeadline,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.calendar_today, color: onBg),
+                        const SizedBox(width: 8),
+                        Text("Échéance : ", style: TextStyle(color: onBg)),
+                        const SizedBox(width: 8),
+                        Text(
+                          _deadline == null
+                              ? DateFormat('yyyy-MM-dd').format(DateTime.now())
+                              : DateFormat('yyyy-MM-dd').format(_deadline!),
+                          style: TextStyle(color: onBgFaded),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // --- Heures de début / fin ---
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // Heure de début
+                    Row(
+                      children: [
+                        Text("Début: ", style: TextStyle(color: onBg)),
+                        SizedBox(
+                          width: 60,
+                          child: TextField(
+                            controller: startHourController,
+                            focusNode: startHourFocusNode,
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            decoration: InputDecoration(
+                              hintText: "HH",
+                              hintStyle: TextStyle(color: onBgFadedLight),
+                              counterText: "",
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(color: borderColor),
+                              ),
+                            ),
+                            maxLength: 2,
+                            style: TextStyle(color: onBg),
+                            onChanged: (v) {
+                              if (v.length >= 2) {
+                                FocusScope.of(context).requestFocus(startMinuteFocusNode);
+                              }
+                            },
+                          ),
+                        ),
+                        Text(":", style: TextStyle(color: onBgFaded)),
+                        SizedBox(
+                          width: 60,
+                          child: TextField(
+                            controller: startMinuteController,
+                            focusNode: startMinuteFocusNode,
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            decoration: InputDecoration(
+                              hintText: "MM",
+                              hintStyle: TextStyle(color: onBgFadedLight),
+                              counterText: "",
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(color: borderColor),
+                              ),
+                            ),
+                            maxLength: 2,
+                            style: TextStyle(color: onBg),
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Heure de fin
+                    Row(
+                      children: [
+                        Text("Fin: ", style: TextStyle(color: onBg)),
+                        SizedBox(
+                          width: 60,
+                          child: TextField(
+                            controller: endHourController,
+                            focusNode: endHourFocusNode,
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            decoration: InputDecoration(
+                              hintText: "HH",
+                              hintStyle: TextStyle(color: onBgFadedLight),
+                              counterText: "",
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(color: borderColor),
+                              ),
+                            ),
+                            maxLength: 2,
+                            style: TextStyle(color: onBg),
+                            onChanged: (v) {
+                              if (v.length >= 2) {
+                                FocusScope.of(context).requestFocus(endMinuteFocusNode);
+                              }
+                            },
+                          ),
+                        ),
+                        Text(":", style: TextStyle(color: onBgFaded)),
+                        SizedBox(
+                          width: 60,
+                          child: TextField(
+                            controller: endMinuteController,
+                            focusNode: endMinuteFocusNode,
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            decoration: InputDecoration(
+                              hintText: "MM",
+                              hintStyle: TextStyle(color: onBgFadedLight),
+                              counterText: "",
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(color: borderColor),
+                              ),
+                            ),
+                            maxLength: 2,
+                            style: TextStyle(color: onBg),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
-    );
+    ),
+  ),
+);
   }
 }
