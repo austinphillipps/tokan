@@ -18,6 +18,9 @@ class CustomTask extends Equatable {
   String? project;       // Projet d’appartenance (optionnel)
   String? folderId;      // Dossier auquel la tâche appartient
 
+  /// Date de création de la tâche pour gérer l'ordre d'affichage
+  DateTime? createdAt;
+
   /// ID du projet avant édition, pour détecter les changements de projet
   String? originalProjectId;
 
@@ -45,6 +48,7 @@ class CustomTask extends Equatable {
     this.client,
     this.project,
     this.folderId,
+    this.createdAt,
     this.originalProjectId,
     this.recurrenceType,
     this.recurrenceDays,
@@ -85,7 +89,9 @@ class CustomTask extends Equatable {
       'recurrenceIncludePast': recurrenceIncludePast ?? false,
       'subTasks': subTasks.map((t) => t._toSubMap()).toList(),
       'createdBy': userId,
-      'createdAt': FieldValue.serverTimestamp(),
+      'createdAt': createdAt != null
+          ? Timestamp.fromDate(createdAt!)
+          : FieldValue.serverTimestamp(),
     };
   }
 
@@ -175,6 +181,7 @@ class CustomTask extends Equatable {
       client: map['client'] as String?,
       project: proj,
       folderId: map['folderId'] as String?,
+      createdAt: _mapToDate(map['createdAt']),
       originalProjectId: proj,
       recurrenceType: map['recurrenceType'] as String?,
       recurrenceDays: _mapToRecurrenceDays(map['recurrenceDays']),
@@ -204,6 +211,7 @@ class CustomTask extends Equatable {
       client: map['client'] as String?,
       project: proj,
       folderId: map['folderId'] as String?,
+      createdAt: _mapToDate(map['createdAt']),
       originalProjectId: proj,
       recurrenceType: map['recurrenceType'] as String?,
       recurrenceDays: _mapToRecurrenceDays(map['recurrenceDays']),
@@ -232,6 +240,7 @@ class CustomTask extends Equatable {
     String? client,
     String? project,
     String? folderId,
+    DateTime? createdAt,
     String? originalProjectId,
     String? recurrenceType,
     List<int>? recurrenceDays,
@@ -251,6 +260,7 @@ class CustomTask extends Equatable {
       client: client ?? this.client,
       project: project ?? this.project,
       folderId: folderId ?? this.folderId,
+      createdAt: createdAt ?? this.createdAt,
       originalProjectId: originalProjectId ?? this.originalProjectId,
       recurrenceType: recurrenceType ?? this.recurrenceType,
       recurrenceDays: recurrenceDays != null ? List<int>.from(recurrenceDays) : this.recurrenceDays,
@@ -275,6 +285,7 @@ class CustomTask extends Equatable {
     client,
     project,
     folderId,
+    createdAt,
     originalProjectId,
     recurrenceType,
     recurrenceDays,
