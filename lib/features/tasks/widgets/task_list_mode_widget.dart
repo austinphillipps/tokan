@@ -131,7 +131,7 @@ class TasksListView extends StatelessWidget {
                     padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: Text(
-                      "En cours",
+                      "EN COURS",
                       style:
                       Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context)
@@ -175,7 +175,7 @@ class TasksListView extends StatelessWidget {
                     padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: Text(
-                      "Terminées",
+                      "TERMINÉES",
                       style:
                       Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context)
