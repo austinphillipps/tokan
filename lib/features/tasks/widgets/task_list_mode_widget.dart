@@ -84,21 +84,9 @@ class TasksListView extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
-                TextButton.icon(
-                  onPressed: onCreateFolder,
-                  style: TextButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.primary,
-                  ),
-                  icon: const Icon(Icons.create_new_folder),
-                  label: Text(
-                    'Nouveau dossier',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                ),
+                // Lorsque la liste est vide, seul le bouton pour ajouter une
+                // tâche doit être affiché. Le bouton de création de dossier a
+                // été retiré pour simplifier l'interface dans ce cas précis.
               ],
             ),
           ),
