@@ -243,6 +243,28 @@ class _TasksPageState extends State<TasksPage> {
           );
           showTaskPanel = true;
         }),
+        onAddTaskToFolder: (folderId) => setState(() {
+          activeTask = CustomTask(
+            id: '',
+            name: '',
+            description: '',
+            status: '',
+            responsable: '',
+            deadline: null,
+            startTime: null,
+            endTime: null,
+            duration: null,
+            client: null,
+            project: widget.projectId,
+            folderId: folderId,
+            originalProjectId: null,
+            recurrenceType: null,
+            recurrenceDays: null,
+            recurrenceIncludePast: null,
+            subTasks: [],
+          );
+          showTaskPanel = true;
+        }),
         onCreateFolder: _showCreateFolderDialog,
         onDeleteTask: _deleteTask,
 
