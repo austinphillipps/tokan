@@ -243,8 +243,31 @@ class _TasksPageState extends State<TasksPage> {
           );
           showTaskPanel = true;
         }),
+        onAddTaskToFolder: (folder) => setState(() {
+          activeTask = CustomTask(
+            id: '',
+            name: '',
+            description: '',
+            status: '',
+            responsable: '',
+            deadline: null,
+            startTime: null,
+            endTime: null,
+            duration: null,
+            client: null,
+            project: widget.projectId,
+            originalProjectId: null,
+            recurrenceType: null,
+            recurrenceDays: null,
+            recurrenceIncludePast: null,
+            folderId: folder.id,
+            subTasks: [],
+          );
+          showTaskPanel = true;
+        }),
         onCreateFolder: _showCreateFolderDialog,
         onDeleteTask: _deleteTask,
+        onDeleteFolder: _deleteFolder,
 
         multiSelectMode: _multiSelectMode,
         selectedTaskIds: _selectedTaskIds,
@@ -504,5 +527,9 @@ class _TasksPageState extends State<TasksPage> {
         );
       },
     );
+  }
+
+  Future<void> _deleteFolder(TaskFolder folder) async {
+    await TaskFolderService().deleteFolder(folder.id);
   }
 }
