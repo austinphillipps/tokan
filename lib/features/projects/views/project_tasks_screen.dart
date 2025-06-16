@@ -646,6 +646,7 @@ class _ProjectTasksPageState extends State<ProjectTasksPage> {
                             ? AppColors.darkBackground
                             : Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(12),
+                        clipBehavior: Clip.antiAlias,
                         child: SizedBox(
                           width: 500,
                           height: MediaQuery.of(context).size.height * 0.8,

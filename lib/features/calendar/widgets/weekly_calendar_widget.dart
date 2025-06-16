@@ -486,9 +486,16 @@ class _CalendarPageState extends State<CalendarPage> {
       context: context,
       builder: (ctx) {
         return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          clipBehavior: Clip.antiAlias,
           child: Container(
             width: 400,
-            color: Colors.grey[850],
+            decoration: BoxDecoration(
+              color: Colors.grey[850],
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: TaskDetailPanel(
               task: customTask,
               onSave: (updatedTask) async {
@@ -837,9 +844,16 @@ class _CalendarPageState extends State<CalendarPage> {
             context: context,
             builder: (ctx) {
               return Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                clipBehavior: Clip.antiAlias,
                 child: Container(
                   width: 400,
-                  color: Colors.grey[850],
+                  decoration: BoxDecoration(
+                    color: Colors.grey[850],
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   child: TaskDetailPanel(
                     task: CustomTask(name: '', description: ''),
                     onSave: (updatedTask) async {
