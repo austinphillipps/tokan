@@ -98,20 +98,55 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
       'Paramètres',
     ];
 
+    final notifIndex = 6 + plugins.length;
+    final libraryIndex = notifIndex + 1;
+    final settingsIndex = notifIndex + 2;
+
+    final bottomItemsCount = notifIndex;
+    final showBottomNav = _selectedIndex < bottomItemsCount;
+
     return Scaffold(
-      body: pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (i) => setState(() => _selectedIndex = i),
-        type: BottomNavigationBarType.fixed,
-        items: [
-          for (int i = 0; i < pages.length; i++)
-            BottomNavigationBarItem(
-              icon: _buildIcon(i, icons[i]),
-              label: labels[i],
+      body: Stack(
+        children: [
+          pages[_selectedIndex],
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: _buildNotificationsIcon(Icons.notifications),
+                    onPressed: () => setState(() => _selectedIndex = notifIndex),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.library_books),
+                    onPressed: () => setState(() => _selectedIndex = libraryIndex),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.settings),
+                    onPressed: () => setState(() => _selectedIndex = settingsIndex),
+                  ),
+                ],
+              ),
             ),
+          ),
         ],
       ),
+      bottomNavigationBar: showBottomNav
+          ? BottomNavigationBar(
+              currentIndex: _selectedIndex,
+              onTap: (i) => setState(() => _selectedIndex = i),
+              type: BottomNavigationBarType.fixed,
+              items: [
+                for (int i = 0; i < bottomItemsCount; i++)
+                  BottomNavigationBarItem(
+                    icon: _buildIcon(i, icons[i]),
+                    label: labels[i],
+                  ),
+              ],
+            )
+          : null,
     );
   }
 
