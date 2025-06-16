@@ -74,7 +74,9 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
 
 
           final List<Widget> pluginToggles = List<Widget>.from(
-            PluginRegistry().availablePlugins.map((plugin) {
+            PluginRegistry().availablePlugins
+                .where((plugin) => plugin.id != 'crm')
+                .map((plugin) {
                 final installed = pluginProv.isInstalled(plugin.id);
                 return SwitchListTile(
                   title: Text(
