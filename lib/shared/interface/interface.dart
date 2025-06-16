@@ -24,13 +24,15 @@ import '../../main.dart'; // Pour AppTheme, themeNotifier et AppColors
 import '../../features/notifications/services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  final int initialIndex;
+  final Widget? child;
+  const HomeScreen({Key? key, this.initialIndex = 0, this.child}) : super(key: key);
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
   bool _sidebarExpanded = false;
   bool _showLabels = false;
   Timer? _labelTimer;
@@ -40,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialIndex;
     _notifService.init();
   }
 
@@ -64,6 +67,16 @@ class _HomeScreenState extends State<HomeScreen> {
       _showLabels = false;
       _sidebarExpanded = false;
     });
+  }
+
+  void _navigateToIndex(int index) {
+    if (widget.child != null) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => HomeScreen(initialIndex: index)),
+      );
+    } else {
+      setState(() => _selectedIndex = index);
+    }
   }
 
   @override
@@ -167,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 showLabel: _showLabels,
                 isSelected: _selectedIndex == i,
                 selectedBg: selectedBg,
-                onTap: () => setState(() => _selectedIndex = i),
+                onTap: () => _navigateToIndex(i),
               ),
             const Spacer(),
             // Items fixes en bas
@@ -185,7 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 showLabel: _showLabels,
                 isSelected: _selectedIndex == i,
                 selectedBg: selectedBg,
-                onTap: () => setState(() => _selectedIndex = i),
+                onTap: () => _navigateToIndex(i),
               ),
             const SizedBox(height: 24),
           ],
@@ -199,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           sidebar,
           VerticalDivider(width: 1, color: dividerColor),
-          Expanded(child: pages[_selectedIndex]),
+          Expanded(child: widget.child ?? pages[_selectedIndex]),
         ],
       ),
     );
@@ -232,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
         showLabel: _showLabels,
         isSelected: _selectedIndex == index,
         selectedBg: selectedBg,
-        onTap: () => setState(() => _selectedIndex = index),
+        onTap: () => _navigateToIndex(index),
       );
     }
 
@@ -258,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
           isSelected: _selectedIndex == index,
           selectedBg: selectedBg,
           badgeCount: count > 0 ? count : null,
-          onTap: () => setState(() => _selectedIndex = index),
+          onTap: () => _navigateToIndex(index),
         );
       },
     );
@@ -278,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
         showLabel: _showLabels,
         isSelected: _selectedIndex == index,
         selectedBg: selectedBg,
-        onTap: () => setState(() => _selectedIndex = index),
+        onTap: () => _navigateToIndex(index),
       );
     }
 
@@ -309,7 +322,7 @@ class _HomeScreenState extends State<HomeScreen> {
               isSelected: _selectedIndex == index,
               selectedBg: selectedBg,
               badgeCount: count > 0 ? count : null,
-              onTap: () => setState(() => _selectedIndex = index),
+              onTap: () => _navigateToIndex(index),
             );
           },
         );
