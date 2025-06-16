@@ -302,24 +302,8 @@ class TasksListView extends StatelessWidget {
                           ),
                           onPressed: onAddTask,
                         ),
-                        const SizedBox(width: 16),
-                        TextButton.icon(
-                          icon: const Icon(Icons.create_new_folder),
-                          label: Text(
-                            "Nouveau dossier",
-                            style: TextStyle(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onBackground
-                                  .withOpacity(0.7),
-                            ),
-                          ),
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12, horizontal: 16),
-                          ),
-                          onPressed: onCreateFolder,
-                        ),
+                        // Bouton "Nouveau dossier" supprimé, la création se
+                        // fait désormais via l'icône du header
                       ],
                     ),
                   ),
@@ -344,9 +328,9 @@ class TasksListView extends StatelessWidget {
           SizedBox(
             width: 40,
             child: IconButton(
-              icon: const Icon(Icons.folder, size: 20),
-              tooltip: 'Dossiers',
-              onPressed: () {},
+              icon: const Icon(Icons.create_new_folder, size: 20),
+              tooltip: 'Nouveau dossier',
+              onPressed: onCreateFolder,
               padding: EdgeInsets.zero,
               splashRadius: 20,
             ),
