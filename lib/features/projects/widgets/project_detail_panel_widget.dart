@@ -493,7 +493,13 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
             const SizedBox(height: 16),
             Text(
               'Couleur du libellé',
-              style: TextStyle(color: _selectedColor),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(
+                    color: _selectedColor,
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             GestureDetector(
