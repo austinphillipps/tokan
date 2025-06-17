@@ -83,83 +83,165 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
 
       body: SafeArea(
         child: Container(
-          // couche « glass »
           color: AppColors.glassBackground,
           padding: const EdgeInsets.all(16),
           child: _loading
               ? const Center(child: CircularProgressIndicator())
               : _quote == null
-              ? const Center(child: Text('Devis introuvable'))
-              : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Référence : ${_quote!.reference}',
-                  style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              Text(
-                'Total : ${NumberFormat.currency(symbol: '€').format(_quote!.total)}',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              if (_quote!.discount != null) ...[
-                const SizedBox(height: 8),
-                Text('Remise : ${_quote!.discount!.toStringAsFixed(2)}%',
-                    style: Theme.of(context).textTheme.titleMedium),
-              ],
-              const SizedBox(height: 8),
-              Text('Statut : ${_quote!.status}',
-                  style: Theme.of(context).textTheme.titleMedium),
-              if (_quote!.customer != null && _quote!.customer!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text('Client : ${_quote!.customer!}',
-                    style: Theme.of(context).textTheme.titleMedium),
-              ],
-              const SizedBox(height: 8),
-              Text(
-                'Créé le : ${DateFormat.yMd().format(_quote!.createdAt)}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              if (_quote!.dueDate != null) ...[
-                const SizedBox(height: 8),
-                Text('Échéance : ${DateFormat.yMd().format(_quote!.dueDate!)}',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-              if (_quote!.description != null && _quote!.description!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text('Description : ${_quote!.description!}',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-              if (_quote!.items.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text('Détails', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                ..._quote!.items.map((e) => Text(
-                    '${e.designation} - ${e.quantity} x ${e.unitPrice.toStringAsFixed(2)} €')),
-              ],
-              if (_quote!.notes != null && _quote!.notes!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text('Notes : ${_quote!.notes!}',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-              const SizedBox(height: 8),
-              Text('TVA : ${_quote!.vatRate.toStringAsFixed(2)}%',
-                  style: Theme.of(context).textTheme.bodyMedium),
-              if (_quote!.iban != null && _quote!.iban!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text('IBAN : ${_quote!.iban!}',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-              if (_quote!.bic != null && _quote!.bic!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text('BIC : ${_quote!.bic!}',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-              if (_quote!.depositPercent != null) ...[
-                const SizedBox(height: 8),
-                Text('Acompte : ${_quote!.depositPercent!.toStringAsFixed(2)}%',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-            ],
-          ),
+                  ? const Center(child: Text('Devis introuvable'))
+                  : ListView(
+                      children: [
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Référence : ${_quote!.reference}',
+                                    style: Theme.of(context).textTheme.titleMedium),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Total : ${NumberFormat.currency(symbol: '€').format(_quote!.total)}',
+                                  style: Theme.of(context).textTheme.titleMedium,
+                                ),
+                                if (_quote!.discount != null) ...[
+                                  const SizedBox(height: 8),
+                                  Text('Remise : ${_quote!.discount!.toStringAsFixed(2)}%',
+                                      style: Theme.of(context).textTheme.titleMedium),
+                                ],
+                                const SizedBox(height: 8),
+                                Text('Statut : ${_quote!.status}',
+                                    style: Theme.of(context).textTheme.titleMedium),
+                                if (_quote!.customer != null && _quote!.customer!.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  Text('Client : ${_quote!.customer!}',
+                                      style: Theme.of(context).textTheme.titleMedium),
+                                ],
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Créé le : ${DateFormat.yMd().format(_quote!.createdAt)}',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                                if (_quote!.dueDate != null) ...[
+                                  const SizedBox(height: 8),
+                                  Text('Échéance : ${DateFormat.yMd().format(_quote!.dueDate!)}',
+                                      style: Theme.of(context).textTheme.bodyMedium),
+                                ],
+                                if (_quote!.description != null && _quote!.description!.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  Text('Description : ${_quote!.description!}',
+                                      style: Theme.of(context).textTheme.bodyMedium),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                        if (_quote!.items.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Détails',
+                                      style: Theme.of(context).textTheme.titleMedium),
+                                  const SizedBox(height: 8),
+                                  Table(
+                                    border: TableBorder.all(color: Colors.grey.shade300),
+                                    columnWidths: const {
+                                      0: FlexColumnWidth(4),
+                                      1: FlexColumnWidth(1),
+                                      2: FlexColumnWidth(2),
+                                      3: FlexColumnWidth(2),
+                                    },
+                                    children: [
+                                      TableRow(
+                                        decoration: BoxDecoration(color: Colors.grey.shade200),
+                                        children: const [
+                                          Padding(
+                                            padding: EdgeInsets.all(8),
+                                            child: Text('Désignation', style: TextStyle(fontWeight: FontWeight.bold)),
+                                          ),
+                                          Padding(
+                                            padding: EdgeInsets.all(8),
+                                            child: Text('Qté', style: TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                                          ),
+                                          Padding(
+                                            padding: EdgeInsets.all(8),
+                                            child: Text('P.U', style: TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                                          ),
+                                          Padding(
+                                            padding: EdgeInsets.all(8),
+                                            child: Text('Total', style: TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                                          ),
+                                        ],
+                                      ),
+                                      ..._quote!.items.map(
+                                        (e) => TableRow(
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.all(8),
+                                              child: Text(e.designation),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.all(8),
+                                              child: Text(e.quantity.toStringAsFixed(2), textAlign: TextAlign.center),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.all(8),
+                                              child: Text(e.unitPrice.toStringAsFixed(2), textAlign: TextAlign.center),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.all(8),
+                                              child: Text(e.total.toStringAsFixed(2), textAlign: TextAlign.center),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 12),
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (_quote!.notes != null && _quote!.notes!.isNotEmpty) ...[
+                                  Text('Notes :', style: Theme.of(context).textTheme.titleMedium),
+                                  const SizedBox(height: 4),
+                                  Text(_quote!.notes!),
+                                  const SizedBox(height: 8),
+                                ],
+                                Text('TVA : ${_quote!.vatRate.toStringAsFixed(2)}%',
+                                    style: Theme.of(context).textTheme.bodyMedium),
+                                if (_quote!.iban != null && _quote!.iban!.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text('IBAN : ${_quote!.iban!}',
+                                      style: Theme.of(context).textTheme.bodyMedium),
+                                ],
+                                if (_quote!.bic != null && _quote!.bic!.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text('BIC : ${_quote!.bic!}',
+                                      style: Theme.of(context).textTheme.bodyMedium),
+                                ],
+                                if (_quote!.depositPercent != null) ...[
+                                  const SizedBox(height: 4),
+                                  Text('Acompte : ${_quote!.depositPercent!.toStringAsFixed(2)}%',
+                                      style: Theme.of(context).textTheme.bodyMedium),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
         ),
       ),
     );
