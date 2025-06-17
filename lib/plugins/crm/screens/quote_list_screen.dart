@@ -111,7 +111,7 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
               child: SafeArea(
                 child: _panelQuoteId == null
                     ? QuoteFormScreen(onSaved: _closePanel)
-                    : QuoteDetailScreen(quoteId: _panelQuoteId!),
+                    : const QuoteDetailScreen(),
               ),
             ),
           ),
