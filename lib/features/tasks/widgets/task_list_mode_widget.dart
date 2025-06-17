@@ -1180,22 +1180,6 @@ class _TaskRowState extends State<_TaskRow> {
                   : Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        if (_hoverRow && widget.onMoveUp != null)
-                          IconButton(
-                            icon: const Icon(Icons.arrow_upward, size: 16),
-                            tooltip: 'Monter',
-                            onPressed: widget.onMoveUp,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                        if (_hoverRow && widget.onMoveDown != null)
-                          IconButton(
-                            icon: const Icon(Icons.arrow_downward, size: 16),
-                            tooltip: 'Descendre',
-                            onPressed: widget.onMoveDown,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
                         if (_hoverRow)
                           IconButton(
                             icon: const Icon(Icons.close, color: Colors.red),
@@ -1203,6 +1187,33 @@ class _TaskRowState extends State<_TaskRow> {
                             onPressed: () => widget.onDelete(widget.task),
                             padding: const EdgeInsets.all(8),
                             constraints: const BoxConstraints(),
+                          ),
+                        if (_hoverRow)
+                          PopupMenuButton<String>(
+                            icon: const Icon(Icons.drag_handle, size: 16),
+                            tooltip: 'Déplacer cette tâche',
+                            onSelected: (value) {
+                              switch (value) {
+                                case 'up':
+                                  if (widget.onMoveUp != null) widget.onMoveUp!();
+                                  break;
+                                case 'down':
+                                  if (widget.onMoveDown != null) widget.onMoveDown!();
+                                  break;
+                              }
+                            },
+                            itemBuilder: (_) => [
+                              if (widget.onMoveUp != null)
+                                const PopupMenuItem(
+                                  value: 'up',
+                                  child: Text('Monter'),
+                                ),
+                              if (widget.onMoveDown != null)
+                                const PopupMenuItem(
+                                  value: 'down',
+                                  child: Text('Descendre'),
+                                ),
+                            ],
                           ),
                       ],
                     ),
