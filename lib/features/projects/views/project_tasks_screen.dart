@@ -145,9 +145,9 @@ class _ProjectTasksPageState extends State<ProjectTasksPage> {
       );
     }
     final ongoingTasks =
-    tasks.where((t) => t.status.toLowerCase() != "terminée").toList();
+        tasks.where((t) => t.status.toLowerCase() != "terminée").toList();
     final doneTasks =
-    tasks.where((t) => t.status.toLowerCase() == "terminée").toList();
+        tasks.where((t) => t.status.toLowerCase() == "terminée").toList();
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -155,10 +155,26 @@ class _ProjectTasksPageState extends State<ProjectTasksPage> {
       child: Row(
         children: [
           _buildBoardColumn(
-              context, "En cours", ongoingTasks, columnBg, cardBg, titleColor, subtitleColor),
+            context,
+            "En cours",
+            ongoingTasks,
+            columnBg,
+            cardBg,
+            titleColor,
+            subtitleColor,
+            isDone: false,
+          ),
           const SizedBox(width: 16),
           _buildBoardColumn(
-              context, "Terminées", doneTasks, columnBg, cardBg, titleColor, subtitleColor),
+            context,
+            "Terminées",
+            doneTasks,
+            columnBg,
+            cardBg,
+            titleColor,
+            subtitleColor,
+            isDone: true,
+          ),
         ],
       ),
     );
@@ -172,42 +188,78 @@ class _ProjectTasksPageState extends State<ProjectTasksPage> {
       Color cardBg,
       Color titleColor,
       Color subtitleColor,
-      ) {
-    return Container(
-      width: 300,
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: columnBg,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: titleColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+      {
+        required bool isDone,
+      }) {
+    return DragTarget<CustomTask>(
+      onWillAccept: (_) => true,
+      onAccept: (task) async {
+        await _updateTaskStatus(task, isDone ? 'terminée' : 'en cours');
+      },
+      builder: (context, candidateData, rejectedData) {
+        return Container(
+          width: 300,
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: columnBg,
+            borderRadius: BorderRadius.circular(8),
           ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: titleColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
           const SizedBox(height: 8),
           ...tasks.map((task) {
             final deadlineStr = task.deadline != null
                 ? DateFormat('dd MMM yyyy').format(task.deadline!)
                 : '-';
-            return Card(
-              color: cardBg,
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                title: Text(task.name, style: TextStyle(color: titleColor)),
-                subtitle: Text(deadlineStr, style: TextStyle(color: subtitleColor)),
-                onTap: () {
-                  setState(() {
-                    activeTask = task;
-                    showTaskPanel = true;
-                  });
-                },
+            return LongPressDraggable<CustomTask>(
+              data: task,
+              feedback: Material(
+                color: Colors.transparent,
+                child: Card(
+                  color: cardBg,
+                  child: ListTile(
+                    title: Text(task.name, style: TextStyle(color: titleColor)),
+                    subtitle: Text(deadlineStr, style: TextStyle(color: subtitleColor)),
+                    trailing: const Icon(Icons.drag_handle),
+                  ),
+                ),
+              ),
+              childWhenDragging: Opacity(
+                opacity: 0.5,
+                child: Card(
+                  color: cardBg,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    title: Text(task.name, style: TextStyle(color: titleColor)),
+                    subtitle:
+                        Text(deadlineStr, style: TextStyle(color: subtitleColor)),
+                    trailing: const Icon(Icons.drag_handle),
+                  ),
+                ),
+              ),
+              child: Card(
+                color: cardBg,
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  title: Text(task.name, style: TextStyle(color: titleColor)),
+                  subtitle: Text(deadlineStr, style: TextStyle(color: subtitleColor)),
+                  trailing: const Icon(Icons.drag_handle),
+                  onTap: () {
+                    setState(() {
+                      activeTask = task;
+                      showTaskPanel = true;
+                    });
+                  },
+                ),
               ),
             );
           }).toList(),
@@ -597,6 +649,12 @@ class _ProjectTasksPageState extends State<ProjectTasksPage> {
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  Future<void> _updateTaskStatus(CustomTask task, String status) async {
+    task.status = status;
+    await saveTaskToFirestore(task);
+    setState(() {});
   }
 
   Future<void> saveTaskToFirestore(CustomTask task) async {
