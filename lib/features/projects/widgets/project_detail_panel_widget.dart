@@ -461,9 +461,12 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
       padding: const EdgeInsets.all(16),
       child: Form(
         key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
             TextFormField(
               controller: _descCtrl,
               maxLines: 3,
@@ -488,7 +491,16 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
               onChanged: (_) => _autoSave(),
             ),
             const SizedBox(height: 16),
-            Text('Couleur du libellé', style: TextStyle(color: onSurface)),
+            Text(
+              'Couleur du libellé',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(
+                    color: _selectedColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
             const SizedBox(height: 8),
             GestureDetector(
               onTap: _pickColor,
@@ -503,6 +515,8 @@ class _ProjectDetailPanelState extends State<ProjectDetailPanel> {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }
