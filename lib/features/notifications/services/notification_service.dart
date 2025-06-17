@@ -19,8 +19,12 @@ class NotificationService {
   Future<void> init() async {
     // Initialisation des notifications locales
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const windowsSettings = WindowsInitializationSettings();
     await _localNotif.initialize(
-      const InitializationSettings(android: androidSettings),
+      const InitializationSettings(
+        android: androidSettings,
+        windows: windowsSettings,
+      ),
     );
     _listenFriendRequests();
     _listenFriendAcceptances();
