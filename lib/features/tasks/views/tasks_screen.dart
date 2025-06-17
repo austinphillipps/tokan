@@ -515,9 +515,20 @@ class _TasksPageState extends State<TasksPage> {
   Future<void> _swapTaskOrder(CustomTask first, CustomTask second) async {
     final db = FirebaseFirestore.instance;
     final batch = db.batch();
-    final temp = first.order;
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    // Ensure both tasks have a defined order before swapping
+    if (first.order == null) {
+      first.order = now;
+    }
+    if (second.order == null) {
+      second.order = now + 1;
+    }
+
+    final temp = first.order!;
     first.order = second.order;
     second.order = temp;
+
     batch.update(db.collection('tasks').doc(first.id), {'order': first.order});
     batch.update(db.collection('tasks').doc(second.id), {'order': second.order});
     await batch.commit();
