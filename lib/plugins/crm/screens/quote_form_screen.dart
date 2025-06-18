@@ -289,6 +289,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
           ),
         ),
       ),
+      ),
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
