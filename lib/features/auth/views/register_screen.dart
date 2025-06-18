@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 // 🔄 Redirection vers l’interface principale de Sequoia
 import '../../../shared/interface/interface.dart'; // ajuste le chemin si besoin
+import '../../onboarding/onboarding_flow.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({Key? key}) : super(key: key);
@@ -260,9 +261,9 @@ class _RegisterPageState extends State<RegisterPage> {
         });
       }
 
-      // 3️⃣ Redirection vers HomeScreen
+      // 3️⃣ Démarrage du formulaire d'onboarding
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => OnboardingFlow(user: user!)),
       );
     } on FirebaseAuthException catch (e) {
       setState(() {
