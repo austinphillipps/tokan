@@ -1,167 +1,265 @@
-// lib/plugins/crm/screens/quote_detail_screen.dart
-
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 
-import 'package:tokan/main.dart'; // pour AppColors
-import 'package:tokan/plugins/crm/providers/quote_provider.dart';
-import 'package:tokan/plugins/crm/models/quote.dart';
-import 'package:tokan/plugins/crm/screens/quote_form_screen.dart';
-import 'package:tokan/plugins/crm/services/quote_pdf_service.dart';
+class QuoteDetailScreen extends StatelessWidget {
+  // Vous pouvez remplacer ces valeurs statiques par votre modèle Quote
+  final String companyName = 'CHAMBRE DE MÉTIERS ET DE L\u2019ARTISANAT\nDE R\u00c9GION MARTINIQUE';
+  final String companyAddress = 'Rue DU TEMPLE\n97200 FORT-DE-FRANCE France';
+  final String quoteNumber = 'DEV000050';
+  final String quoteDate = '28/05/2025';
+  final String expirationDate = '27/06/2025';
 
-class QuoteDetailScreen extends StatefulWidget {
-  final String quoteId;
-  const QuoteDetailScreen({Key? key, required this.quoteId}) : super(key: key);
+  final List<QuoteLine> lines = [
+    QuoteLine(
+      description:
+          'Conception & scenarisation (Reunion creative, redaction script 30 s, decoupage-plan)',
+      qty: 1,
+      unitPrice: '120,00 \u20ac',
+      total: '120,00 \u20ac',
+    ),
+    QuoteLine(
+      description: 'Pre-production / Recherche medias (HD/4K, licences)',
+      qty: 1,
+      unitPrice: '60,00 \u20ac',
+      total: '60,00 \u20ac',
+    ),
+    QuoteLine(
+      description:
+          'Montage, habillage & VFX (Montage 4K, etalonnage, motion-graphics\u2026)',
+      qty: 1,
+      unitPrice: '290,00 \u20ac',
+      total: '290,00 \u20ac',
+    ),
+    QuoteLine(
+      description: 'Voix-off & musique libres de droit (Studio pro)',
+      qty: 1,
+      unitPrice: '90,00 \u20ac',
+      total: '90,00 \u20ac',
+    ),
+    QuoteLine(
+      description: 'Mastering & livrables (HD/4K, PAL 25 i/s, .mp4 & .mov)',
+      qty: 1,
+      unitPrice: '20,00 \u20ac',
+      total: '20,00 \u20ac',
+    ),
+  ];
 
-  @override
-  State<QuoteDetailScreen> createState() => _QuoteDetailScreenState();
-}
+  final String subTotal = '580,00 \u20ac';
+  final String vatAmount = '49,30 \u20ac';
+  final String totalTTC = '629,30 \u20ac';
 
-class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
-  Quote? _quote;
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    context.read<QuoteProvider>().fetchById(widget.quoteId).then((q) {
-      setState(() {
-        _quote = q;
-        _loading = false;
-      });
-    });
-  }
+  const QuoteDetailScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // On laisse les couches derrière
-      backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
+    const primaryColor = Color(0xFF006644);
+    const accentColor = Color(0xFFEEEEEE);
+    const headerTextStyle =
+        TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white);
+    const labelTextStyle =
+        TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black);
+    const valueTextStyle = TextStyle(fontSize: 14, color: Colors.black87);
 
+    return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: AppColors.glassHeader,
+        title: const Text('Devis', style: TextStyle(color: primaryColor)),
+        backgroundColor: Colors.white,
         elevation: 0,
-        title: Text(
-          _loading
-              ? 'Devis'
-              : _quote != null
-              ? 'Devis ${_quote!.reference}'
-              : 'Devis introuvable',
-          style: const TextStyle(color: Colors.white),
-        ),
-        iconTheme: const IconThemeData(color: Colors.white),
-        actions: (_loading || _quote == null)
-            ? null
-            : [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => QuoteFormScreen(quoteId: widget.quoteId),
+        iconTheme: const IconThemeData(color: primaryColor),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // —— EN-T\u00caTE ——
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  color: primaryColor,
+                  child: const Center(
+                    child: Text('Logo',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(companyName, style: labelTextStyle),
+                      const SizedBox(height: 4),
+                      Text(companyAddress, style: valueTextStyle),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          _infoPair('N\u00b0 Devis :', quoteNumber),
+                          const SizedBox(width: 16),
+                          _infoPair('Date :', quoteDate),
+                          const SizedBox(width: 16),
+                          _infoPair('Expiration :', expirationDate),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // —— TABLEAU DES PRESTATIONS ——
+            Container(
+              color: accentColor,
+              padding: const EdgeInsets.all(4),
+              child: Table(
+                columnWidths: const {
+                  0: FlexColumnWidth(4),
+                  1: FlexColumnWidth(1),
+                  2: FlexColumnWidth(2),
+                  3: FlexColumnWidth(2),
+                },
+                border: TableBorder.all(color: Colors.grey),
+                children: [
+                  TableRow(
+                    decoration: const BoxDecoration(color: primaryColor),
+                    children: const [
+                      Padding(
+                        padding: EdgeInsets.all(6),
+                        child: Text('D\u00e9signation', style: headerTextStyle),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.all(6),
+                        child: Text('Qt\u00e9',
+                            style: headerTextStyle, textAlign: TextAlign.center),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.all(6),
+                        child: Text('P.U HT',
+                            style: headerTextStyle, textAlign: TextAlign.right),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.all(6),
+                        child: Text('Total HT',
+                            style: headerTextStyle, textAlign: TextAlign.right),
+                      ),
+                    ],
+                  ),
+                  for (var line in lines) _buildLineRow(line),
+                ],
               ),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.print),
-            onPressed: () async {
-              if (_quote != null) {
-                await QuotePdfService().printQuote(_quote!);
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () async {
-              await context.read<QuoteProvider>().delete(widget.quoteId);
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      ),
-
-      body: SafeArea(
-        child: Container(
-          // couche « glass »
-          color: AppColors.glassBackground,
-          padding: const EdgeInsets.all(16),
-          child: _loading
-              ? const Center(child: CircularProgressIndicator())
-              : _quote == null
-              ? const Center(child: Text('Devis introuvable'))
-              : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Référence : ${_quote!.reference}',
-                  style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              Text(
-                'Total : ${NumberFormat.currency(symbol: '€').format(_quote!.total)}',
-                style: Theme.of(context).textTheme.titleMedium,
+            const SizedBox(height: 16),
+            // —— R\u00c9CAPITULATIF ——
+            Align(
+              alignment: Alignment.centerRight,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _summaryRow('Sous-total HT :', subTotal),
+                  _summaryRow('TVA 8,50 % :', vatAmount),
+                  const Divider(color: Colors.grey),
+                  _summaryRow('Total TTC :', totalTTC,
+                      labelStyle: labelTextStyle.copyWith(fontSize: 16),
+                      valueStyle: valueTextStyle.copyWith(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
               ),
-              if (_quote!.discount != null) ...[
-                const SizedBox(height: 8),
-                Text('Remise : ${_quote!.discount!.toStringAsFixed(2)}%',
-                    style: Theme.of(context).textTheme.titleMedium),
-              ],
-              const SizedBox(height: 8),
-              Text('Statut : ${_quote!.status}',
-                  style: Theme.of(context).textTheme.titleMedium),
-              if (_quote!.customer != null && _quote!.customer!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text('Client : ${_quote!.customer!}',
-                    style: Theme.of(context).textTheme.titleMedium),
-              ],
-              const SizedBox(height: 8),
-              Text(
-                'Créé le : ${DateFormat.yMd().format(_quote!.createdAt)}',
-                style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 32),
+            // —— PIED DE PAGE – RIB & MENTIONS ——
+            Container(
+              padding: const EdgeInsets.all(12),
+              color: accentColor,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text('RIB FRAMECASTLE STUDIO', style: labelTextStyle),
+                  Text('IBAN : FR76 1659 6000 0114 1752 3250 54',
+                      style: valueTextStyle),
+                  Text('BIC/SWIFT : QNTOFRP1XXX', style: valueTextStyle),
+                  SizedBox(height: 12),
+                  Text(
+                    'Signature du client precedee de la mention \xab Bon pour accord \xbb :',
+                    style: valueTextStyle,
+                  ),
+                ],
               ),
-              if (_quote!.dueDate != null) ...[
-                const SizedBox(height: 8),
-                Text('Échéance : ${DateFormat.yMd().format(_quote!.dueDate!)}',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-              if (_quote!.description != null && _quote!.description!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text('Description : ${_quote!.description!}',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-              if (_quote!.items.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text('Détails', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                ..._quote!.items.map((e) => Text(
-                    '${e.designation} - ${e.quantity} x ${e.unitPrice.toStringAsFixed(2)} €')),
-              ],
-              if (_quote!.notes != null && _quote!.notes!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text('Notes : ${_quote!.notes!}',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-              const SizedBox(height: 8),
-              Text('TVA : ${_quote!.vatRate.toStringAsFixed(2)}%',
-                  style: Theme.of(context).textTheme.bodyMedium),
-              if (_quote!.iban != null && _quote!.iban!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text('IBAN : ${_quote!.iban!}',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-              if (_quote!.bic != null && _quote!.bic!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text('BIC : ${_quote!.bic!}',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-              if (_quote!.depositPercent != null) ...[
-                const SizedBox(height: 8),
-                Text('Acompte : ${_quote!.depositPercent!.toStringAsFixed(2)}%',
-                    style: Theme.of(context).textTheme.bodyMedium),
-              ],
-            ],
-          ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'SAS FRAMECASTLE STUDIO – SIRET 910 945 252 00013 – Code NAF 7410Z\nTél. 06 20 37 81 04 – framecastlestudio@gmail.com',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
         ),
       ),
     );
   }
+
+  Widget _infoPair(String label, String value) {
+    return RichText(
+      text: TextSpan(
+        text: '$label ',
+        style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black),
+        children: [
+          TextSpan(text: value, style: const TextStyle(fontWeight: FontWeight.normal)),
+        ],
+      ),
+    );
+  }
+
+  TableRow _buildLineRow(QuoteLine line) {
+    return TableRow(children: [
+      Padding(
+        padding: const EdgeInsets.all(6),
+        child: Text(line.description, style: const TextStyle(fontSize: 13)),
+      ),
+      Padding(
+        padding: const EdgeInsets.all(6),
+        child: Text(line.qty.toString(), textAlign: TextAlign.center),
+      ),
+      Padding(
+        padding: const EdgeInsets.all(6),
+        child: Text(line.unitPrice, textAlign: TextAlign.right),
+      ),
+      Padding(
+        padding: const EdgeInsets.all(6),
+        child: Text(line.total, textAlign: TextAlign.right),
+      ),
+    ]);
+  }
+
+  Widget _summaryRow(String label, String value,
+      {TextStyle? labelStyle, TextStyle? valueStyle}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: RichText(
+        text: TextSpan(
+          text: label,
+          style: labelStyle ??
+              const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black),
+          children: [
+            TextSpan(text: ' $value', style: valueStyle ?? const TextStyle(fontSize: 14)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class QuoteLine {
+  final String description;
+  final int qty;
+  final String unitPrice;
+  final String total;
+
+  QuoteLine({
+    required this.description,
+    required this.qty,
+    required this.unitPrice,
+    required this.total,
+  });
 }
