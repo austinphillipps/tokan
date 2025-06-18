@@ -242,6 +242,7 @@ class _TasksPageState extends State<TasksPage> {
           );
           showTaskPanel = true;
         }),
+        // Callback for the "Nouveau dossier" button shown when tasks are listed
         onCreateFolder: _showCreateFolderDialog,
         onDeleteTask: _deleteTask,
 
