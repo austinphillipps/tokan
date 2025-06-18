@@ -17,6 +17,7 @@ import '../../features/projects/views/projects_screen.dart';
 import '../../settings/views/settings_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../features/auth/widgets/profile_info_dialog.dart';
 
 import '../../main.dart'; // Pour AppTheme, themeNotifier et AppColors
 import '../../features/notifications/services/notification_service.dart';
@@ -38,6 +39,29 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _notifService.init();
+    _checkProfileCompletion();
+  }
+
+  Future<void> _checkProfileCompletion() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+    final data = doc.data() ?? {};
+    final first = (data['firstName'] ?? '').toString().trim();
+    final last = (data['lastName'] ?? '').toString().trim();
+    final phone = (data['phoneNumber'] ?? '').toString().trim();
+    if (first.isEmpty || last.isEmpty || phone.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const ProfileInfoDialog(),
+        );
+      });
+    }
   }
 
   @override
