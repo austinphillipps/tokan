@@ -18,6 +18,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   final _formKey = GlobalKey<FormState>();
   final _firstNameCtrl = TextEditingController();
   final _lastNameCtrl = TextEditingController();
+  final _usernameCtrl  = TextEditingController();
   final _phoneCtrl = TextEditingController();
   String _dialCode = '+33';
   final _companyCtrl = TextEditingController();
@@ -47,6 +48,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   void dispose() {
     _firstNameCtrl.dispose();
     _lastNameCtrl.dispose();
+    _usernameCtrl.dispose();
     _phoneCtrl.dispose();
     _companyCtrl.dispose();
     _pageController.dispose();
@@ -72,6 +74,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         .update({
       'firstName': _firstNameCtrl.text.trim(),
       'lastName': _lastNameCtrl.text.trim(),
+      'username':  _usernameCtrl.text.trim(),
       'phone': '$_dialCode ${_phoneCtrl.text.trim()}',
       'company': _selectedCompany ?? _companyCtrl.text.trim(),
       'themeColor': _selectedColor,
@@ -155,6 +158,12 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               controller: _lastNameCtrl,
               decoration: const InputDecoration(labelText: 'Nom'),
               validator: (v) => v == null || v.isEmpty ? 'Entrez votre nom' : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _usernameCtrl,
+              decoration: const InputDecoration(labelText: 'Nom d\'utilisateur'),
+              validator: (v) => v == null || v.isEmpty ? 'Choisissez un pseudo' : null,
             ),
             const SizedBox(height: 12),
             Row(
