@@ -76,10 +76,13 @@ class _ProjectProgressWidgetState extends State<ProjectProgressWidget> {
 
   Future<_ProjectData?> _fetchTasksForProject(Project project) async {
     try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return null;
+
       final snap = await _firestore
-          .collection('projects')
-          .doc(project.id)
           .collection('tasks')
+          .where('project', isEqualTo: project.id)
+          .where('createdBy', isEqualTo: uid)
           .get();
 
       final tasks = snap.docs
