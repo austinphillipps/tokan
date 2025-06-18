@@ -198,72 +198,79 @@ class _TasksPageState extends State<TasksPage> {
         projectId: widget.projectId,
       );
     } else {
-      return TasksListView(
-        tasks: tasks,
-        folders: folders,
-        onToggleStatus: _toggleStatus,
-        onCollaboratorChanged: (t, uid) async {
-          t.responsable = uid ?? '';
-          await _saveTask(t);
-          setState(() {});
-        },
-        onProjectChanged: (t, id) async {
-          t.project = id;
-          await _saveTask(t);
-          setState(() {});
-        },
-        onDeadlineChanged: (t, date) async {
-          t.deadline = date;
-          await _saveTask(t);
-          setState(() {});
-        },
-        onOpenDetail: (t) => setState(() {
-          activeTask = t;
-          showTaskPanel = true;
-        }),
-        onAddTask: () => setState(() {
-          activeTask = CustomTask(
-            id: '',
-            name: '',
-            description: '',
-            status: '',
-            responsable: '',
-            deadline: null,
-            startTime: null,
-            endTime: null,
-            duration: null,
-            client: null,
-            project: widget.projectId,
-            originalProjectId: null,
-            recurrenceType: null,
-            recurrenceDays: null,
-            recurrenceIncludePast: null,
-            subTasks: [],
-          );
-          showTaskPanel = true;
-        }),
-        onCreateFolder: _showCreateFolderDialog,
-        onDeleteTask: _deleteTask,
+      return Column(
+        children: [
+          _buildFolderCarousel(folders, tasks),
+          Expanded(
+            child: TasksListView(
+              tasks: tasks,
+              folders: folders,
+              onToggleStatus: _toggleStatus,
+              onCollaboratorChanged: (t, uid) async {
+                t.responsable = uid ?? '';
+                await _saveTask(t);
+                setState(() {});
+              },
+              onProjectChanged: (t, id) async {
+                t.project = id;
+                await _saveTask(t);
+                setState(() {});
+              },
+              onDeadlineChanged: (t, date) async {
+                t.deadline = date;
+                await _saveTask(t);
+                setState(() {});
+              },
+              onOpenDetail: (t) => setState(() {
+                activeTask = t;
+                showTaskPanel = true;
+              }),
+              onAddTask: () => setState(() {
+                activeTask = CustomTask(
+                  id: '',
+                  name: '',
+                  description: '',
+                  status: '',
+                  responsable: '',
+                  deadline: null,
+                  startTime: null,
+                  endTime: null,
+                  duration: null,
+                  client: null,
+                  project: widget.projectId,
+                  originalProjectId: null,
+                  recurrenceType: null,
+                  recurrenceDays: null,
+                  recurrenceIncludePast: null,
+                  subTasks: [],
+                );
+                showTaskPanel = true;
+              }),
+              onCreateFolder: _showCreateFolderDialog,
+              onDeleteTask: _deleteTask,
 
-        multiSelectMode: _multiSelectMode,
-        selectedTaskIds: _selectedTaskIds,
-        onTaskSelectToggle: (task, isSelected) {
-          setState(() {
-            if (isSelected) {
-              _selectedTaskIds.add(task.id);
-            } else {
-              _selectedTaskIds.remove(task.id);
-            }
-          });
-        },
-        onToggleMultiSelectMode: () {
-          setState(() {
-            if (_multiSelectMode) {
-              _selectedTaskIds.clear();
-            }
-            _multiSelectMode = !_multiSelectMode;
-          });
-        },
+              multiSelectMode: _multiSelectMode,
+              selectedTaskIds: _selectedTaskIds,
+              onTaskSelectToggle: (task, isSelected) {
+                setState(() {
+                  if (isSelected) {
+                    _selectedTaskIds.add(task.id);
+                  } else {
+                    _selectedTaskIds.remove(task.id);
+                  }
+                });
+              },
+              onToggleMultiSelectMode: () {
+                setState(() {
+                  if (_multiSelectMode) {
+                    _selectedTaskIds.clear();
+                  }
+                  _multiSelectMode = !_multiSelectMode;
+                });
+              },
+            ),
+          ),
+        ],
       );
     }
   }
@@ -367,6 +374,106 @@ class _TasksPageState extends State<TasksPage> {
           const Spacer(),
         ],
       ),
+    );
+  }
+
+  Widget _buildFolderCarousel(List<TaskFolder> folders, List<CustomTask> tasks) {
+    if (folders.isEmpty) return const SizedBox.shrink();
+    return SizedBox(
+      height: 80,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: folders.length,
+        itemBuilder: (context, index) {
+          final f = folders[index];
+          return GestureDetector(
+            onTap: () => _showFolderTasks(f, tasks),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.folder, size: 36, color: AppColors.purple),
+                  const SizedBox(height: 4),
+                  Text(
+                    f.name,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onBackground,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showFolderTasks(TaskFolder folder, List<CustomTask> tasks) {
+    final list = tasks.where((t) => t.folderId == folder.id).toList();
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return Dialog(
+          child: SizedBox(
+            width: 500,
+            height: 400,
+            child: TasksListView(
+              tasks: list,
+              folders: const [],
+              onToggleStatus: _toggleStatus,
+              onCollaboratorChanged: (t, uid) async {
+                t.responsable = uid ?? '';
+                await _saveTask(t);
+                setState(() {});
+              },
+              onProjectChanged: (t, id) async {
+                t.project = id;
+                await _saveTask(t);
+                setState(() {});
+              },
+              onDeadlineChanged: (t, date) async {
+                t.deadline = date;
+                await _saveTask(t);
+                setState(() {});
+              },
+              onOpenDetail: (t) => setState(() {
+                activeTask = t;
+                showTaskPanel = true;
+              }),
+              onAddTask: () => setState(() {
+                activeTask = CustomTask(
+                  id: '',
+                  name: '',
+                  description: '',
+                  status: '',
+                  responsable: '',
+                  deadline: null,
+                  startTime: null,
+                  endTime: null,
+                  duration: null,
+                  client: null,
+                  project: widget.projectId,
+                  folderId: folder.id,
+                  originalProjectId: null,
+                  recurrenceType: null,
+                  recurrenceDays: null,
+                  recurrenceIncludePast: null,
+                  subTasks: [],
+                );
+                showTaskPanel = true;
+              }),
+              onCreateFolder: () {},
+              onDeleteTask: _deleteTask,
+              multiSelectMode: false,
+              selectedTaskIds: const {},
+              onTaskSelectToggle: (_, __) {},
+              onToggleMultiSelectMode: () {},
+            ),
+          ),
+        );
+      },
     );
   }
 
