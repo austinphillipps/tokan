@@ -24,8 +24,8 @@ import 'firebase_options.dart';
 /// 1) Enum à trois valeurs
 enum AppTheme { light, dark, sequoia }
 
-/// 2) ValueNotifier global, initialisé à Sequoia (sera écrasé si prefs contient autre chose)
-final ValueNotifier<AppTheme> themeNotifier = ValueNotifier(AppTheme.sequoia);
+/// 2) ValueNotifier global, initialisé à Clair (sera écrasé si prefs contient autre chose)
+final ValueNotifier<AppTheme> themeNotifier = ValueNotifier(AppTheme.light);
 
 /// 3) Classe centralisant toutes les couleurs utilisées dans l’app
 class AppColors {
@@ -193,7 +193,7 @@ Future<void> main() async {
   if (stored != null) {
     themeNotifier.value = AppTheme.values.firstWhere(
           (e) => e.toString() == stored,
-      orElse: () => AppTheme.sequoia,
+      orElse: () => AppTheme.light,
     );
   }
 
