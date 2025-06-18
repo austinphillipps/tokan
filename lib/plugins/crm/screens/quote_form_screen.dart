@@ -7,7 +7,9 @@ import 'package:intl/intl.dart';
 import 'package:tokan/main.dart'; // pour AppColors
 import 'package:tokan/plugins/crm/models/quote.dart';
 import 'package:tokan/plugins/crm/models/quote_item.dart';
+import 'package:printing/printing.dart';
 import 'package:tokan/plugins/crm/providers/quote_provider.dart';
+import 'package:tokan/plugins/crm/services/quote_pdf_service.dart';
 
 class QuoteFormScreen extends StatefulWidget {
   /// Si quoteId est null, on est en création, sinon en édition
@@ -131,6 +133,29 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
     }
   }
 
+  Quote _buildQuote() {
+    final total = _items.fold<double>(0,
+            (prev, e) => prev + e.quantity * e.unitPrice) - (_discount ?? 0);
+    return Quote(
+      id: widget.quoteId,
+      reference: _reference ?? '',
+      total: total,
+      status: _status,
+      customer: _customer,
+      description: _description,
+      dueDate: _dueDateStr == null || _dueDateStr!.isEmpty
+          ? null
+          : DateTime.tryParse(_dueDateStr!),
+      discount: _discount,
+      notes: _notes,
+      items: _items,
+      vatRate: _vatRate,
+      iban: _iban,
+      bic: _bic,
+      depositPercent: _depositPercent,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -153,6 +178,29 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             key: _formKey,
             child: ListView(
               children: [
+                SizedBox(
+                  height: 400,
+                  child: PdfPreview(
+                    build: (format) async {
+                      final doc = await QuotePdfService().buildPdf(_buildQuote());
+                      return doc.save();
+                    },
+                    canChangePageFormat: false,
+                    allowPrinting: false,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => QuotePdfService().printQuote(_buildQuote()),
+                      icon: const Icon(Icons.download),
+                      label: const Text('Télécharger le PDF'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 TextFormField(
                   initialValue: _reference,
                   decoration: const InputDecoration(labelText: 'Référence'),

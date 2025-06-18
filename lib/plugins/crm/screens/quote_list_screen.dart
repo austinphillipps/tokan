@@ -22,10 +22,16 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
 
   /// Ouvre le panneau (form si [quoteId]==null, sinon détail)
   void _openPanel({String? quoteId}) {
-    setState(() {
-      _panelQuoteId = quoteId;
-      _showPanel = true;
-    });
+    if (quoteId == null) {
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => const QuoteFormScreen()))
+          .then((_) => context.read<QuoteProvider>().fetchAll());
+    } else {
+      setState(() {
+        _panelQuoteId = quoteId;
+        _showPanel = true;
+      });
+    }
   }
 
   /// Ferme le panneau
