@@ -259,12 +259,16 @@ class _RegisterPageState extends State<RegisterPage> {
           'username':    _usernameCtrl.text.trim(),
           'createdAt':   FieldValue.serverTimestamp(),
         });
-      }
 
-      // 3️⃣ Démarrage du formulaire d'onboarding
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => OnboardingFlow(user: user)),
-      );
+        // 3️⃣ Démarrage du formulaire d'onboarding
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => OnboardingFlow(user: user)),
+        );
+      } else {
+        setState(() {
+          _errorMessage = "Erreur inattendue : utilisateur introuvable";
+        });
+      }
     } on FirebaseAuthException catch (e) {
       setState(() {
         switch (e.code) {
