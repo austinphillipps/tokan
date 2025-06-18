@@ -73,8 +73,18 @@ class _HomeScreenState extends State<HomeScreen> {
   void _toggleSidebar() {
     setState(() {
       _sidebarExpanded = !_sidebarExpanded;
-      _showLabels = _sidebarExpanded;
+      if (!_sidebarExpanded) {
+        _showLabels = false; // Hide labels immediately when collapsing
+      }
     });
+    if (_sidebarExpanded) {
+      // Delay showing labels until the expansion animation completes
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (mounted) {
+          setState(() => _showLabels = true);
+        }
+      });
+    }
   }
 
   @override
