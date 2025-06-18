@@ -40,17 +40,20 @@ class ProjectService {
   /// Flux des projets accessibles à l'utilisateur (propriétaire ou collaborateur).
   Stream<List<Project>> getProjectsStream() {
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    return _projectsRef.snapshots().map((snap) {
+    if (uid == null) return const Stream.empty();
+
+    final query = _projectsRef.where(
+      Filter.or(
+        Filter('ownerId', isEqualTo: uid),
+        Filter('collaborators', arrayContains: uid),
+      ),
+    );
+
+    return query.snapshots().map((snap) {
       return snap.docs
           .map((d) =>
-          Project.fromMap(d.data() as Map<String, dynamic>, d.id))
-          .where((proj) {
-        if (uid == null) return false;
-        final isOwner = proj.ownerId == uid;
-        final isCollaborator =
-        proj.collaborators.any((c) => c.uid == uid);
-        return isOwner || isCollaborator;
-      }).toList();
+              Project.fromMap(d.data() as Map<String, dynamic>, d.id))
+          .toList();
     });
   }
 
