@@ -117,6 +117,7 @@ class _ProjectProgressWidgetState extends State<ProjectProgressWidget> {
       color: glassBg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Entête "PROJETS EN COURS" avec glassHeader en arrière-plan
           Container(
@@ -131,17 +132,19 @@ class _ProjectProgressWidgetState extends State<ProjectProgressWidget> {
               ),
             ),
           ),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _projectsData.isEmpty
-                ? const Center(
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else if (_projectsData.isEmpty)
+            const Center(
               child: Text(
                 'Aucun projet trouvé',
                 style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
               ),
             )
-                : ListView.builder(
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
               itemCount: _projectsData.length,
               itemBuilder: (context, index) {
@@ -149,7 +152,6 @@ class _ProjectProgressWidgetState extends State<ProjectProgressWidget> {
                 return _buildProjectCard(pd, context, glassBg);
               },
             ),
-          ),
         ],
       ),
     );
