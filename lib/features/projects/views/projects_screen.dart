@@ -63,7 +63,7 @@ class ProjectsScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 12),
                       child: Text(
-                        'Projets & Entreprises',
+                        'Projets',
                         style: theme.textTheme.headlineLarge?.copyWith(
                           color: titleColor,
                           fontWeight: FontWeight.bold,
@@ -93,7 +93,7 @@ class ProjectsScreen extends StatelessWidget {
                         ),
                       ),
                       icon: const Icon(Icons.add),
-                      label: const Text('Créer un projet ou une entreprise'),
+                      label: const Text('Créer un projet'),
                       onPressed: () => _showCreateProjectDialog(context),
                     ),
                   ],
@@ -123,18 +123,16 @@ class ProjectsScreen extends StatelessWidget {
     );
   }
 
-  /// Dialogue pour créer un projet simple ou une entreprise
+  /// Dialogue pour créer un projet
   Future<void> _showCreateProjectDialog(BuildContext context) async {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final nameCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
-    ProjectType selectedType = ProjectType.simple;
 
     final created = await showDialog<bool>(
       context: context,
-      builder: (c) => StatefulBuilder(
-        builder: (c, setSt) => AlertDialog(
+      builder: (c) => AlertDialog(
           backgroundColor:
               isDark ? AppColors.darkGreyBackground : theme.colorScheme.surface,
           title: Text(
@@ -164,24 +162,6 @@ class ProjectsScreen extends StatelessWidget {
                   autofocus: true,
                 ),
                 const SizedBox(height: 16),
-                DropdownButtonFormField<ProjectType>(
-                  value: selectedType,
-                  decoration: InputDecoration(
-                    labelText: 'Type de projet',
-                    labelStyle: TextStyle(color: theme.colorScheme.onBackground),
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: ProjectType.simple,
-                      child: Text('Projet simple'),
-                    ),
-                    DropdownMenuItem(
-                      value: ProjectType.entreprise,
-                      child: Text("Projet d'entreprise"),
-                    ),
-                  ],
-                  onChanged: (val) => setSt(() => selectedType = val ?? ProjectType.simple),
-                ),
               ],
             ),
           ),
@@ -205,7 +185,7 @@ class ProjectsScreen extends StatelessWidget {
                     ownerId: '', // sera géré par le service
                     collaborators: const [],
                     color: null,
-                    type: selectedType,
+                    type: ProjectType.simple,
                   ),
                 );
                 Navigator.of(c).pop(true);

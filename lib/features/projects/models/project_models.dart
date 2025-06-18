@@ -26,7 +26,7 @@ class Collaborator {
 }
 
 /// Modèle représentant un projet
-enum ProjectType { simple, entreprise }
+enum ProjectType { simple }
 
 /// Modèle représentant un projet
 class Project {
@@ -38,7 +38,7 @@ class Project {
   List<Collaborator> collaborators;
   String? color; // code hexadécimal (ex: "ff00ff00")
 
-  /// Type du projet : simple ou entreprise
+  /// Type du projet
   ProjectType type;
 
   /// Liste des plugins installés pour ce projet
@@ -87,7 +87,7 @@ class Project {
       'name': name,
       'description': description,
       'ownerId': ownerId,
-      'type': type == ProjectType.entreprise ? 'entreprise' : 'simple',
+      'type': 'simple',
       if (objective != null) 'objective': objective,
       if (color != null) 'color': color,
       'collaborators': collaborators.map((c) => c.toMap()).toList(),
@@ -103,9 +103,7 @@ class Project {
       name: map['name'] as String? ?? '',
       description: map['description'] as String? ?? '',
       ownerId: map['ownerId'] as String? ?? '',
-      type: (map['type'] as String?) == 'entreprise'
-          ? ProjectType.entreprise
-          : ProjectType.simple,
+      type: ProjectType.simple,
       objective: map['objective'] as String?,
       color: map['color'] as String?,
       collaborators: (map['collaborators'] as List<dynamic>?)
