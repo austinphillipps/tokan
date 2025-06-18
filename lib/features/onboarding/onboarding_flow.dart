@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../shared/interface/interface.dart';
+import 'views/explore_schedule_page.dart';
+import '../../utils/tab_launcher.dart';
 
 class OnboardingFlow extends StatefulWidget {
   final User user;
@@ -75,6 +77,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       'themeColor': _selectedColor,
     });
     if (mounted) {
+      // Ouvre la page d'options dans un nouvel onglet sur le Web
+      openTab('/#/explore-schedule');
+      // Redirige l'utilisateur vers l'écran d'accueil dans l'onglet actuel
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
