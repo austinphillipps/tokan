@@ -83,10 +83,16 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
 
       body: SafeArea(
         child: Container(
-          // couche « glass »
-          color: AppColors.glassBackground,
-          padding: const EdgeInsets.all(16),
-          child: _loading
+          color: AppColors.darkGreyBackground,
+          alignment: Alignment.topCenter,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Container(
+            width: 794,
+            color: Colors.white,
+            padding: const EdgeInsets.all(16),
+            child: DefaultTextStyle.merge(
+              style: const TextStyle(color: Colors.black),
+              child: _loading
               ? const Center(child: CircularProgressIndicator())
               : _quote == null
               ? const Center(child: Text('Devis introuvable'))
@@ -159,6 +165,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen> {
                     style: Theme.of(context).textTheme.bodyMedium),
               ],
             ],
+            ),
           ),
         ),
       ),
