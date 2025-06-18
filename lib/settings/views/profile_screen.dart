@@ -374,68 +374,74 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 12),
 
                 // Si l’utilisateur a cliqué, on affiche le formulaire :
-                if (_showPasswordSection)
-                  Center(
-                    child: Card(
-                      elevation: 2,
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 16, horizontal: 16),
-                        child: Column(
-                          children: [
-                            // Mot de passe actuel
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 350),
-                              child: _buildTextField(
-                                label: 'Mot de passe actuel',
-                                controller: _currentPwdController,
-                                obscure: true,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Nouveau mot de passe
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 350),
-                              child: _buildTextField(
-                                label: 'Nouveau mot de passe',
-                                controller: _newPwdController,
-                                obscure: true,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Confirmer le mot de passe
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 350),
-                              child: _buildTextField(
-                                label: 'Confirmer le mot de passe',
-                                controller: _confirmPwdController,
-                                obscure: true,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-
-                            // Bouton Valider le changement
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 200),
-                              child: ElevatedButton(
-                                onPressed: _isLoading ? null : _changePassword,
-                                child: const Text('Mettre à jour'),
-                                style: ElevatedButton.styleFrom(
-                                  padding:
-                                  const EdgeInsets.symmetric(vertical: 12),
-                                  tapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
+                _showPasswordSection
+                    ? Center(
+                        child: Card(
+                          elevation: 2,
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 16, horizontal: 16),
+                            child: Column(
+                              children: [
+                                // Mot de passe actuel
+                                ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 350),
+                                  child: _buildTextField(
+                                    label: 'Mot de passe actuel',
+                                    controller: _currentPwdController,
+                                    obscure: true,
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(height: 12),
+
+                                // Nouveau mot de passe
+                                ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 350),
+                                  child: _buildTextField(
+                                    label: 'Nouveau mot de passe',
+                                    controller: _newPwdController,
+                                    obscure: true,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+
+                                // Confirmer le mot de passe
+                                ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 350),
+                                  child: _buildTextField(
+                                    label: 'Confirmer le mot de passe',
+                                    controller: _confirmPwdController,
+                                    obscure: true,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+
+                                // Bouton Valider le changement
+                                ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 200),
+                                  child: ElevatedButton(
+                                    onPressed:
+                                        _isLoading ? null : _changePassword,
+                                    child: const Text('Mettre à jour'),
+                                    style: ElevatedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12),
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
+                      )
+                    : const SizedBox.shrink(),
 
                 const SizedBox(height: 24),
               ],
