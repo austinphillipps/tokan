@@ -182,8 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 24),
           ],
         ),
-      ),
-    );
+      );
 
     Widget content = Scaffold(
       backgroundColor: isSequoia ? Colors.transparent : mainBg,
