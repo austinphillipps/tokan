@@ -403,443 +403,438 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                 ],
               ),
 
-              // --- Champ nom de tâche ---
-              TextField(
-                controller: nameController,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: onBg,
-                ),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  hintText: "Nouvelle tâche…",
-                  hintStyle: TextStyle(color: onBgFadedLight),
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // --- Champ client (optionnel) ---
-              TextField(
-                controller: clientController,
-                style: TextStyle(color: onBg),
-                decoration: InputDecoration(
-                  labelText: "Client (optionnel)",
-                  labelStyle: TextStyle(color: onBgFaded),
-                  border: UnderlineInputBorder(
-                    borderSide: BorderSide(color: borderColor),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // --- Sélecteur de date d’échéance ---
-              InkWell(
-                onTap: _pickDeadline,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_today, color: onBg),
-                      const SizedBox(width: 8),
-                      Text("Échéance : ", style: TextStyle(color: onBg)),
-                      const SizedBox(width: 8),
-                      Text(
-                        _deadline == null
-                            ? DateFormat('yyyy-MM-dd').format(DateTime.now())
-                            : DateFormat('yyyy-MM-dd').format(_deadline!),
-                        style: TextStyle(color: onBgFaded),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // --- Champ Récurrence (ouvre un dialogue) ---
-              Text(
-                "Récurrence :",
-                style: TextStyle(
-                  color: onBg,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 4),
-              GestureDetector(
-                onTap: _openRecurrenceDialog,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: borderColor),
-                    borderRadius: BorderRadius.circular(4),
-                    color: surfaceColor,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _recurrence == 'none'
-                                ? "Aucune"
-                                : _recurrence == 'sameDay'
-                                ? "Tous les mêmes jours"
-                                : _recurrence == 'weekdays'
-                                ? "Jours de semaine"
-                                : _recurrence == 'weekends'
-                                ? "Week‐ends"
-                                : _recurrence == 'customDays'
-                                ? _recurrenceDays
-                                .map((i) => [
-                              'Lun',
-                              'Mar',
-                              'Mer',
-                              'Jeu',
-                              'Ven',
-                              'Sam',
-                              'Dim'
-                            ][i])
-                                .join(', ')
-                                : "Personnalisé",
-                            style: TextStyle(color: onBg),
-                          ),
-                          if (_recurrenceIncludePast)
-                            Text(
-                              "Inclut tâches antérieures",
-                              style:
-                              TextStyle(color: onBgFadedLight, fontSize: 12),
-                            ),
-                        ],
-                      ),
-                      Icon(Icons.arrow_forward_ios, size: 16, color: onBgFadedLight),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // --- Heures de début / fin ---
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Heure de début
-                  Row(
-                    children: [
-                      Text("Début: ", style: TextStyle(color: onBg)),
-                      SizedBox(
-                        width: 60,
-                        child: TextField(
-                          controller: startHourController,
-                          focusNode: startHourFocusNode,
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          decoration: InputDecoration(
-                            hintText: "HH",
-                            hintStyle: TextStyle(color: onBgFadedLight),
-                            counterText: "",
-                            contentPadding:
-                            const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: borderColor),
-                            ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // --- Champ nom de tâche ---
+                        TextField(
+                          controller: nameController,
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: onBg,
                           ),
-                          maxLength: 2,
-                          style: TextStyle(color: onBg),
-                          onChanged: (v) {
-                            if (v.length >= 2) {
-                              FocusScope.of(context).requestFocus(startMinuteFocusNode);
-                            }
-                          },
-                        ),
-                      ),
-                      Text(":", style: TextStyle(color: onBgFaded)),
-                      SizedBox(
-                        width: 60,
-                        child: TextField(
-                          controller: startMinuteController,
-                          focusNode: startMinuteFocusNode,
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
                           decoration: InputDecoration(
-                            hintText: "MM",
+                            border: InputBorder.none,
+                            hintText: "Nouvelle tâche…",
                             hintStyle: TextStyle(color: onBgFadedLight),
-                            counterText: "",
-                            contentPadding:
-                            const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: borderColor),
-                            ),
                           ),
-                          maxLength: 2,
-                          style: TextStyle(color: onBg),
                         ),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(height: 8),
 
-                  // Heure de fin
-                  Row(
-                    children: [
-                      Text("Fin: ", style: TextStyle(color: onBg)),
-                      SizedBox(
-                        width: 60,
-                        child: TextField(
-                          controller: endHourController,
-                          focusNode: endHourFocusNode,
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
+                        // --- Champ client (optionnel) ---
+                        TextField(
+                          controller: clientController,
+                          style: TextStyle(color: onBg),
                           decoration: InputDecoration(
-                            hintText: "HH",
-                            hintStyle: TextStyle(color: onBgFadedLight),
-                            counterText: "",
-                            contentPadding:
-                            const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                            enabledBorder: UnderlineInputBorder(
+                            labelText: "Client (optionnel)",
+                            labelStyle: TextStyle(color: onBgFaded),
+                            border: UnderlineInputBorder(
                               borderSide: BorderSide(color: borderColor),
                             ),
                           ),
-                          maxLength: 2,
+                        ),
+                        const SizedBox(height: 8),
+
+                        // --- Sélecteur de date d’échéance ---
+                        InkWell(
+                          onTap: _pickDeadline,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              children: [
+                                Icon(Icons.calendar_today, color: onBg),
+                                const SizedBox(width: 8),
+                                Text("Échéance : ", style: TextStyle(color: onBg)),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _deadline == null
+                                      ? DateFormat('yyyy-MM-dd').format(DateTime.now())
+                                      : DateFormat('yyyy-MM-dd').format(_deadline!),
+                                  style: TextStyle(color: onBgFaded),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // --- Champ Récurrence (ouvre un dialogue) ---
+                        Text(
+                          "Récurrence :",
+                          style: TextStyle(
+                            color: onBg,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        GestureDetector(
+                          onTap: _openRecurrenceDialog,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: borderColor),
+                              borderRadius: BorderRadius.circular(4),
+                              color: surfaceColor,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _recurrence == 'none'
+                                          ? "Aucune"
+                                          : _recurrence == 'sameDay'
+                                              ? "Tous les mêmes jours"
+                                              : _recurrence == 'weekdays'
+                                                  ? "Jours de semaine"
+                                                  : _recurrence == 'weekends'
+                                                      ? "Week‐ends"
+                                                      : _recurrence == 'customDays'
+                                                          ? _recurrenceDays
+                                                              .map((i) => ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'][i])
+                                                              .join(', ')
+                                                          : "Personnalisé",
+                                      style: TextStyle(color: onBg),
+                                    ),
+                                    if (_recurrenceIncludePast)
+                                      Text(
+                                        "Inclut tâches antérieures",
+                                        style: TextStyle(color: onBgFadedLight, fontSize: 12),
+                                      ),
+                                  ],
+                                ),
+                                Icon(Icons.arrow_forward_ios, size: 16, color: onBgFadedLight),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // --- Heures de début / fin ---
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            // Heure de début
+                            Row(
+                              children: [
+                                Text("Début: ", style: TextStyle(color: onBg)),
+                                SizedBox(
+                                  width: 60,
+                                  child: TextField(
+                                    controller: startHourController,
+                                    focusNode: startHourFocusNode,
+                                    keyboardType: TextInputType.number,
+                                    textAlign: TextAlign.center,
+                                    decoration: InputDecoration(
+                                      hintText: "HH",
+                                      hintStyle: TextStyle(color: onBgFadedLight),
+                                      counterText: "",
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                      enabledBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(color: borderColor),
+                                      ),
+                                    ),
+                                    maxLength: 2,
+                                    style: TextStyle(color: onBg),
+                                    onChanged: (v) {
+                                      if (v.length >= 2) {
+                                        FocusScope.of(context).requestFocus(startMinuteFocusNode);
+                                      }
+                                    },
+                                  ),
+                                ),
+                                Text(":", style: TextStyle(color: onBgFaded)),
+                                SizedBox(
+                                  width: 60,
+                                  child: TextField(
+                                    controller: startMinuteController,
+                                    focusNode: startMinuteFocusNode,
+                                    keyboardType: TextInputType.number,
+                                    textAlign: TextAlign.center,
+                                    decoration: InputDecoration(
+                                      hintText: "MM",
+                                      hintStyle: TextStyle(color: onBgFadedLight),
+                                      counterText: "",
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                      enabledBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(color: borderColor),
+                                      ),
+                                    ),
+                                    maxLength: 2,
+                                    style: TextStyle(color: onBg),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            // Heure de fin
+                            Row(
+                              children: [
+                                Text("Fin: ", style: TextStyle(color: onBg)),
+                                SizedBox(
+                                  width: 60,
+                                  child: TextField(
+                                    controller: endHourController,
+                                    focusNode: endHourFocusNode,
+                                    keyboardType: TextInputType.number,
+                                    textAlign: TextAlign.center,
+                                    decoration: InputDecoration(
+                                      hintText: "HH",
+                                      hintStyle: TextStyle(color: onBgFadedLight),
+                                      counterText: "",
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                      enabledBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(color: borderColor),
+                                      ),
+                                    ),
+                                    maxLength: 2,
+                                    style: TextStyle(color: onBg),
+                                    onChanged: (v) {
+                                      if (v.length >= 2) {
+                                        FocusScope.of(context).requestFocus(endMinuteFocusNode);
+                                      }
+                                    },
+                                  ),
+                                ),
+                                Text(":", style: TextStyle(color: onBgFaded)),
+                                SizedBox(
+                                  width: 60,
+                                  child: TextField(
+                                    controller: endMinuteController,
+                                    focusNode: endMinuteFocusNode,
+                                    keyboardType: TextInputType.number,
+                                    textAlign: TextAlign.center,
+                                    decoration: InputDecoration(
+                                      hintText: "MM",
+                                      hintStyle: TextStyle(color: onBgFadedLight),
+                                      counterText: "",
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                      enabledBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(color: borderColor),
+                                      ),
+                                    ),
+                                    maxLength: 2,
+                                    style: TextStyle(color: onBg),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        // --- Sélecteur de responsable ---
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Responsable :", style: TextStyle(color: onBg)),
+                              const SizedBox(height: 4),
+                              GestureDetector(
+                                onTap: () => setState(() => _showResponsableDropdown = !_showResponsableDropdown),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: borderColor),
+                                    borderRadius: BorderRadius.circular(4),
+                                    color: surfaceColor,
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        selectedResponsableName ?? "Sélectionnez un responsable",
+                                        style: TextStyle(
+                                          color: selectedResponsableName != null ? onBg : onBgFadedLight,
+                                        ),
+                                      ),
+                                      Icon(
+                                        _showResponsableDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                                        color: onBgFadedLight,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              if (_showResponsableDropdown)
+                                Container(
+                                  margin: const EdgeInsets.only(top: 4),
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: surfaceVariant,
+                                    border: Border.all(color: borderColor),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      TextField(
+                                        controller: _responsableSearchController,
+                                        style: TextStyle(color: onBg),
+                                        decoration: InputDecoration(
+                                          hintText: "Rechercher…",
+                                          hintStyle: TextStyle(color: onBgFadedLight),
+                                          prefixIcon: Icon(Icons.search, color: onBgFadedLight),
+                                          border: OutlineInputBorder(
+                                            borderSide: BorderSide(color: borderColor),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          isDense: true,
+                                          contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                                        ),
+                                        onChanged: (v) => setState(() => responsableSearch = v.trim().toLowerCase()),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      SizedBox(
+                                        height: 200,
+                                        child: StreamBuilder<List<Map<String, String>>>(
+                                          stream: _friendsStream,
+                                          builder: (ctx, snap) {
+                                            if (!snap.hasData) {
+                                              return Center(
+                                                child: CircularProgressIndicator(
+                                                  valueColor: AlwaysStoppedAnimation(onBg),
+                                                ),
+                                              );
+                                            }
+                                            final results = snap.data!
+                                                .where((f) => f['displayName']!.toLowerCase().contains(responsableSearch))
+                                                .toList();
+                                            if (results.isEmpty) {
+                                              return Center(
+                                                child: Text(
+                                                  "Aucun ami trouvé",
+                                                  style: TextStyle(color: onBgFadedLight),
+                                                ),
+                                              );
+                                            }
+                                            return ListView.builder(
+                                              itemCount: results.length,
+                                              itemBuilder: (c, i) {
+                                                final f = results[i];
+                                                return ListTile(
+                                                  title: Text(
+                                                    f['displayName']!,
+                                                    style: TextStyle(color: onBg),
+                                                  ),
+                                                  onTap: () {
+                                                    setState(() {
+                                                      selectedResponsableId = f['uid'];
+                                                      selectedResponsableName = f['displayName'];
+                                                      _showResponsableDropdown = false;
+                                                      _responsableSearchController.clear();
+                                                      responsableSearch = '';
+                                                    });
+                                                  },
+                                                );
+                                              },
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+
+                        // --- Sélecteur de projet (sans bouton "+") ---
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            children: [
+                              Icon(Icons.work, color: onBg),
+                              const SizedBox(width: 8),
+                              Text("Projet :", style: TextStyle(color: onBg)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: DropdownButton<String>(
+                                  isExpanded: true,
+                                  value: selectedProject,
+                                  hint: Text(
+                                    "Sélectionnez un projet",
+                                    style: TextStyle(color: onBgFadedLight),
+                                  ),
+                                  dropdownColor: surfaceVariant,
+                                  style: TextStyle(color: onBg),
+                                  onChanged: (newProjectId) => setState(() => selectedProject = newProjectId),
+                                  items: projetsExistants.map((projId) {
+                                    return DropdownMenuItem<String>(
+                                      value: projId,
+                                      child: Text(projectNamesById[projId]!),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+                        Divider(color: borderColor, height: 24),
+
+                        // --- Champ description ---
+                        Text(
+                          "Description",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: onBg,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: descController,
                           style: TextStyle(color: onBg),
-                          onChanged: (v) {
-                            if (v.length >= 2) {
-                              FocusScope.of(context).requestFocus(endMinuteFocusNode);
-                            }
+                          maxLines: 3,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: surfaceVariant,
+                            hintText: "Décris la tâche ici…",
+                            hintStyle: TextStyle(color: onBgFadedLight),
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide(color: borderColor),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  VerticalDivider(color: borderColor, width: 32, thickness: 1),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // --- Section commentaires ---
+                        CommentSectionWidget(controller: commentController),
+                        const SizedBox(height: 16),
+                        // --- Sous‐tâches ---
+                        SubTaskListWidget(
+                          subTasks: currentTask.subTasks,
+                          onEdit: (idx) => _navigateToSubTask(idx),
+                          onDelete: (i) => setState(() => currentTask.subTasks.removeAt(i)),
+                          onToggleStatus: (i) {
+                            setState(() {
+                              final s = currentTask.subTasks[i];
+                              s.status = s.status == 'terminé' ? 'à venir' : 'terminé';
+                            });
                           },
+                          onAdd: (name) => setState(() => currentTask.subTasks.add(CustomTask(name: name, description: ''))),
                         ),
-                      ),
-                      Text(":", style: TextStyle(color: onBgFaded)),
-                      SizedBox(
-                        width: 60,
-                        child: TextField(
-                          controller: endMinuteController,
-                          focusNode: endMinuteFocusNode,
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          decoration: InputDecoration(
-                            hintText: "MM",
-                            hintStyle: TextStyle(color: onBgFadedLight),
-                            counterText: "",
-                            contentPadding:
-                            const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: borderColor),
-                            ),
-                          ),
-                          maxLength: 2,
-                          style: TextStyle(color: onBg),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-
-              // --- Sélecteur de responsable ---
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Responsable :", style: TextStyle(color: onBg)),
-                    const SizedBox(height: 4),
-                    GestureDetector(
-                      onTap: () => setState(() => _showResponsableDropdown = !_showResponsableDropdown),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: borderColor),
-                          borderRadius: BorderRadius.circular(4),
-                          color: surfaceColor,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              selectedResponsableName ?? "Sélectionnez un responsable",
-                              style: TextStyle(
-                                color: selectedResponsableName != null ? onBg : onBgFadedLight,
-                              ),
-                            ),
-                            Icon(
-                              _showResponsableDropdown
-                                  ? Icons.arrow_drop_up
-                                  : Icons.arrow_drop_down,
-                              color: onBgFadedLight,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    if (_showResponsableDropdown)
-                      Container(
-                        margin: const EdgeInsets.only(top: 4),
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: surfaceVariant,
-                          border: Border.all(color: borderColor),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Column(
-                          children: [
-                            TextField(
-                              controller: _responsableSearchController,
-                              style: TextStyle(color: onBg),
-                              decoration: InputDecoration(
-                                hintText: "Rechercher…",
-                                hintStyle: TextStyle(color: onBgFadedLight),
-                                prefixIcon: Icon(Icons.search, color: onBgFadedLight),
-                                border: OutlineInputBorder(
-                                  borderSide: BorderSide(color: borderColor),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                isDense: true,
-                                contentPadding:
-                                const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                              ),
-                              onChanged: (v) => setState(() => responsableSearch = v.trim().toLowerCase()),
-                            ),
-                            const SizedBox(height: 8),
-                            SizedBox(
-                              height: 200,
-                              child: StreamBuilder<List<Map<String, String>>>(
-                                stream: _friendsStream,
-                                builder: (ctx, snap) {
-                                  if (!snap.hasData) {
-                                    return Center(
-                                      child: CircularProgressIndicator(
-                                        valueColor: AlwaysStoppedAnimation(onBg),
-                                      ),
-                                    );
-                                  }
-                                  final results = snap.data!
-                                      .where((f) =>
-                                      f['displayName']!
-                                          .toLowerCase()
-                                          .contains(responsableSearch))
-                                      .toList();
-                                  if (results.isEmpty) {
-                                    return Center(
-                                      child: Text(
-                                        "Aucun ami trouvé",
-                                        style: TextStyle(color: onBgFadedLight),
-                                      ),
-                                    );
-                                  }
-                                  return ListView.builder(
-                                    itemCount: results.length,
-                                    itemBuilder: (c, i) {
-                                      final f = results[i];
-                                      return ListTile(
-                                        title: Text(
-                                          f['displayName']!,
-                                          style: TextStyle(color: onBg),
-                                        ),
-                                        onTap: () {
-                                          setState(() {
-                                            selectedResponsableId = f['uid'];
-                                            selectedResponsableName = f['displayName'];
-                                            _showResponsableDropdown = false;
-                                            _responsableSearchController.clear();
-                                            responsableSearch = '';
-                                          });
-                                        },
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-
-              // --- Sélecteur de projet (sans bouton "+") ---
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Row(
-                  children: [
-                    Icon(Icons.work, color: onBg),
-                    const SizedBox(width: 8),
-                    Text("Projet :", style: TextStyle(color: onBg)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: DropdownButton<String>(
-                        isExpanded: true,
-                        value: selectedProject,
-                        hint: Text(
-                          "Sélectionnez un projet",
-                          style: TextStyle(color: onBgFadedLight),
-                        ),
-                        dropdownColor: surfaceVariant,
-                        style: TextStyle(color: onBg),
-                        onChanged: (newProjectId) => setState(() => selectedProject = newProjectId),
-                        items: projetsExistants.map((projId) {
-                          return DropdownMenuItem<String>(
-                            value: projId,
-                            child: Text(projectNamesById[projId]!),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-              Divider(color: borderColor, height: 24),
-
-              // --- Champ description ---
-              Text(
-                "Description",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: onBg,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: descController,
-                style: TextStyle(color: onBg),
-                maxLines: 3,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: surfaceVariant,
-                  hintText: "Décris la tâche ici…",
-                  hintStyle: TextStyle(color: onBgFadedLight),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: borderColor),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // --- Sous‐tâches ---
-              SubTaskListWidget(
-                subTasks: currentTask.subTasks,
-                onEdit: (idx) => _navigateToSubTask(idx),
-                onDelete: (i) => setState(() => currentTask.subTasks.removeAt(i)),
-                onToggleStatus: (i) {
-                  setState(() {
-                    final s = currentTask.subTasks[i];
-                    s.status = s.status == 'terminé' ? 'à venir' : 'terminé';
-                  });
-                },
-                onAdd: (name) =>
-                    setState(() => currentTask.subTasks.add(CustomTask(name: name, description: ''))),
-              ),
-
-              const SizedBox(height: 16),
-
-              // --- Section commentaires ---
-              CommentSectionWidget(controller: commentController),
 
               const SizedBox(height: 16),
 
