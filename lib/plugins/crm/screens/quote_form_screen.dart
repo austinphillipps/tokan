@@ -147,11 +147,18 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
       ),
       body: SafeArea(
         child: Container(
-          color: AppColors.glassBackground,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          child: Form(
-            key: _formKey,
-            child: ListView(
+          color: AppColors.darkGreyBackground,
+          alignment: Alignment.topCenter,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Container(
+            width: 794,
+            color: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            child: DefaultTextStyle.merge(
+              style: const TextStyle(color: Colors.black),
+              child: Form(
+              key: _formKey,
+              child: ListView(
               children: [
                 TextFormField(
                   initialValue: _reference,
@@ -286,6 +293,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             ),
           ),
         ),
+      ),
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
