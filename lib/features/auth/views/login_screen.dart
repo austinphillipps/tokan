@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart'
 import 'package:firebase_auth/firebase_auth.dart';
 import 'register_screen.dart';
 import '../../../shared/interface/interface.dart'; // Ajuste le chemin si besoin
+import '../../../main.dart'; // Pour AppTheme et themeNotifier
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -89,8 +90,10 @@ class _LoginPageState extends State<LoginPage> {
       TargetPlatform.macOS,
     ].contains(defaultTargetPlatform);
 
-    return Scaffold(
-      backgroundColor: Colors.black,
+    final isSequoia = themeNotifier.value == AppTheme.sequoia;
+
+    Widget content = Scaffold(
+      backgroundColor: isSequoia ? Colors.transparent : Colors.black,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -203,6 +206,19 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
+
+    if (isSequoia) {
+      return Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/sequoia.jpeg'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: content,
+      );
+    }
+    return content;
   }
 
   Widget _buildTextField({

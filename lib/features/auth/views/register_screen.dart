@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 // 🔄 Redirection vers l’interface principale de Sequoia
 import '../../../shared/interface/interface.dart'; // ajuste le chemin si besoin
+import '../../../main.dart'; // Pour AppTheme et themeNotifier
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({Key? key}) : super(key: key);
@@ -54,8 +55,10 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
+    final isSequoia = themeNotifier.value == AppTheme.sequoia;
+
+    Widget content = Scaffold(
+      backgroundColor: isSequoia ? Colors.transparent : Colors.black,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -201,6 +204,19 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
       ),
     );
+
+    if (isSequoia) {
+      return Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/sequoia.jpeg'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: content,
+      );
+    }
+    return content;
   }
 
   Widget _buildTextField({
