@@ -215,6 +215,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    bool obscure = false,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white70),
+        filled: true,
+        fillColor: Colors.white10,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        enabledBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: Colors.white38),
+          borderRadius: BorderRadius.circular(50),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: Colors.white),
+          borderRadius: BorderRadius.circular(50),
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _usernameController.dispose();
@@ -230,17 +258,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
+        backgroundColor: Colors.black,
         title: const Text('Mon Profil'),
         centerTitle: true,
       ),
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
                 // ------------ Avatar ------------
                 Center(
                   child: Stack(
@@ -354,14 +387,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             // Mot de passe actuel
                             ConstrainedBox(
                               constraints: const BoxConstraints(maxWidth: 350),
-                              child: TextField(
+                              child: _buildTextField(
+                                label: 'Mot de passe actuel',
                                 controller: _currentPwdController,
-                                obscureText: true,
-                                decoration: InputDecoration(
-                                  labelText: 'Mot de passe actuel',
-                                  border: const OutlineInputBorder(),
-                                  prefixIcon: const Icon(Icons.lock_outline),
-                                ),
+                                obscure: true,
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -369,14 +398,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             // Nouveau mot de passe
                             ConstrainedBox(
                               constraints: const BoxConstraints(maxWidth: 350),
-                              child: TextField(
+                              child: _buildTextField(
+                                label: 'Nouveau mot de passe',
                                 controller: _newPwdController,
-                                obscureText: true,
-                                decoration: InputDecoration(
-                                  labelText: 'Nouveau mot de passe',
-                                  border: const OutlineInputBorder(),
-                                  prefixIcon: const Icon(Icons.vpn_key),
-                                ),
+                                obscure: true,
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -384,14 +409,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             // Confirmer le mot de passe
                             ConstrainedBox(
                               constraints: const BoxConstraints(maxWidth: 350),
-                              child: TextField(
+                              child: _buildTextField(
+                                label: 'Confirmer le mot de passe',
                                 controller: _confirmPwdController,
-                                obscureText: true,
-                                decoration: InputDecoration(
-                                  labelText: 'Confirmer le mot de passe',
-                                  border: const OutlineInputBorder(),
-                                  prefixIcon: const Icon(Icons.vpn_key_outlined),
-                                ),
+                                obscure: true,
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -422,11 +443,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
 
           // Indicateur de chargement semi-transparent
-          if (_isLoading)
-            Container(
+          Visibility(
+            visible: _isLoading,
+            maintainAnimation: true,
+            maintainState: true,
+            maintainSize: true,
+            child: Container(
               color: Colors.black45,
               child: const Center(child: CircularProgressIndicator()),
             ),
+          ),
         ],
       ),
     );
