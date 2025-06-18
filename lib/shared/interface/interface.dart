@@ -1,8 +1,6 @@
 // lib/shared/interface/interface.dart
 
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';      // Pour PointerEnterEvent / PointerExitEvent
 import 'package:provider/provider.dart';
 
 import '../../core/providers/plugin_provider.dart';
@@ -59,7 +57,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isSequoia = themeNotifier.value == AppTheme.sequoia;
-    final isDark    = theme.brightness == Brightness.dark;
     final pluginProv = context.watch<PluginProvider>();
 
     // 1) Pages "de base"
@@ -367,3 +364,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
