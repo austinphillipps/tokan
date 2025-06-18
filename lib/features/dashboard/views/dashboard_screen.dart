@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tokan/core/providers/plugin_provider.dart';
 import 'package:tokan/core/contract/plugin_contract.dart';
+import '../widgets/project_progress_widget.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -9,7 +10,7 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final pluginProv = context.watch<PluginProvider>();
-    final installedPlugins = pluginProv.installedPlugins;
+    final installedPlugins = pluginProv.enabledWidgetPlugins;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -18,7 +19,7 @@ class DashboardScreen extends StatelessWidget {
         children: [
           Text('Tableau de bord principal', style: theme.textTheme.titleLarge),
           const SizedBox(height: 16),
-          // … vos autres widgets dashboard …
+          const ProjectProgressWidget(),
 
           if (installedPlugins.isNotEmpty) ...[
             const Divider(height: 32),

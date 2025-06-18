@@ -127,17 +127,25 @@ class _ProjectProgressWidgetState extends State<ProjectProgressWidget> {
               ),
             ),
           ),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _projectsData.isEmpty
-                ? const Center(
-              child: Text(
-                'Aucun projet trouvé',
-                style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_projectsData.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(
+                child: Text(
+                  'Aucun projet trouvé',
+                  style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+                ),
               ),
             )
-                : ListView.builder(
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
               itemCount: _projectsData.length,
               itemBuilder: (context, index) {
@@ -145,7 +153,6 @@ class _ProjectProgressWidgetState extends State<ProjectProgressWidget> {
                 return _buildProjectCard(pd, context, glassBg);
               },
             ),
-          ),
         ],
       ),
     );

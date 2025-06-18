@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../main.dart'; // Pour AppTheme et themeNotifier
 import 'profile_screen.dart'; // Import de la page Profil
+import 'widget_settings_screen.dart';
 
 /// Page Paramètres de l’app
 /// Ajoute les thèmes Clair / Sombre / Sequoia et persiste le choix.
@@ -118,6 +119,22 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ],
             ),
+          ),
+
+          const SizedBox(height: 8),
+          _SettingTile(
+            icon: Icons.widgets,
+            label: 'Widgets du dashboard',
+            tileBgColor: tileBgColor,
+            iconColor: tileIconColor,
+            textColor: tileTextColor,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const WidgetSettingsScreen()),
+              );
+            },
           ),
 
           const SizedBox(height: 16),
