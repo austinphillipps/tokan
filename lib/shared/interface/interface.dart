@@ -188,6 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Widget content = Scaffold(
       backgroundColor: isSequoia ? Colors.transparent : mainBg,
       body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           sidebar,
           VerticalDivider(width: 1, color: dividerColor),

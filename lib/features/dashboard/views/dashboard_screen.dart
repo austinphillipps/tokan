@@ -38,6 +38,8 @@ class DashboardScreen extends StatelessWidget {
           const SizedBox(height: 16),
           // … vos autres widgets dashboard …
 
+          for (final w in dashboardProv.widgets) w,
+
           if (installedPlugins.isNotEmpty) ...[
             const Divider(height: 32),
             Text('Extensions installées', style: theme.textTheme.titleMedium),
@@ -46,8 +48,6 @@ class DashboardScreen extends StatelessWidget {
               if (p.buildDashboardWidget(context) != null)
                 p.buildDashboardWidget(context)!,
           ],
-
-          for (final w in dashboardProv.widgets) w,
         ],
       ),
     );
