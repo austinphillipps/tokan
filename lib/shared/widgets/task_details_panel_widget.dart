@@ -403,6 +403,28 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                 ],
               ),
 
+              if (taskStack.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 2,
+                        height: 20,
+                        color: onBg.withOpacity(0.5),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          taskStack[taskStack.length - 2].name,
+                          style: TextStyle(color: onBg.withOpacity(0.7)),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
               // --- Champ nom de tâche ---
               TextField(
                 controller: nameController,
