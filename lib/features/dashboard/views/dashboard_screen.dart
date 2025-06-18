@@ -5,6 +5,7 @@ import 'package:tokan/core/contract/plugin_contract.dart';
 import 'package:intl/intl.dart';
 import '../providers/dashboard_widget_provider.dart';
 import 'manage_dashboard_widgets_sheet.dart';
+import '../../../main.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -28,8 +29,22 @@ class DashboardScreen extends StatelessWidget {
                     const Duration(seconds: 1), (_) => DateTime.now()),
                 builder: (context, snapshot) {
                   final now = snapshot.data ?? DateTime.now();
-                  final formatted = DateFormat('HH:mm:ss').format(now);
-                  return Text(formatted, style: theme.textTheme.titleLarge);
+                  final time = DateFormat('HH:mm:ss').format(now);
+                  final date = DateFormat('dd MMM yyyy').format(now);
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.glassHeader,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '$time \u2022 $date',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: theme.colorScheme.onPrimary,
+                      ),
+                    ),
+                  );
                 },
               ),
               IconButton(

@@ -108,6 +108,10 @@ class _ProjectProgressWidgetState extends State<ProjectProgressWidget> {
     final bool isSequoia = themeNotifier.value == AppTheme.sequoia;
     final Color glassBg = AppColors.glassBackground;
 
+    if (!_isLoading && _projectsData.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     // On enveloppe tout le widget dans un Container glassBackground
     return Container(
       color: glassBg,
@@ -130,13 +134,6 @@ class _ProjectProgressWidgetState extends State<ProjectProgressWidget> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _projectsData.isEmpty
-                ? const Center(
-              child: Text(
-                'Aucun projet trouvé',
-                style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
-              ),
-            )
                 : ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
               itemCount: _projectsData.length,
