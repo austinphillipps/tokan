@@ -380,11 +380,28 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
           setState(() => _showResponsableDropdown = false);
         }
       },
-      child: Container(
-        color: bgColor,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+      child: Row(
+        children: [
+          if (taskStack.length > 1)
+            Container(
+              width: 20,
+              color: bgColor,
+              alignment: Alignment.center,
+              child: RotatedBox(
+                quarterTurns: 3,
+                child: Text(
+                  taskStack[taskStack.length - 2].name,
+                  style: TextStyle(color: onBg.withOpacity(0.7)),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          Expanded(
+            child: Container(
+              color: bgColor,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // --- En‐tête : bouton retour (si sous‐tâche) et fermeture ---
@@ -403,20 +420,61 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                 ],
               ),
 
+              if (taskStack.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Text(
+                    taskStack[taskStack.length - 2].name,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: onBg,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+
               // --- Champ nom de tâche ---
-              TextField(
-                controller: nameController,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: onBg,
+              if (taskStack.length > 1)
+                Row(
+                  children: [
+                    Container(
+                      width: 2,
+                      height: 20,
+                      color: onBg.withOpacity(0.5),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: nameController,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: onBg,
+                        ),
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          hintText: "Nouvelle tâche…",
+                          hintStyle: TextStyle(color: onBgFadedLight),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              else
+                TextField(
+                  controller: nameController,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: onBg,
+                  ),
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    hintText: "Nouvelle tâche…",
+                    hintStyle: TextStyle(color: onBgFadedLight),
+                  ),
                 ),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  hintText: "Nouvelle tâche…",
-                  hintStyle: TextStyle(color: onBgFadedLight),
-                ),
-              ),
+
               const SizedBox(height: 8),
 
               // --- Champ client (optionnel) ---

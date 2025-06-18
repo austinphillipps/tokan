@@ -19,8 +19,17 @@ class NotificationService {
   Future<void> init() async {
     // Initialisation des notifications locales
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    // Paramètres Windows requis pour l'initialisation
+    const windowsSettings = WindowsInitializationSettings(
+      appName: 'Tokan',
+      appUserModelId: 'com.tokan.tokan',
+      guid: '{769040d3-7f85-475c-a9a7-c59e2e46f28b}',
+    );
     await _localNotif.initialize(
-      const InitializationSettings(android: androidSettings),
+      const InitializationSettings(
+        android: androidSettings,
+        windows: windowsSettings,
+      ),
     );
     _listenFriendRequests();
     _listenFriendAcceptances();
