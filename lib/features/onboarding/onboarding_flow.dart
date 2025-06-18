@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../shared/interface/interface.dart';
-import 'views/explore_schedule_page.dart';
+import 'package:tokan/features/onboarding/views/explore_schedule_page.dart';
 import '../../utils/tab_launcher.dart';
 
 class OnboardingFlow extends StatefulWidget {

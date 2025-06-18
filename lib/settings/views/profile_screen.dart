@@ -443,11 +443,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
 
           // Indicateur de chargement semi-transparent
-          if (_isLoading)
-            Container(
+          Visibility(
+            visible: _isLoading,
+            child: Container(
               color: Colors.black45,
               child: const Center(child: CircularProgressIndicator()),
             ),
+          ),
         ],
       ),
     );

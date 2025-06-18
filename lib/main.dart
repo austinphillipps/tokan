@@ -17,7 +17,7 @@ import 'features/auth/views/login_screen.dart';
 import 'features/auth/views/register_screen.dart';
 import 'features/auth/views/auth_gate.dart';
 import 'shared/interface/interface.dart'; // Pour HomeScreen
-import 'features/onboarding/views/explore_schedule_page.dart';
+import 'package:tokan/features/onboarding/views/explore_schedule_page.dart';
 import 'firebase_options.dart';
 
 /// 1) Enum à trois valeurs
