@@ -840,7 +840,7 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
 
               // --- Bouton Sauvegarder ---
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   ElevatedButton(
                     onPressed: () async {

@@ -137,7 +137,7 @@ class _TasksPageState extends State<TasksPage> {
               top: 0,
               bottom: 0,
               child: Container(
-                width: MediaQuery.of(context).size.width / 3,
+                width: MediaQuery.of(context).size.width / 2,
                 color: Theme.of(context).colorScheme.surface,
                 child: TaskDetailPanel(
                   task: activeTask!,
