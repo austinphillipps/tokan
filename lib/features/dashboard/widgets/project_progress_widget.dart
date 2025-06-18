@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../main.dart'; // Pour accéder à AppTheme, AppColors et themeNotifier
 import '../../projects/models/project_models.dart';
 import '../../projects/services/project_service.dart';
