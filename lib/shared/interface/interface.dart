@@ -31,9 +31,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  bool _sidebarExpanded = false;
-  bool _showLabels = false;
-  Timer? _labelTimer;
+  bool _sidebarExpanded = true;
+  bool _showLabels = true;
   final ValueNotifier<int> _calendarRefreshNotifier = ValueNotifier<int>(0);
   final NotificationService _notifService = NotificationService();
 
@@ -45,24 +44,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    _labelTimer?.cancel();
     _notifService.dispose();
     super.dispose();
   }
 
-  void _onMouseEnter(PointerEnterEvent _) {
-    _labelTimer?.cancel();
-    setState(() => _sidebarExpanded = true);
-    _labelTimer = Timer(const Duration(milliseconds: 200), () {
-      if (_sidebarExpanded) setState(() => _showLabels = true);
-    });
-  }
-
-  void _onMouseExit(PointerExitEvent _) {
-    _labelTimer?.cancel();
+  void _toggleSidebar() {
     setState(() {
-      _showLabels = false;
-      _sidebarExpanded = false;
+      _sidebarExpanded = !_sidebarExpanded;
+      _showLabels = _sidebarExpanded;
     });
   }
 
@@ -141,10 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Utiliser désormais la couleur glassBackground définie dans AppColors
     final selectedBg  = AppColors.glassHeader;
 
-    Widget sidebar = MouseRegion(
-      onEnter: _onMouseEnter,
-      onExit: _onMouseExit,
-      child: AnimatedContainer(
+    Widget sidebar = AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: _sidebarExpanded ? 180 : 60,
         color: sidebarBg.withOpacity(isSequoia ? 0.6 : 1.0),
@@ -187,6 +173,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 selectedBg: selectedBg,
                 onTap: () => setState(() => _selectedIndex = i),
               ),
+            InkWell(
+              onTap: _toggleSidebar,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Icon(
+                  _sidebarExpanded ? Icons.chevron_left : Icons.chevron_right,
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
           ],
         ),
