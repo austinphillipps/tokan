@@ -201,7 +201,6 @@ class ProjectsScreen extends StatelessWidget {
             ),
           ),
         ],
-        ),
       ),
     );
 
