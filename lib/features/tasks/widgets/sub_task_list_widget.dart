@@ -62,17 +62,19 @@ class _SubTaskListWidgetState extends State<SubTaskListWidget> {
           itemCount: widget.subTasks.length,
           itemBuilder: (context, index) {
             final subTask = widget.subTasks[index];
-            return GestureDetector(
-              onTap: () => widget.onEdit(index),
-              child: Card(
-                color: Colors.grey[800],
-                margin: const EdgeInsets.symmetric(vertical: 4),
-                child: ListTile(
-                  leading: IconButton(
-                    icon: subTask.status == 'terminé'
-                        ? const Icon(Icons.check, color: Colors.white)
-                        : const Icon(Icons.circle_outlined, color: Colors.white70),
-                    onPressed: () => widget.onToggleStatus(index),
+            return MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () => widget.onEdit(index),
+                child: Card(
+                  color: Colors.grey[800],
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  child: ListTile(
+                    leading: IconButton(
+                      icon: subTask.status == 'terminé'
+                          ? const Icon(Icons.check, color: Colors.white)
+                          : const Icon(Icons.circle_outlined, color: Colors.white70),
+                      onPressed: () => widget.onToggleStatus(index),
                   ),
                   title: Text(
                     subTask.name,
@@ -84,6 +86,7 @@ class _SubTaskListWidgetState extends State<SubTaskListWidget> {
                   trailing: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () => widget.onDelete(index),
+                  ),
                   ),
                 ),
               ),

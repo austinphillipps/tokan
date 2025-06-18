@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import 'package:tokan/main.dart'; // pour AppColors
 import '../providers/quote_provider.dart';
 import '../models/quote.dart';
-import 'quote_detail_screen.dart';
 import 'quote_form_screen.dart';
 
 class QuoteListScreen extends StatefulWidget {
@@ -47,9 +46,9 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
   @override
   Widget build(BuildContext context) {
     final prov = context.watch<QuoteProvider>();
-    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
+      backgroundColor: AppColors.darkGreyBackground,
       appBar: AppBar(
         title: const Text('Devis'),
         centerTitle: false,               // titre aligné à gauche
@@ -58,63 +57,67 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
       ),
       body: Stack(
         children: [
-          // 1) La liste des devis
-          if (prov.isLoading)
-            const Center(child: CircularProgressIndicator())
-          else if (prov.quotes.isEmpty)
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: () => _openPanel(quoteId: null),
-                icon: const Icon(Icons.add),
-                label: const Text('Ajouter votre premier devis'),
-              ),
-            )
-          else
-            ListView.builder(
-              itemCount: prov.quotes.length,
-              itemBuilder: (_, i) {
-                final q = prov.quotes[i];
-                return Card(
-                  margin:
-                  const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                  child: ListTile(
-                    title: Text(q.reference),
-                    subtitle: Text('${q.total.toStringAsFixed(2)} €'),
-                    trailing: Text(q.status),
-                    onTap: () => _openPanel(quoteId: q.id),
-                  ),
-                );
-              },
-            ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: prov.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : prov.quotes.isEmpty
+                    ? Center(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _openPanel(quoteId: null),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Ajouter votre premier devis'),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: prov.quotes.length,
+                        itemBuilder: (_, i) {
+                          final q = prov.quotes[i];
+                          return ListTile(
+                            title: Text(q.reference),
+                            subtitle:
+                                Text('${q.total.toStringAsFixed(2)} €'),
+                            trailing: Text(q.status),
+                            onTap: () => _openPanel(quoteId: q.id),
+                          );
+                        },
+                      ),
+          ),
 
-          // 2) Overlay pour fermer au clic en dehors
+          // 2) Panneau plein écran
           if (_showPanel)
             Positioned.fill(
               child: GestureDetector(
                 onTap: _closePanel,
                 behavior: HitTestBehavior.translucent,
-                child: Container(color: Colors.black26),
+                child: Container(
+                  color: AppColors.darkGreyBackground,
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: () {},
+                      child: Material(
+                        elevation: 16,
+                        color: Colors.white,
+                        child: SizedBox(
+                          width: 794,
+                          child: DefaultTextStyle.merge(
+                            style: const TextStyle(color: Colors.black),
+                            child: SafeArea(
+                              child: _panelQuoteId == null
+                                  ? QuoteFormScreen(onSaved: _closePanel)
+                                  : QuoteFormScreen(
+                                      quoteId: _panelQuoteId!,
+                                      onSaved: _closePanel,
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
-
-          // 3) Panneau latéral
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-            top: 0,
-            bottom: 0,
-            right: _showPanel ? 0 : -screenWidth * 0.75,
-            width: screenWidth * 0.25,
-            child: Material(
-              elevation: 16,
-              color: AppColors.glassBackground,
-              child: SafeArea(
-                child: _panelQuoteId == null
-                    ? QuoteFormScreen(onSaved: _closePanel)
-                    : QuoteDetailScreen(quoteId: _panelQuoteId!),
-              ),
-            ),
-          ),
         ],
       ),
       floatingActionButton: !_showPanel
