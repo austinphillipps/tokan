@@ -22,7 +22,7 @@ class NotificationService {
     const windowsSettings = WindowsInitializationSettings(
       appName: 'tokan',
       appUserModelId: 'com.tokan.tokan',
-      guid: '{00000000-0000-0000-0000-000000000000}',
+      guid: '00000000-0000-0000-0000-000000000000',
     );
     await _localNotif.initialize(
       const InitializationSettings(
