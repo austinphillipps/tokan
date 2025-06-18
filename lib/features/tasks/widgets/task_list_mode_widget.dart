@@ -80,9 +80,9 @@ class TasksListView extends StatelessWidget {
                   style: TextButton.styleFrom(
                     foregroundColor: Theme.of(context).colorScheme.primary,
                   ),
-                  icon: const Icon(Icons.create_new_folder),
+                  icon: const Icon(Icons.library_books),
                   label: Text(
-                    'Nouveau dossier',
+                    'Nouveau classeur',
                     style: TextStyle(
                       fontSize: 16,
                       color: Theme.of(context).colorScheme.onSurface,
@@ -209,7 +209,7 @@ class TasksListView extends StatelessWidget {
                     ],
                   )),
                 ],
-                // Sections dossiers
+                // Sections classeurs
                 ...folders.map((folder) {
                   final list =
                   tasks.where((t) => t.folderId == folder.id).toList();
@@ -276,7 +276,7 @@ class TasksListView extends StatelessWidget {
                     ],
                   );
                 }).toList(),
-                // Boutons pour ajouter une tâche ou un dossier
+                // Boutons pour ajouter une tâche ou un classeur
                 Padding(
                   padding:
                   const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -326,8 +326,8 @@ class TasksListView extends StatelessWidget {
           SizedBox(
             width: 40,
             child: IconButton(
-              icon: const Icon(Icons.folder, size: 20),
-              tooltip: 'Nouveau dossier',
+              icon: const Icon(Icons.library_books, size: 20),
+              tooltip: 'Nouveau classeur',
               onPressed: onCreateFolder,
               padding: EdgeInsets.zero,
               splashRadius: 20,

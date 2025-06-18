@@ -16,7 +16,7 @@ class CustomTask extends Equatable {
   int? duration;         // Durée estimée en minutes
   String? client;        // Nom du client (optionnel)
   String? project;       // Projet d’appartenance (optionnel)
-  String? folderId;      // Dossier auquel la tâche appartient
+  String? folderId;      // Classeur auquel la tâche appartient
 
   /// ID du projet avant édition, pour détecter les changements de projet
   String? originalProjectId;

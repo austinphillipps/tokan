@@ -39,6 +39,7 @@ class _TasksPageState extends State<TasksPage> {
   TaskViewMode _viewMode = TaskViewMode.list;
   String? filterCollaborator;
   DateTime? filterDate;
+  String? filterFolderId;
 
   bool _multiSelectMode = false;
   final Set<String> _selectedTaskIds = {};
@@ -200,7 +201,6 @@ class _TasksPageState extends State<TasksPage> {
     } else {
       return Column(
         children: [
-          _buildFolderCarousel(folders, tasks),
           Expanded(
             child: TasksListView(
               tasks: tasks,
@@ -308,7 +308,7 @@ class _TasksPageState extends State<TasksPage> {
             ],
           ),
           const SizedBox(width: 24),
-          // Bouton "Nouveau dossier" déplacé dans la liste des tâches
+          // Bouton "Nouveau classeur" déplacé dans la liste des tâches
           if (_viewMode == TaskViewMode.list) ...[
             DropdownButton<String>(
               hint: const Text('Filtrer par collaborateur'),
@@ -370,6 +370,43 @@ class _TasksPageState extends State<TasksPage> {
                 icon: const Icon(Icons.clear),
                 onPressed: () => setState(() => filterDate = null),
               ),
+            const SizedBox(width: 16),
+            ElevatedButton(
+              onPressed: () async {
+                final selected = await showDialog<String?>(
+                  context: context,
+                  builder: (ctx) => SimpleDialog(
+                    title: const Text('Filtrer par classeur'),
+                    children: [
+                      SimpleDialogOption(
+                        onPressed: () => Navigator.of(ctx).pop(null),
+                        child: const Text('Aucun filtre'),
+                      ),
+                      ...folders.map(
+                        (f) => SimpleDialogOption(
+                          onPressed: () => Navigator.of(ctx).pop(f.id),
+                          child: Text(f.name),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+                if (selected != null) {
+                  setState(() => filterFolderId = selected);
+                }
+              },
+              child: Text(
+                filterFolderId == null
+                    ? 'Filtrer par classeur'
+                    : 'Classeur: '
+                        '${folders.firstWhere((f) => f.id == filterFolderId).name}',
+              ),
+            ),
+            if (filterFolderId != null)
+              IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: () => setState(() => filterFolderId = null),
+              ),
           ],
           const Spacer(),
         ],
@@ -377,105 +414,6 @@ class _TasksPageState extends State<TasksPage> {
     );
   }
 
-  Widget _buildFolderCarousel(List<TaskFolder> folders, List<CustomTask> tasks) {
-    if (folders.isEmpty) return const SizedBox.shrink();
-    return SizedBox(
-      height: 80,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: folders.length,
-        itemBuilder: (context, index) {
-          final f = folders[index];
-          return GestureDetector(
-            onTap: () => _showFolderTasks(f, tasks),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.folder, size: 36, color: AppColors.purple),
-                  const SizedBox(height: 4),
-                  Text(
-                    f.name,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onBackground,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _showFolderTasks(TaskFolder folder, List<CustomTask> tasks) {
-    final list = tasks.where((t) => t.folderId == folder.id).toList();
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return Dialog(
-          child: SizedBox(
-            width: 500,
-            height: 400,
-            child: TasksListView(
-              tasks: list,
-              folders: const [],
-              onToggleStatus: _toggleStatus,
-              onCollaboratorChanged: (t, uid) async {
-                t.responsable = uid ?? '';
-                await _saveTask(t);
-                setState(() {});
-              },
-              onProjectChanged: (t, id) async {
-                t.project = id;
-                await _saveTask(t);
-                setState(() {});
-              },
-              onDeadlineChanged: (t, date) async {
-                t.deadline = date;
-                await _saveTask(t);
-                setState(() {});
-              },
-              onOpenDetail: (t) => setState(() {
-                activeTask = t;
-                showTaskPanel = true;
-              }),
-              onAddTask: () => setState(() {
-                activeTask = CustomTask(
-                  id: '',
-                  name: '',
-                  description: '',
-                  status: '',
-                  responsable: '',
-                  deadline: null,
-                  startTime: null,
-                  endTime: null,
-                  duration: null,
-                  client: null,
-                  project: widget.projectId,
-                  folderId: folder.id,
-                  originalProjectId: null,
-                  recurrenceType: null,
-                  recurrenceDays: null,
-                  recurrenceIncludePast: null,
-                  subTasks: [],
-                );
-                showTaskPanel = true;
-              }),
-              onCreateFolder: () {},
-              onDeleteTask: _deleteTask,
-              multiSelectMode: false,
-              selectedTaskIds: const {},
-              onTaskSelectToggle: (_, __) {},
-              onToggleMultiSelectMode: () {},
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   Stream<List<CustomTask>> _getTasksStream() {
     final db = FirebaseFirestore.instance;
@@ -509,6 +447,10 @@ class _TasksPageState extends State<TasksPage> {
                 (t) => t.deadline != null && _sameDay(t.deadline!, filterDate!),
           )
               .toList();
+        }
+        if (filterFolderId != null) {
+          list =
+              list.where((t) => t.folderId == filterFolderId).toList();
         }
       }
 
@@ -582,7 +524,7 @@ class _TasksPageState extends State<TasksPage> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Nouveau dossier'),
+          title: const Text('Nouveau classeur'),
           content: TextField(
             controller: nameController,
             decoration: const InputDecoration(labelText: 'Nom'),
