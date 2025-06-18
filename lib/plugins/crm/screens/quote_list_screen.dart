@@ -50,6 +50,7 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
+      backgroundColor: AppColors.darkGreyBackground,
       appBar: AppBar(
         title: const Text('Devis'),
         centerTitle: false,               // titre aligné à gauche
@@ -58,34 +59,43 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
       ),
       body: Stack(
         children: [
-          // 1) La liste des devis
-          if (prov.isLoading)
-            const Center(child: CircularProgressIndicator())
-          else if (prov.quotes.isEmpty)
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: () => _openPanel(quoteId: null),
-                icon: const Icon(Icons.add),
-                label: const Text('Ajouter votre premier devis'),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Container(
+              color: Colors.white,
+              child: DefaultTextStyle.merge(
+                style: const TextStyle(color: Colors.black),
+                child: prov.isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : prov.quotes.isEmpty
+                        ? Center(
+                            child: ElevatedButton.icon(
+                              onPressed: () => _openPanel(quoteId: null),
+                              icon: const Icon(Icons.add),
+                              label:
+                                  const Text('Ajouter votre premier devis'),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: prov.quotes.length,
+                            itemBuilder: (_, i) {
+                              final q = prov.quotes[i];
+                              return Card(
+                                margin: const EdgeInsets.symmetric(
+                                    vertical: 4, horizontal: 8),
+                                child: ListTile(
+                                  title: Text(q.reference),
+                                  subtitle:
+                                      Text('${q.total.toStringAsFixed(2)} €'),
+                                  trailing: Text(q.status),
+                                  onTap: () => _openPanel(quoteId: q.id),
+                                ),
+                              );
+                            },
+                          ),
               ),
-            )
-          else
-            ListView.builder(
-              itemCount: prov.quotes.length,
-              itemBuilder: (_, i) {
-                final q = prov.quotes[i];
-                return Card(
-                  margin:
-                  const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                  child: ListTile(
-                    title: Text(q.reference),
-                    subtitle: Text('${q.total.toStringAsFixed(2)} €'),
-                    trailing: Text(q.status),
-                    onTap: () => _openPanel(quoteId: q.id),
-                  ),
-                );
-              },
             ),
+          ),
 
           // 2) Overlay pour fermer au clic en dehors
           if (_showPanel)
@@ -107,11 +117,14 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
             width: screenWidth * 0.25,
             child: Material(
               elevation: 16,
-              color: AppColors.glassBackground,
-              child: SafeArea(
-                child: _panelQuoteId == null
-                    ? QuoteFormScreen(onSaved: _closePanel)
-                    : QuoteDetailScreen(quoteId: _panelQuoteId!),
+              color: Colors.white,
+              child: DefaultTextStyle.merge(
+                style: const TextStyle(color: Colors.black),
+                child: SafeArea(
+                  child: _panelQuoteId == null
+                      ? QuoteFormScreen(onSaved: _closePanel)
+                      : QuoteDetailScreen(quoteId: _panelQuoteId!),
+                ),
               ),
             ),
           ),
