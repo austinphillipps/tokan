@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:tokan/core/providers/plugin_provider.dart';
 import 'package:tokan/core/contract/plugin_contract.dart';
 import '../providers/dashboard_widget_provider.dart';
+import 'manage_dashboard_widgets_sheet.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -18,7 +19,22 @@ class DashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Tableau de bord principal', style: theme.textTheme.titleLarge),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Tableau de bord principal', style: theme.textTheme.titleLarge),
+              IconButton(
+                icon: const Icon(Icons.widgets),
+                tooltip: 'Gérer les widgets',
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (_) => const ManageDashboardWidgetsSheet(),
+                  );
+                },
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
           // … vos autres widgets dashboard …
 

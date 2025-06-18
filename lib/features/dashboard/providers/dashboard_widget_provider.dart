@@ -18,4 +18,15 @@ class DashboardWidgetProvider extends ChangeNotifier {
     _widgets.remove(widget);
     notifyListeners();
   }
+
+  /// Returns true if a widget of type [T] is currently registered.
+  bool hasWidgetOfType<T>() {
+    return _widgets.any((w) => w is T);
+  }
+
+  /// Removes all widgets of type [T] and notifies listeners.
+  void removeWidgetOfType<T>() {
+    _widgets.removeWhere((w) => w is T);
+    notifyListeners();
+  }
 }
