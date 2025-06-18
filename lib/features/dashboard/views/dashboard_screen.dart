@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tokan/core/providers/plugin_provider.dart';
 import 'package:tokan/core/contract/plugin_contract.dart';
+import 'package:intl/intl.dart';
 import '../providers/dashboard_widget_provider.dart';
 import 'manage_dashboard_widgets_sheet.dart';
 
@@ -22,7 +23,15 @@ class DashboardScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Tableau de bord principal', style: theme.textTheme.titleLarge),
+              StreamBuilder<DateTime>(
+                stream: Stream<DateTime>.periodic(
+                    const Duration(seconds: 1), (_) => DateTime.now()),
+                builder: (context, snapshot) {
+                  final now = snapshot.data ?? DateTime.now();
+                  final formatted = DateFormat('HH:mm:ss').format(now);
+                  return Text(formatted, style: theme.textTheme.titleLarge);
+                },
+              ),
               IconButton(
                 icon: const Icon(Icons.widgets),
                 tooltip: 'Gérer les widgets',
