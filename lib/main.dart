@@ -17,6 +17,8 @@ import 'features/auth/views/login_screen.dart';
 import 'features/auth/views/register_screen.dart';
 import 'features/auth/views/auth_gate.dart';
 import 'shared/interface/interface.dart'; // Pour HomeScreen
+import 'shared/interface/mobile_interface.dart';
+import 'shared/interface/adaptive_home_screen.dart';
 import 'firebase_options.dart';
 
 /// 1) Enum à trois valeurs
@@ -236,7 +238,7 @@ class MyApp extends StatelessWidget {
           routes: {
             '/login':    (_) => const LoginPage(),
             '/register': (_) => const RegisterPage(),
-            '/home':     (_) => const HomeScreen(),
+            '/home':     (_) => const AdaptiveHomeScreen(),
             // Les routes CRM / FSM / ESP sont gérées dynamiquement via PluginProvider
           },
         );

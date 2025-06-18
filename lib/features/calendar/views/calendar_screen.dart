@@ -630,10 +630,36 @@ class _CalendarPageState extends State<CalendarPage> {
     }
 
     _subscribeToTasks();
-    setState(() {
-      _showTaskPanel = false;
-      _activeTask = null;
-    });
+  setState(() {
+    _showTaskPanel = false;
+    _activeTask = null;
+  });
+}
+
+  Widget _buildHourColumn(BuildContext context) {
+    final textColor =
+        Theme.of(context).colorScheme.onBackground.withOpacity(0.7);
+    final hourColColor = AppColors.glassBackground;
+    return Container(
+      width: _hourColumnWidth,
+      decoration: BoxDecoration(color: hourColColor),
+      child: Column(
+        children: List.generate(24, (h) {
+          return Container(
+            height: _cellHeight,
+            alignment: Alignment.topCenter,
+            padding: const EdgeInsets.only(top: 10),
+            child: Transform.translate(
+              offset: const Offset(0, -10),
+              child: Text(
+                '${h.toString().padLeft(2, '0')}h',
+                style: TextStyle(color: textColor, fontSize: 12),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
   }
 
   Widget _buildHeaderRow(BuildContext context) {
@@ -804,6 +830,7 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildBodyRow() {
+    final isMobile = MediaQuery.of(context).size.width < 600;
     final List<Widget> allColumns = [];
 
     for (int i = 0; i < 7; i++) {
@@ -818,61 +845,71 @@ class _CalendarPageState extends State<CalendarPage> {
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(right: 16),
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Colonne des heures
-                  Builder(builder: (ctx) {
-                    final isDark = Theme.of(ctx).brightness == Brightness.dark;
-                    final hourColColor = AppColors.glassBackground;
-                    final textColor =
-                    Theme.of(ctx).colorScheme.onBackground.withOpacity(0.7);
+    if (isMobile) {
+      final headerBg = AppColors.glassHeader;
+      final borderColor =
+          Theme.of(context).colorScheme.onBackground.withOpacity(0.3);
+      final textColor = Theme.of(context).colorScheme.onBackground;
 
-                    return Container(
-                      width: _hourColumnWidth,
-                      decoration: BoxDecoration(color: hourColColor),
-                      child: Column(
-                        children: List.generate(24, (h) {
-                          return Container(
-                            height: _cellHeight,
-                            alignment: Alignment.topCenter,
-                            padding: const EdgeInsets.only(top: 10),
-                            child: Transform.translate(
-                              offset: const Offset(0, -10),
-                              child: Text(
-                                '${h.toString().padLeft(2, '0')}h',
-                                style: TextStyle(
-                                    color: textColor, fontSize: 12),
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-                    );
-                  }),
-
-                  // Colonnes des jours (sans espacement)
-                  Expanded(child: Row(children: allColumns)),
-                ],
+      final List<Widget> dayWidgets = [];
+      for (int i = 0; i < 7; i++) {
+        final day = _weekStart.add(Duration(days: i));
+        dayWidgets.add(Container(
+          height: 50,
+          width: double.infinity,
+          decoration: BoxDecoration(color: headerBg),
+          alignment: Alignment.center,
+          child: Text(
+            '${_weekdayName(day.weekday)} ${day.day}',
+            style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
+          ),
+        ));
+        dayWidgets.add(Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHourColumn(context),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 10.0),
+                child: _buildDayColumn(day, i),
               ),
             ),
-          ),
-          Builder(builder: (ctx) {
-            final borderColor =
-            Theme.of(ctx).colorScheme.onBackground.withOpacity(0.3);
-            return Container(height: 1, color: borderColor);
-          }),
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
+          ],
+        ));
+        dayWidgets.add(Container(height: 1, color: borderColor));
+      }
+
+      return Padding(
+        padding: const EdgeInsets.only(right: 16),
+        child: SingleChildScrollView(child: Column(children: dayWidgets)),
+      );
+    } else {
+      return Padding(
+        padding: const EdgeInsets.only(right: 16),
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHourColumn(context),
+                    Expanded(child: Row(children: allColumns)),
+                  ],
+                ),
+              ),
+            ),
+            Builder(builder: (ctx) {
+              final borderColor =
+                  Theme.of(ctx).colorScheme.onBackground.withOpacity(0.3);
+              return Container(height: 1, color: borderColor);
+            }),
+            const SizedBox(height: 20),
+          ],
+        ),
+      );
+    }
   }
 
   void _onCalendarTapDefault(DateTime day) {
@@ -906,7 +943,8 @@ class _CalendarPageState extends State<CalendarPage> {
           children: [
             Column(
               children: [
-                _buildHeaderRow(context),
+                if (MediaQuery.of(context).size.width >= 600)
+                  _buildHeaderRow(context),
                 Expanded(child: _buildBodyRow()),
               ],
             ),
@@ -944,30 +982,32 @@ class _CalendarPageState extends State<CalendarPage> {
                   child: Container(color: Colors.black.withOpacity(0.5)),
                 ),
               ),
-              Positioned(
-                top: 0,
-                bottom: 0,
-                right: 0,
-                width: 400,
-                child: Container(
+              Center(
+                child: Material(
                   color: Theme.of(context).brightness == Brightness.dark
                       ? AppColors.darkBackground
                       : Colors.white,
-                  child: TaskDetailPanel(
-                    task: _activeTask!,
-                    onSave: (updatedTask) async {
-                      await _saveTaskFromCalendar(updatedTask);
-                    },
-                    onClose: () => setState(() {
-                      _showTaskPanel = false;
-                      _activeTask = null;
-                    }),
-                    onMarkAsDone: () {
-                      // Optionnel : marquer terminé
-                    },
-                    onCalendarRefresh: () {
-                      _subscribeToTasks();
-                    },
+                  borderRadius: BorderRadius.circular(12),
+                  clipBehavior: Clip.antiAlias,
+                  child: SizedBox(
+                    width: 500,
+                    height: MediaQuery.of(context).size.height * 0.8,
+                    child: TaskDetailPanel(
+                      task: _activeTask!,
+                      onSave: (updatedTask) async {
+                        await _saveTaskFromCalendar(updatedTask);
+                      },
+                      onClose: () => setState(() {
+                        _showTaskPanel = false;
+                        _activeTask = null;
+                      }),
+                      onMarkAsDone: () {
+                        // Optionnel : marquer terminé
+                      },
+                      onCalendarRefresh: () {
+                        _subscribeToTasks();
+                      },
+                    ),
                   ),
                 ),
               ),

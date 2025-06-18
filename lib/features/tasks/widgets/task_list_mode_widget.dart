@@ -18,6 +18,7 @@ class TasksListView extends StatelessWidget {
   final Function(CustomTask, DateTime?) onDeadlineChanged;
   final Function(CustomTask) onOpenDetail;
   final VoidCallback onAddTask;
+  final void Function(String folderId) onAddTaskToFolder;
   final VoidCallback onCreateFolder;
   final Function(CustomTask) onDeleteTask;
 
@@ -26,6 +27,7 @@ class TasksListView extends StatelessWidget {
   final Set<String> selectedTaskIds;
   final Function(CustomTask, bool) onTaskSelectToggle;
   final VoidCallback onToggleMultiSelectMode;
+  final Future<void> Function(CustomTask, CustomTask) onSwapOrder;
 
   const TasksListView({
     Key? key,
@@ -38,6 +40,7 @@ class TasksListView extends StatelessWidget {
     required this.onOpenDetail,
     required this.onAddTask,
     required this.onCreateFolder,
+    required this.onAddTaskToFolder,
     required this.onDeleteTask,
 
     // ← Nouveaux paramètres :
@@ -45,6 +48,7 @@ class TasksListView extends StatelessWidget {
     required this.selectedTaskIds,
     required this.onTaskSelectToggle,
     required this.onToggleMultiSelectMode,
+    required this.onSwapOrder,
   }) : super(key: key);
 
   @override
@@ -97,6 +101,11 @@ class TasksListView extends StatelessWidget {
     }
 
     final rootTasks = tasks.where((t) => t.folderId == null || t.folderId!.isEmpty).toList();
+    rootTasks.sort((a, b) {
+      final aOrder = a.order ?? -(a.createdAt?.millisecondsSinceEpoch ?? 0);
+      final bOrder = b.order ?? -(b.createdAt?.millisecondsSinceEpoch ?? 0);
+      return bOrder.compareTo(aOrder);
+    });
     final enCours = rootTasks.where((t) => t.status != 'completed').toList();
     final terminees = rootTasks.where((t) => t.status == 'completed').toList();
 
@@ -138,11 +147,11 @@ class TasksListView extends StatelessWidget {
                       ),
                     ),
                   ),
-                  ...enCours.map((task) => Column(
+                  ...enCours.asMap().entries.map((entry) => Column(
                     children: [
                       _TaskRow(
-                        key: ValueKey(task.id),
-                        task: task,
+                        key: ValueKey(entry.value.id),
+                        task: entry.value,
                         onToggle: onToggleStatus,
                         onCollaboratorChanged: onCollaboratorChanged,
                         onProjectChanged: onProjectChanged,
@@ -150,9 +159,16 @@ class TasksListView extends StatelessWidget {
                         onOpenDetail: onOpenDetail,
                         onDelete: onDeleteTask,
 
+                        onMoveUp: entry.key > 0
+                            ? () => onSwapOrder(entry.value, enCours[entry.key - 1])
+                            : null,
+                        onMoveDown: entry.key < enCours.length - 1
+                            ? () => onSwapOrder(entry.value, enCours[entry.key + 1])
+                            : null,
+
                         // ← Paramètres multi-sélection
                         multiSelectMode: multiSelectMode,
-                        isSelected: selectedTaskIds.contains(task.id),
+                        isSelected: selectedTaskIds.contains(entry.value.id),
                         onTaskSelectToggle: onTaskSelectToggle,
                       ),
                       Divider(
@@ -182,11 +198,11 @@ class TasksListView extends StatelessWidget {
                       ),
                     ),
                   ),
-                  ...terminees.map((task) => Column(
+                  ...terminees.asMap().entries.map((entry) => Column(
                     children: [
                       _TaskRow(
-                        key: ValueKey(task.id),
-                        task: task,
+                        key: ValueKey(entry.value.id),
+                        task: entry.value,
                         onToggle: onToggleStatus,
                         onCollaboratorChanged: onCollaboratorChanged,
                         onProjectChanged: onProjectChanged,
@@ -194,9 +210,16 @@ class TasksListView extends StatelessWidget {
                         onOpenDetail: onOpenDetail,
                         onDelete: onDeleteTask,
 
+                        onMoveUp: entry.key > 0
+                            ? () => onSwapOrder(entry.value, terminees[entry.key - 1])
+                            : null,
+                        onMoveDown: entry.key < terminees.length - 1
+                            ? () => onSwapOrder(entry.value, terminees[entry.key + 1])
+                            : null,
+
                         // ← Paramètres multi-sélection
                         multiSelectMode: multiSelectMode,
-                        isSelected: selectedTaskIds.contains(task.id),
+                        isSelected: selectedTaskIds.contains(entry.value.id),
                         onTaskSelectToggle: onTaskSelectToggle,
                       ),
                       Divider(
@@ -212,25 +235,40 @@ class TasksListView extends StatelessWidget {
                 // Sections dossiers
                 ...folders.map((folder) {
                   final list =
-                  tasks.where((t) => t.folderId == folder.id).toList();
+                      tasks.where((t) => t.folderId == folder.id).toList()
+                        ..sort((a, b) {
+                          final aOrder = a.order ?? -(a.createdAt?.millisecondsSinceEpoch ?? 0);
+                          final bOrder = b.order ?? -(b.createdAt?.millisecondsSinceEpoch ?? 0);
+                          return bOrder.compareTo(aOrder);
+                        });
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 4),
-                        child: Text(
-                          folder.name,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onBackground
-                                .withOpacity(0.7),
-                            fontWeight: FontWeight.bold,
-                          ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                folder.name,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onBackground
+                                          .withOpacity(0.7),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.add, size: 18),
+                              tooltip: 'Ajouter une tâche',
+                              onPressed: () => onAddTaskToFolder(folder.id),
+                            )
+                          ],
                         ),
                       ),
                       if (list.isEmpty)
@@ -248,11 +286,11 @@ class TasksListView extends StatelessWidget {
                           ),
                         )
                       else
-                        ...list.map((task) => Column(
+                        ...list.asMap().entries.map((entry) => Column(
                           children: [
                             _TaskRow(
-                              key: ValueKey(task.id),
-                              task: task,
+                              key: ValueKey(entry.value.id),
+                              task: entry.value,
                               onToggle: onToggleStatus,
                               onCollaboratorChanged: onCollaboratorChanged,
                               onProjectChanged: onProjectChanged,
@@ -261,7 +299,13 @@ class TasksListView extends StatelessWidget {
                               onDelete: onDeleteTask,
                               multiSelectMode: multiSelectMode,
                               isSelected:
-                              selectedTaskIds.contains(task.id),
+                              selectedTaskIds.contains(entry.value.id),
+                              onMoveUp: entry.key > 0
+                                  ? () => onSwapOrder(entry.value, list[entry.key - 1])
+                                  : null,
+                              onMoveDown: entry.key < list.length - 1
+                                  ? () => onSwapOrder(entry.value, list[entry.key + 1])
+                                  : null,
                               onTaskSelectToggle: onTaskSelectToggle,
                             ),
                             Divider(
@@ -333,6 +377,10 @@ class TasksListView extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    // Hide the detailed header on small screens (mobile)
+    if (MediaQuery.of(context).size.width < 600) {
+      return const SizedBox.shrink();
+    }
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       decoration: BoxDecoration(
@@ -512,6 +560,9 @@ class _TaskRow extends StatefulWidget {
   final Function(CustomTask) onOpenDetail;
   final Function(CustomTask) onDelete;
 
+  final VoidCallback? onMoveUp;
+  final VoidCallback? onMoveDown;
+
   // ← Nouveaux paramètres pour la sélection multiple
   final bool multiSelectMode;
   final bool isSelected;
@@ -526,6 +577,9 @@ class _TaskRow extends StatefulWidget {
     required this.onDeadlineChanged,
     required this.onOpenDetail,
     required this.onDelete,
+
+    this.onMoveUp,
+    this.onMoveDown,
 
     required this.multiSelectMode,
     required this.isSelected,
@@ -672,6 +726,12 @@ class _TaskRowState extends State<_TaskRow> {
                 child: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection('collaborations')
+                      .where(
+                        Filter.or(
+                          Filter('from', isEqualTo: FirebaseAuth.instance.currentUser!.uid),
+                          Filter('to', isEqualTo: FirebaseAuth.instance.currentUser!.uid),
+                        ),
+                      )
                       .where('status', isEqualTo: 'accepted')
                       .snapshots(),
                   builder: (ctx2, snap) {
@@ -842,6 +902,7 @@ class _TaskRowState extends State<_TaskRow> {
         : null;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool isMobile = MediaQuery.of(context).size.width < 600;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -861,8 +922,83 @@ class _TaskRowState extends State<_TaskRow> {
             ),
           ],
         ),
-        child: Row(
-          children: [
+        child: isMobile
+            ? Row(
+                children: [
+                  InkWell(
+                    onTap: () => widget.onToggle(widget.task),
+                    child: CircleAvatar(
+                      radius: 12,
+                      backgroundColor: widget.task.status == 'completed'
+                          ? AppColors.green
+                          : (isDark
+                              ? Theme.of(context)
+                                  .colorScheme
+                                  .onBackground
+                                  .withOpacity(0.2)
+                              : Colors.grey[300]),
+                      child: Icon(
+                        Icons.check,
+                        size: 16,
+                        color: isDark
+                            ? Theme.of(context).colorScheme.onPrimary
+                            : Colors.black,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => widget.onOpenDetail(widget.task),
+                      child: Text(
+                        widget.task.name,
+                        style: TextStyle(
+                          color: isDark
+                              ? Theme.of(context).colorScheme.onBackground
+                              : Colors.black87,
+                          fontSize: 14,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    icon: Icon(Icons.more_vert,
+                        color: Theme.of(context).iconTheme.color),
+                    onSelected: (action) {
+                      switch (action) {
+                        case 'select':
+                          widget.onTaskSelectToggle(
+                              widget.task, !widget.isSelected);
+                          break;
+                        case 'edit':
+                          widget.onOpenDetail(widget.task);
+                          break;
+                        case 'delete':
+                          widget.onDelete(widget.task);
+                          break;
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                        value: 'select',
+                        child: const Text('Sélectionner'),
+                      ),
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: const Text('Modifier'),
+                      ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: const Text('Supprimer'),
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : Row(
+                children: [
             // 1) Point de statut (cercle vert si terminé, gris clair sinon)
             SizedBox(
               width: 40,
@@ -1033,27 +1169,54 @@ class _TaskRowState extends State<_TaskRow> {
             _vDiv(context),
             // 6) Zone de droite (checkbox ou bouton de suppression individuelle)
             SizedBox(
-              width: 40,
+              width: 80,
               child: widget.multiSelectMode
-              // Mode multi-sélection : afficher la checkbox
                   ? Checkbox(
-                value: widget.isSelected,
-                onChanged: (v) {
-                  widget.onTaskSelectToggle(widget.task, v!);
-                },
-              )
-                  : (_hoverRow
-              // Mode normal + survol : afficher la croix de suppression
-                  ? IconButton(
-                icon: const Icon(Icons.close, color: Colors.red),
-                tooltip: 'Supprimer cette tâche',
-                onPressed: () => widget.onDelete(widget.task),
-                padding: const EdgeInsets.all(8),
-                constraints:
-                const BoxConstraints(), // pour ne pas ajouter de padding supplémentaire
-              )
-              // Mode normal + pas de survol : espace vide
-                  : Container()),
+                      value: widget.isSelected,
+                      onChanged: (v) {
+                        widget.onTaskSelectToggle(widget.task, v!);
+                      },
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        if (_hoverRow)
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.red),
+                            tooltip: 'Supprimer cette tâche',
+                            onPressed: () => widget.onDelete(widget.task),
+                            padding: const EdgeInsets.all(8),
+                            constraints: const BoxConstraints(),
+                          ),
+                        if (_hoverRow)
+                          PopupMenuButton<String>(
+                            icon: const Icon(Icons.drag_handle, size: 16),
+                            tooltip: 'Déplacer cette tâche',
+                            onSelected: (value) {
+                              switch (value) {
+                                case 'up':
+                                  if (widget.onMoveUp != null) widget.onMoveUp!();
+                                  break;
+                                case 'down':
+                                  if (widget.onMoveDown != null) widget.onMoveDown!();
+                                  break;
+                              }
+                            },
+                            itemBuilder: (_) => [
+                              if (widget.onMoveUp != null)
+                                const PopupMenuItem(
+                                  value: 'up',
+                                  child: Text('Monter'),
+                                ),
+                              if (widget.onMoveDown != null)
+                                const PopupMenuItem(
+                                  value: 'down',
+                                  child: Text('Descendre'),
+                                ),
+                            ],
+                          ),
+                      ],
+                    ),
             ),
           ],
         ),

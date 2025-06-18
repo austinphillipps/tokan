@@ -132,27 +132,29 @@ class _TasksPageState extends State<TasksPage> {
             ),
 
           if (showTaskPanel && activeTask != null)
-            Positioned(
-              right: 0,
-              top: 0,
-              bottom: 0,
-              child: Container(
-                width: MediaQuery.of(context).size.width / 3,
+            Center(
+              child: Material(
                 color: Theme.of(context).colorScheme.surface,
-                child: TaskDetailPanel(
-                  task: activeTask!,
-                  onSave: (updated) async {
-                    await _saveTask(updated);
-                    setState(() => showTaskPanel = false);
-                    _calendarRefreshNotifier.value++;
-                  },
-                  onClose: () => setState(() => showTaskPanel = false),
-                  onMarkAsDone: () {
-                    if (activeTask != null) _toggleStatus(activeTask!);
-                  },
-                  onCalendarRefresh: () {
-                    _calendarRefreshNotifier.value++;
-                  },
+                borderRadius: BorderRadius.circular(12),
+                clipBehavior: Clip.antiAlias,
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.6,
+                  height: MediaQuery.of(context).size.height * 0.8,
+                  child: TaskDetailPanel(
+                    task: activeTask!,
+                    onSave: (updated) async {
+                      await _saveTask(updated);
+                      setState(() => showTaskPanel = false);
+                      _calendarRefreshNotifier.value++;
+                    },
+                    onClose: () => setState(() => showTaskPanel = false),
+                    onMarkAsDone: () {
+                      if (activeTask != null) _toggleStatus(activeTask!);
+                    },
+                    onCalendarRefresh: () {
+                      _calendarRefreshNotifier.value++;
+                    },
+                  ),
                 ),
               ),
             ),
@@ -242,6 +244,28 @@ class _TasksPageState extends State<TasksPage> {
           );
           showTaskPanel = true;
         }),
+        onAddTaskToFolder: (folderId) => setState(() {
+          activeTask = CustomTask(
+            id: '',
+            name: '',
+            description: '',
+            status: '',
+            responsable: '',
+            deadline: null,
+            startTime: null,
+            endTime: null,
+            duration: null,
+            client: null,
+            project: widget.projectId,
+            folderId: folderId,
+            originalProjectId: null,
+            recurrenceType: null,
+            recurrenceDays: null,
+            recurrenceIncludePast: null,
+            subTasks: [],
+          );
+          showTaskPanel = true;
+        }),
         onCreateFolder: _showCreateFolderDialog,
         onDeleteTask: _deleteTask,
 
@@ -263,6 +287,10 @@ class _TasksPageState extends State<TasksPage> {
             }
             _multiSelectMode = !_multiSelectMode;
           });
+        },
+        onSwapOrder: (a, b) async {
+          await _swapTaskOrder(a, b);
+          setState(() {});
         },
       );
     }
@@ -405,9 +433,11 @@ class _TasksPageState extends State<TasksPage> {
         }
       }
 
-      list.sort((a, b) =>
-          (a.deadline ?? DateTime(1970))
-              .compareTo(b.deadline ?? DateTime(1970)));
+      list.sort((a, b) {
+        final aOrder = a.order ?? -(a.createdAt?.millisecondsSinceEpoch ?? 0);
+        final bOrder = b.order ?? -(b.createdAt?.millisecondsSinceEpoch ?? 0);
+        return bOrder.compareTo(aOrder);
+      });
       return list;
     });
   }
@@ -445,10 +475,23 @@ class _TasksPageState extends State<TasksPage> {
       ..['updatedBy'] = user.uid
       ..['updatedAt'] = FieldValue.serverTimestamp();
 
+    if (task.id.isNotEmpty) {
+      data.remove('createdAt');
+      data.remove('createdBy');
+    }
+
+    if (task.order == null) {
+      task.order = DateTime.now().millisecondsSinceEpoch;
+      data['order'] = task.order;
+    } else {
+      data['order'] = task.order;
+    }
+
     if (task.id.isEmpty) {
       if (task.status.isEmpty) task.status = 'à venir';
       final docRef = await tasksCollection.add(data);
       task.id = docRef.id;
+      task.createdAt = DateTime.now();
     } else {
       await tasksCollection.doc(task.id).update(data);
     }
@@ -467,6 +510,17 @@ class _TasksPageState extends State<TasksPage> {
     final db = FirebaseFirestore.instance;
     await db.collection('tasks').doc(task.id).delete();
     _calendarRefreshNotifier.value++;
+  }
+
+  Future<void> _swapTaskOrder(CustomTask first, CustomTask second) async {
+    final db = FirebaseFirestore.instance;
+    final batch = db.batch();
+    final temp = first.order;
+    first.order = second.order;
+    second.order = temp;
+    batch.update(db.collection('tasks').doc(first.id), {'order': first.order});
+    batch.update(db.collection('tasks').doc(second.id), {'order': second.order});
+    await batch.commit();
   }
 
   Future<void> _showCreateFolderDialog() async {

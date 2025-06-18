@@ -28,7 +28,18 @@ class ProjectsScreen extends StatelessWidget {
     const spacing = 16.0;
     final screenWidth = MediaQuery.of(context).size.width;
     final gridWidth = screenWidth * 0.9;
-    final cardWidth = (gridWidth - 3 * spacing) / 4;
+
+    // Nombre de colonnes en fonction de la largeur de l'écran.
+    int columns;
+    if (screenWidth < 500) {
+      columns = 2;
+    } else if (screenWidth < 900) {
+      columns = 3;
+    } else {
+      columns = 4;
+    }
+
+    final cardWidth = (gridWidth - (columns - 1) * spacing) / columns;
 
     return Scaffold(
       backgroundColor: backgroundColor,

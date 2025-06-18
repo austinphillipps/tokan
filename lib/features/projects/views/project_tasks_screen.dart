@@ -88,6 +88,7 @@ class _ProjectTasksPageState extends State<ProjectTasksPage> {
     final cardBg = AppColors.glassBackground;
     final titleColor = Theme.of(context).colorScheme.onBackground;
     final subtitleColor = titleColor.withOpacity(0.7);
+    final bool isMobile = MediaQuery.of(context).size.width < 600;
 
     if (tasks.isEmpty) {
       return Center(
@@ -100,29 +101,119 @@ class _ProjectTasksPageState extends State<ProjectTasksPage> {
     }
     return Column(
       children: [
-        _buildListHeader(context),
+        if (!isMobile) _buildListHeader(context),
         Expanded(
           child: ListView.builder(
             itemCount: tasks.length,
             itemBuilder: (context, index) {
               final task = tasks[index];
-              final deadlineStr = task.deadline != null
-                  ? DateFormat('dd MMM yyyy').format(task.deadline!)
-                  : '-';
-              return Card(
-                color: cardBg,
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: ListTile(
-                  title: Text(task.name, style: TextStyle(color: titleColor)),
-                  trailing: Text(deadlineStr, style: TextStyle(color: subtitleColor)),
-                  onTap: () {
-                    setState(() {
-                      activeTask = task;
-                      showTaskPanel = true;
-                    });
-                  },
-                ),
-              );
+              if (isMobile) {
+                return Card(
+                  color: cardBg,
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      children: [
+                        InkWell(
+                          onTap: () => _toggleStatus(task),
+                          child: CircleAvatar(
+                            radius: 12,
+                            backgroundColor:
+                                task.status == 'completed' || task.status == 'terminée'
+                                    ? AppColors.green
+                                    : (isDark
+                                        ? Theme.of(context)
+                                            .colorScheme
+                                            .onBackground
+                                            .withOpacity(0.2)
+                                        : Colors.grey[300]),
+                            child: Icon(
+                              Icons.check,
+                              size: 16,
+                              color: isDark
+                                  ? Theme.of(context).colorScheme.onPrimary
+                                  : Colors.black,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                activeTask = task;
+                                showTaskPanel = true;
+                              });
+                            },
+                            child: Text(
+                              task.name,
+                              style: TextStyle(color: titleColor, fontSize: 14),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                        PopupMenuButton<String>(
+                          icon: Icon(Icons.more_vert,
+                              color: Theme.of(context).iconTheme.color),
+                          onSelected: (action) {
+                            switch (action) {
+                              case 'select':
+                                setState(() {
+                                  activeTask = task;
+                                  showTaskPanel = true;
+                                });
+                                break;
+                              case 'edit':
+                                setState(() {
+                                  activeTask = task;
+                                  showTaskPanel = true;
+                                });
+                                break;
+                              case 'delete':
+                                _deleteTask(task);
+                                break;
+                            }
+                          },
+                          itemBuilder: (_) => const [
+                            PopupMenuItem(
+                              value: 'select',
+                              child: Text('Sélectionner'),
+                            ),
+                            PopupMenuItem(
+                              value: 'edit',
+                              child: Text('Modifier'),
+                            ),
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Text('Supprimer'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              } else {
+                final deadlineStr = task.deadline != null
+                    ? DateFormat('dd MMM yyyy').format(task.deadline!)
+                    : '-';
+                return Card(
+                  color: cardBg,
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: ListTile(
+                    title: Text(task.name, style: TextStyle(color: titleColor)),
+                    trailing: Text(deadlineStr, style: TextStyle(color: subtitleColor)),
+                    onTap: () {
+                      setState(() {
+                        activeTask = task;
+                        showTaskPanel = true;
+                      });
+                    },
+                  ),
+                );
+              }
             },
           ),
         ),
@@ -539,45 +630,56 @@ class _ProjectTasksPageState extends State<ProjectTasksPage> {
               title: Text(widget.project.name),
             ),
             Expanded(
-              child: showTaskPanel && activeTask != null
-                  ? Row(
+              child: Stack(
                 children: [
-                  Expanded(child: buildTasksContent()),
-                  Container(
-                    width: 400,
-                    color: isDark
-                        ? AppColors.darkBackground
-                        : Theme.of(context).colorScheme.surface,
-                    child: TaskDetailPanel(
-                      task: activeTask!,
-                      onSave: (updatedTask) async {
-                        await saveTaskToFirestore(updatedTask);
-                        setState(() {
-                          showTaskPanel = false;
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content: Text(
-                                  "Tâche '${updatedTask.name}' sauvegardée")),
-                        );
-                      },
-                      onClose: () {
-                        setState(() {
-                          showTaskPanel = false;
-                        });
-                      },
-                      onMarkAsDone: () async {
-                        activeTask!.status = 'terminée';
-                        await saveTaskToFirestore(activeTask!);
-                        setState(() {
-                          showTaskPanel = false;
-                        });
-                      },
+                  buildTasksContent(),
+                  if (showTaskPanel && activeTask != null) ...[
+                    Positioned.fill(
+                      child: GestureDetector(
+                        onTap: () => setState(() => showTaskPanel = false),
+                        child: Container(color: Colors.black.withOpacity(0.5)),
+                      ),
                     ),
-                  ),
+                    Center(
+                      child: Material(
+                        color: isDark
+                            ? AppColors.darkBackground
+                            : Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        clipBehavior: Clip.antiAlias,
+                        child: SizedBox(
+                          width: 500,
+                          height: MediaQuery.of(context).size.height * 0.8,
+                          child: TaskDetailPanel(
+                            task: activeTask!,
+                            onSave: (updatedTask) async {
+                              await saveTaskToFirestore(updatedTask);
+                              setState(() {
+                                showTaskPanel = false;
+                              });
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text("Tâche '${updatedTask.name}' sauvegardée")),
+                              );
+                            },
+                            onClose: () {
+                              setState(() {
+                                showTaskPanel = false;
+                              });
+                            },
+                            onMarkAsDone: () async {
+                              activeTask!.status = 'terminée';
+                              await saveTaskToFirestore(activeTask!);
+                              setState(() {
+                                showTaskPanel = false;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
-              )
-                  : buildTasksContent(),
+              ),
             ),
           ],
         ),
@@ -611,5 +713,19 @@ class _ProjectTasksPageState extends State<ProjectTasksPage> {
     } else {
       await tasksCollection.doc(task.id).update(task.toMap(currentUser.uid));
     }
+  }
+
+  void _toggleStatus(CustomTask task) async {
+    final nextStatus =
+        (task.status == 'completed' || task.status == 'terminée') ? 'pending' : 'completed';
+    task.status = nextStatus;
+    await saveTaskToFirestore(task);
+    setState(() {});
+  }
+
+  Future<void> _deleteTask(CustomTask task) async {
+    final db = FirebaseFirestore.instance;
+    await db.collection('tasks').doc(task.id).delete();
+    setState(() {});
   }
 }

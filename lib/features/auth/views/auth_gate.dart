@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../shared/interface/interface.dart';
+import '../../../shared/interface/mobile_interface.dart';
+import '../../../shared/interface/adaptive_home_screen.dart';
 import '../../../plugins/crm/providers/contact_provider.dart';
 import '../../../plugins/crm/providers/opportunity_provider.dart';
 import '../../../plugins/crm/providers/quote_provider.dart';
@@ -37,7 +39,7 @@ class AuthGate extends StatelessWidget {
             ChangeNotifierProvider(create: (_) => QuoteProvider()),
             // … ajoutez d'autres providers liés à l'utilisateur ici …
           ],
-          child: const HomeScreen(),
+          child: const AdaptiveHomeScreen(),
         );
       },
     );
