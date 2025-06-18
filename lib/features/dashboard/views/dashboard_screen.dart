@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tokan/core/providers/plugin_provider.dart';
 import 'package:tokan/core/contract/plugin_contract.dart';
+import '../providers/dashboard_widget_provider.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -10,6 +11,7 @@ class DashboardScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final pluginProv = context.watch<PluginProvider>();
     final installedPlugins = pluginProv.installedPlugins;
+    final dashboardProv = context.watch<DashboardWidgetProvider>();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -28,6 +30,8 @@ class DashboardScreen extends StatelessWidget {
               if (p.buildDashboardWidget(context) != null)
                 p.buildDashboardWidget(context)!,
           ],
+
+          for (final w in dashboardProv.widgets) w,
         ],
       ),
     );
