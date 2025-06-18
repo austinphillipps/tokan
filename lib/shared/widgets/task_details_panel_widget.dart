@@ -951,6 +951,9 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
           ),
         ),
       ),
-    );
+    ),
+  ],
+),
+);
   }
 }
