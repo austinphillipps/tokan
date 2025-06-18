@@ -134,7 +134,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.darkGreyBackground,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(
@@ -146,14 +146,20 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SafeArea(
-        child: Container(
-          color: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          child: DefaultTextStyle.merge(
-            style: const TextStyle(color: Colors.black),
-            child: Form(
-              key: _formKey,
-              child: ListView(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 794,
+              maxHeight: 1123,
+            ),
+            child: Container(
+              color: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              child: DefaultTextStyle.merge(
+                style: const TextStyle(color: Colors.black),
+                child: Form(
+                  key: _formKey,
+                  child: ListView(
               children: [
                 TextFormField(
                   initialValue: _reference,
@@ -289,23 +295,28 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
           ),
         ),
       ),
-      ),
+    ),
       bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: ElevatedButton(
-            onPressed: _loading ? null : _onSubmit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              minimumSize: const Size.fromHeight(48),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 794),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: ElevatedButton(
+                onPressed: _loading ? null : _onSubmit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  minimumSize: const Size.fromHeight(48),
+                ),
+                child: _loading
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(color: Colors.white),
+                      )
+                    : Text(_isEditing ? 'Mettre à jour' : 'Créer'),
+              ),
             ),
-            child: _loading
-                ? const SizedBox(
-              height: 24,
-              width: 24,
-              child: CircularProgressIndicator(color: Colors.white),
-            )
-                : Text(_isEditing ? 'Mettre à jour' : 'Créer'),
           ),
         ),
       ),
