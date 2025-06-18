@@ -77,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // 3) Concaténer pages dans l'ordre souhaité
     final pages = <Widget>[
-      // Haut : Accueil..Messages, puis Projets
+      // Haut : Accueil..Messages, puis Projets & Entreprises
       basePages[0],
       basePages[1],
       basePages[2],
@@ -99,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
       Icons.calendar_today,
       Icons.group,
       Icons.message,
-      Icons.work,           // Projets
+      Icons.work,           // Projets & Entreprises
       for (final p in plugins) p.iconData,
       Icons.notifications,
       Icons.library_books,
@@ -113,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
       'Calendrier',
       'Collaborateurs',
       'Messages',
-      'Projets',
+      'Projets & Entreprises',
       for (final p in plugins) p.displayName,
       'Notifications',
       'Library',

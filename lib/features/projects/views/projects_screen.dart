@@ -63,7 +63,7 @@ class ProjectsScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 12),
                       child: Text(
-                        'Mes Projets',
+                        'Projets & Entreprises',
                         style: theme.textTheme.headlineLarge?.copyWith(
                           color: titleColor,
                           fontWeight: FontWeight.bold,
@@ -93,7 +93,7 @@ class ProjectsScreen extends StatelessWidget {
                         ),
                       ),
                       icon: const Icon(Icons.add),
-                      label: const Text('Créer un nouveau projet'),
+                      label: const Text('Créer un projet ou une entreprise'),
                       onPressed: () => _showCreateProjectDialog(context),
                     ),
                   ],
@@ -123,44 +123,69 @@ class ProjectsScreen extends StatelessWidget {
     );
   }
 
-  /// Dialogue pour saisir seulement le nom d’un nouveau projet
+  /// Dialogue pour créer un projet simple ou une entreprise
   Future<void> _showCreateProjectDialog(BuildContext context) async {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final nameCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
+    ProjectType selectedType = ProjectType.simple;
 
     final created = await showDialog<bool>(
       context: context,
-      builder: (c) => AlertDialog(
-        backgroundColor:
-        isDark ? AppColors.darkGreyBackground : theme.colorScheme.surface,
-        title: Text(
-          'Nouveau projet',
-          style:
-          theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.onBackground),
-        ),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: nameCtrl,
-            decoration: InputDecoration(
-              labelText: 'Nom du projet',
-              hintText: 'Entrez un nom',
-              labelStyle: TextStyle(color: theme.colorScheme.onBackground),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: theme.colorScheme.onBackground.withOpacity(0.3),
-                ),
-              ),
-            ),
-            style: TextStyle(color: theme.colorScheme.onBackground),
-            validator: (v) =>
-            v == null || v.trim().isEmpty ? 'Le nom est requis' : null,
-            autofocus: true,
+      builder: (c) => StatefulBuilder(
+        builder: (c, setSt) => AlertDialog(
+          backgroundColor:
+              isDark ? AppColors.darkGreyBackground : theme.colorScheme.surface,
+          title: Text(
+            'Nouveau projet',
+            style:
+                theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.onBackground),
           ),
-        ),
-        actions: [
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Nom du projet',
+                    hintText: 'Entrez un nom',
+                    labelStyle: TextStyle(color: theme.colorScheme.onBackground),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.onBackground.withOpacity(0.3),
+                      ),
+                    ),
+                  ),
+                  style: TextStyle(color: theme.colorScheme.onBackground),
+                  validator: (v) => v == null || v.trim().isEmpty ? 'Le nom est requis' : null,
+                  autofocus: true,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<ProjectType>(
+                  value: selectedType,
+                  decoration: InputDecoration(
+                    labelText: 'Type de projet',
+                    labelStyle: TextStyle(color: theme.colorScheme.onBackground),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: ProjectType.simple,
+                      child: Text('Projet simple'),
+                    ),
+                    DropdownMenuItem(
+                      value: ProjectType.entreprise,
+                      child: Text("Projet d'entreprise"),
+                    ),
+                  ],
+                  onChanged: (val) => setSt(() => selectedType = val ?? ProjectType.simple),
+                ),
+              ],
+            ),
+          ),
+          actions: [
           TextButton(
             onPressed: () => Navigator.of(c).pop(false),
             child: Text(
@@ -180,6 +205,7 @@ class ProjectsScreen extends StatelessWidget {
                     ownerId: '', // sera géré par le service
                     collaborators: const [],
                     color: null,
+                    type: selectedType,
                   ),
                 );
                 Navigator.of(c).pop(true);
@@ -195,6 +221,7 @@ class ProjectsScreen extends StatelessWidget {
             ),
           ),
         ],
+        ),
       ),
     );
 
