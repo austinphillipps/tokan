@@ -67,6 +67,15 @@ flutter:
   assets:
     - assets/images/tokan.svg
     - assets/images/sequoia.jpeg
+    - assets/icons/dashboard.svg
+    - assets/icons/tasks.svg
+    - assets/icons/calendar.svg
+    - assets/icons/collaborators.svg
+    - assets/icons/messages.svg
+    - assets/icons/projects.svg
+    - assets/icons/notifications.svg
+    - assets/icons/library.svg
+    - assets/icons/settings.svg
 
 flutter_icons:
   android: true
