@@ -158,8 +158,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final sidebarBg   = theme.colorScheme.surface;
     final mainBg      = theme.colorScheme.background;
     final dividerColor= theme.colorScheme.onBackground.withOpacity(0.3);
-    // Utiliser désormais la couleur glassBackground définie dans AppColors
-    final selectedBg  = AppColors.glassHeader;
 
     Widget sidebar = AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -176,14 +174,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 index: i,
                 iconData: icons[i],
                 label: labels[i],
-                selectedBg: selectedBg,
               )
                   : _buildNavItem(
                 iconData: icons[i],
                 label: labels[i],
                 showLabel: _showLabels,
                 isSelected: _selectedIndex == i,
-                selectedBg: selectedBg,
                 onTap: () => setState(() => _selectedIndex = i),
               ),
             const Spacer(),
@@ -194,14 +190,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 index: i,
                 iconData: icons[i],
                 label: labels[i],
-                selectedBg: selectedBg,
               )
                   : _buildNavItem(
                 iconData: icons[i],
                 label: labels[i],
                 showLabel: _showLabels,
                 isSelected: _selectedIndex == i,
-                selectedBg: selectedBg,
                 onTap: () => setState(() => _selectedIndex = i),
               ),
             InkWell(
@@ -248,7 +242,6 @@ class _HomeScreenState extends State<HomeScreen> {
     required int index,
     required IconData iconData,
     required String label,
-    required Color selectedBg,
   }) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
@@ -257,7 +250,6 @@ class _HomeScreenState extends State<HomeScreen> {
         label: label,
         showLabel: _showLabels,
         isSelected: _selectedIndex == index,
-        selectedBg: selectedBg,
         onTap: () => setState(() => _selectedIndex = index),
       );
     }
@@ -282,7 +274,6 @@ class _HomeScreenState extends State<HomeScreen> {
           label: label,
           showLabel: _showLabels,
           isSelected: _selectedIndex == index,
-          selectedBg: selectedBg,
           badgeCount: count > 0 ? count : null,
           onTap: () => setState(() => _selectedIndex = index),
         );
@@ -294,7 +285,6 @@ class _HomeScreenState extends State<HomeScreen> {
     required int index,
     required IconData iconData,
     required String label,
-    required Color selectedBg,
   }) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
@@ -303,7 +293,6 @@ class _HomeScreenState extends State<HomeScreen> {
         label: label,
         showLabel: _showLabels,
         isSelected: _selectedIndex == index,
-        selectedBg: selectedBg,
         onTap: () => setState(() => _selectedIndex = index),
       );
     }
@@ -333,7 +322,6 @@ class _HomeScreenState extends State<HomeScreen> {
               label: label,
               showLabel: _showLabels,
               isSelected: _selectedIndex == index,
-              selectedBg: selectedBg,
               badgeCount: count > 0 ? count : null,
               onTap: () => setState(() => _selectedIndex = index),
             );
@@ -348,25 +336,99 @@ class _HomeScreenState extends State<HomeScreen> {
     required String label,
     required bool showLabel,
     required bool isSelected,
-    required Color selectedBg,
     required VoidCallback onTap,
     int? badgeCount,
   }) {
-    final color = isSelected
-        ? Theme.of(context).colorScheme.primary
-        : Theme.of(context).colorScheme.onSurface;
-    return Material(
-      color: isSelected ? selectedBg : Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+    return _SidebarButton(
+      iconData: iconData,
+      label: label,
+      showLabel: showLabel,
+      isSelected: isSelected,
+      onTap: onTap,
+      badgeCount: badgeCount,
+    );
+  }
+}
+
+class _SidebarButton extends StatefulWidget {
+  final IconData iconData;
+  final String label;
+  final bool showLabel;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final int? badgeCount;
+
+  const _SidebarButton({
+    Key? key,
+    required this.iconData,
+    required this.label,
+    required this.showLabel,
+    required this.isSelected,
+    required this.onTap,
+    this.badgeCount,
+  }) : super(key: key);
+
+  @override
+  State<_SidebarButton> createState() => _SidebarButtonState();
+}
+
+class _SidebarButtonState extends State<_SidebarButton> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    const normalColor = Color(0x993C3C43); // #3C3C43 with 60% opacity
+    const hoverColor = Color(0xFF1C1C1E);
+    const selectedColor = Colors.white;
+    const hoverBg = Color(0xFFF2F2F7);
+    const selectedBg = Color(0xFF007AFF);
+
+    final fgColor = widget.isSelected
+        ? selectedColor
+        : (_hovering ? hoverColor : normalColor);
+    final bgColor = widget.isSelected
+        ? selectedBg
+        : (_hovering ? hoverBg : Colors.transparent);
+
+    Widget label = widget.showLabel
+        ? Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Text(
+              widget.label,
+              style: const TextStyle(
+                fontFamily: 'San Francisco',
+                fontFamilyFallback: ['Helvetica Neue'],
+                fontSize: 17,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          )
+        : Tooltip(message: widget.label, child: const SizedBox.shrink());
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeInOut,
+        height: 48,
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: BorderRadius.circular(8),
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
           child: Row(
             children: [
               Stack(
                 children: [
-                  Icon(iconData, size: 24, color: color),
-                  if (badgeCount != null && badgeCount > 0)
+                  Icon(widget.iconData, size: 24, color: fgColor),
+                  if (widget.badgeCount != null && widget.badgeCount! > 0)
                     Positioned(
                       right: 0,
                       top: 0,
@@ -378,7 +440,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                         child: Text(
-                          '$badgeCount',
+                          '${widget.badgeCount}',
                           style: const TextStyle(color: Colors.white, fontSize: 10),
                           textAlign: TextAlign.center,
                         ),
@@ -386,11 +448,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                 ],
               ),
-              if (showLabel) ...[
-                const SizedBox(width: 12),
-                Text(label, style: TextStyle(color: color)),
-              ] else
-                Tooltip(message: label, child: const SizedBox.shrink()),
+              if (widget.showLabel) label,
             ],
           ),
         ),
