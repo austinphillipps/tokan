@@ -851,7 +851,9 @@ class _TaskRowState extends State<_TaskRow> {
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         decoration: BoxDecoration(
-          color: _hoverRow ? AppColors.glassHeader : AppColors.glassBackground,
+          color: isDark
+              ? (_hoverRow ? AppColors.glassHeader : AppColors.glassBackground)
+              : (_hoverRow ? Colors.white70 : Colors.white),
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
