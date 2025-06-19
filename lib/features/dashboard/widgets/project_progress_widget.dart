@@ -21,7 +21,8 @@ class _ProjectProgressWidgetState extends State<ProjectProgressWidget> {
 
   StreamSubscription<List<Project>>? _projectsSub;
   List<_ProjectData> _projectsData = [];
-  bool _isLoading = true;
+  bool _isLoading = false;
+  bool _initialized = false;
 
   /// Conserve l’état d’expansion pour chaque projet
   final Set<String> _expandedProjectIds = {};
@@ -48,9 +49,14 @@ class _ProjectProgressWidgetState extends State<ProjectProgressWidget> {
 
   Future<void> _loadAllTasks(List<Project> projects) async {
     setState(() {
-      _isLoading = true;
+      _initialized = true;
       _projectsData = [];
+      _isLoading = projects.isNotEmpty;
     });
+
+    if (projects.isEmpty) {
+      return;
+    }
 
     final List<_ProjectData> temp = [];
     final List<Future<void>> futures = [];
@@ -108,7 +114,7 @@ class _ProjectProgressWidgetState extends State<ProjectProgressWidget> {
     final bool isSequoia = themeNotifier.value == AppTheme.sequoia;
     final Color glassBg = AppColors.glassBackground;
 
-    if (!_isLoading && _projectsData.isEmpty) {
+    if (!_initialized || (!_isLoading && _projectsData.isEmpty)) {
       return const SizedBox.shrink();
     }
 
