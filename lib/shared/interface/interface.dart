@@ -133,13 +133,12 @@ class _HomeScreenState extends State<HomeScreen> {
       Icons.calendar_today,
       Icons.group,
       Icons.message,
-      Icons.work, // Projets
+      Icons.work,           // Projets
       for (final p in plugins) p.iconData,
       Icons.notifications,
       Icons.library_books,
       Icons.settings,
     ];
-
 
     // Labels correspondantes
     final labels = <String>[
@@ -159,59 +158,65 @@ class _HomeScreenState extends State<HomeScreen> {
     final sidebarBg   = theme.colorScheme.surface;
     final mainBg      = theme.colorScheme.background;
     final dividerColor= theme.colorScheme.onBackground.withOpacity(0.3);
+    // Utiliser désormais la couleur glassBackground définie dans AppColors
+    final selectedBg  = AppColors.glassHeader;
 
     Widget sidebar = AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: _sidebarExpanded ? 180 : 60,
-        color: sidebarBg.withOpacity(isSequoia ? 0.6 : 1.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 24),
-            // Items du haut
-            for (var i = 0; i < pages.length - 3; i++)
-              i == 4
-                  ? _buildMessagesNavItem(
-                index: i,
-                iconData: icons[i],
-                label: labels[i],
-              )
-                  : _buildNavItem(
-                iconData: icons[i],
-                label: labels[i],
-                showLabel: _showLabels,
-                isSelected: _selectedIndex == i,
-                onTap: () => setState(() => _selectedIndex = i),
-              ),
-            const Spacer(),
-            // Items fixes en bas
-            for (var i = pages.length - 3; i < pages.length; i++)
-              i == pages.length - 3
-                  ? _buildNotificationsNavItem(
-                index: i,
-                iconData: icons[i],
-                label: labels[i],
-              )
-                  : _buildNavItem(
-                iconData: icons[i],
-                label: labels[i],
-                showLabel: _showLabels,
-                isSelected: _selectedIndex == i,
-                onTap: () => setState(() => _selectedIndex = i),
-              ),
-            InkWell(
-              onTap: _toggleSidebar,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Icon(
-                  _sidebarExpanded ? Icons.chevron_left : Icons.chevron_right,
-                ),
+      duration: const Duration(milliseconds: 200),
+      width: _sidebarExpanded ? 180 : 60,
+      color: sidebarBg.withOpacity(isSequoia ? 0.6 : 1.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 24),
+          // Items du haut
+          for (var i = 0; i < pages.length - 3; i++)
+            i == 4
+                ? _buildMessagesNavItem(
+              index: i,
+              iconData: icons[i],
+              label: labels[i],
+              selectedBg: selectedBg,
+            )
+                : _buildNavItem(
+              iconData: icons[i],
+              label: labels[i],
+              showLabel: _showLabels,
+              isSelected: _selectedIndex == i,
+              selectedBg: selectedBg,
+              onTap: () => setState(() => _selectedIndex = i),
+            ),
+          const Spacer(),
+          // Items fixes en bas
+          for (var i = pages.length - 3; i < pages.length; i++)
+            i == pages.length - 3
+                ? _buildNotificationsNavItem(
+              index: i,
+              iconData: icons[i],
+              label: labels[i],
+              selectedBg: selectedBg,
+            )
+                : _buildNavItem(
+              iconData: icons[i],
+              label: labels[i],
+              showLabel: _showLabels,
+              isSelected: _selectedIndex == i,
+              selectedBg: selectedBg,
+              onTap: () => setState(() => _selectedIndex = i),
+            ),
+          InkWell(
+            onTap: _toggleSidebar,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Icon(
+                _sidebarExpanded ? Icons.chevron_left : Icons.chevron_right,
               ),
             ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      );
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
 
     Widget content = Scaffold(
       backgroundColor: isSequoia ? Colors.transparent : mainBg,
@@ -243,6 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required int index,
     required IconData iconData,
     required String label,
+    required Color selectedBg,
   }) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
@@ -251,6 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
         label: label,
         showLabel: _showLabels,
         isSelected: _selectedIndex == index,
+        selectedBg: selectedBg,
         onTap: () => setState(() => _selectedIndex = index),
       );
     }
@@ -275,6 +282,7 @@ class _HomeScreenState extends State<HomeScreen> {
           label: label,
           showLabel: _showLabels,
           isSelected: _selectedIndex == index,
+          selectedBg: selectedBg,
           badgeCount: count > 0 ? count : null,
           onTap: () => setState(() => _selectedIndex = index),
         );
@@ -286,6 +294,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required int index,
     required IconData iconData,
     required String label,
+    required Color selectedBg,
   }) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
@@ -294,6 +303,7 @@ class _HomeScreenState extends State<HomeScreen> {
         label: label,
         showLabel: _showLabels,
         isSelected: _selectedIndex == index,
+        selectedBg: selectedBg,
         onTap: () => setState(() => _selectedIndex = index),
       );
     }
@@ -323,6 +333,7 @@ class _HomeScreenState extends State<HomeScreen> {
               label: label,
               showLabel: _showLabels,
               isSelected: _selectedIndex == index,
+              selectedBg: selectedBg,
               badgeCount: count > 0 ? count : null,
               onTap: () => setState(() => _selectedIndex = index),
             );
@@ -337,100 +348,25 @@ class _HomeScreenState extends State<HomeScreen> {
     required String label,
     required bool showLabel,
     required bool isSelected,
+    required Color selectedBg,
     required VoidCallback onTap,
     int? badgeCount,
   }) {
-    return _SidebarButton(
-      iconData: iconData,
-      label: label,
-      showLabel: showLabel,
-      isSelected: isSelected,
-      onTap: onTap,
-      badgeCount: badgeCount,
-    );
-  }
-}
-
-class _SidebarButton extends StatefulWidget {
-  final IconData iconData;
-  final String label;
-  final bool showLabel;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final int? badgeCount;
-
-  const _SidebarButton({
-    Key? key,
-    required this.iconData,
-    required this.label,
-    required this.showLabel,
-    required this.isSelected,
-    required this.onTap,
-    this.badgeCount,
-  }) : super(key: key);
-
-  @override
-  State<_SidebarButton> createState() => _SidebarButtonState();
-}
-
-class _SidebarButtonState extends State<_SidebarButton> {
-  bool _hovering = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final normalColor = colorScheme.onSurface.withOpacity(0.6);
-    final hoverColor = colorScheme.onSurface;
-    final selectedColor = colorScheme.primary;
-    const hoverBg = Color(0xFFE5E5EA);
-    const selectedBg = Color(0xFFE5E5EA);
-
-    final fgColor = widget.isSelected
-        ? selectedColor
-        : (_hovering ? hoverColor : normalColor);
-    final bgColor = widget.isSelected
-        ? selectedBg
-        : (_hovering ? hoverBg : Colors.transparent);
-
-    Widget label = widget.showLabel
-        ? Padding(
-            padding: const EdgeInsets.only(left: 8),
-            child: Text(
-              widget.label,
-              style: const TextStyle(
-                fontFamily: 'San Francisco',
-                fontFamilyFallback: ['Helvetica Neue'],
-                fontSize: 17,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          )
-        : Tooltip(message: widget.label, child: const SizedBox.shrink());
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovering = true),
-      onExit: (_) => setState(() => _hovering = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.easeInOut,
-        height: 48,
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: InkWell(
-          onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(8),
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
+    final color = isSelected
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.onSurface;
+    return Material(
+      color: isSelected ? selectedBg : Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
           child: Row(
             children: [
               Stack(
                 children: [
-                  Icon(widget.iconData, size: 24, color: fgColor),
-                  if (widget.badgeCount != null && widget.badgeCount! > 0)
+                  Icon(iconData, size: 24, color: color),
+                  if (badgeCount != null && badgeCount > 0)
                     Positioned(
                       right: 0,
                       top: 0,
@@ -442,7 +378,7 @@ class _SidebarButtonState extends State<_SidebarButton> {
                         ),
                         constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                         child: Text(
-                          '${widget.badgeCount}',
+                          '$badgeCount',
                           style: const TextStyle(color: Colors.white, fontSize: 10),
                           textAlign: TextAlign.center,
                         ),
@@ -450,7 +386,11 @@ class _SidebarButtonState extends State<_SidebarButton> {
                     ),
                 ],
               ),
-              if (widget.showLabel) label,
+              if (showLabel) ...[
+                const SizedBox(width: 12),
+                Text(label, style: TextStyle(color: color)),
+              ] else
+                Tooltip(message: label, child: const SizedBox.shrink()),
             ],
           ),
         ),
@@ -458,4 +398,3 @@ class _SidebarButtonState extends State<_SidebarButton> {
     );
   }
 }
-
