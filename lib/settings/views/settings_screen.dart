@@ -43,11 +43,11 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundImageNotifier.value = 'assets/images/sequoia.jpeg';
     } else if (newTheme == AppTheme.light) {
       final bg =
-          prefs.getString('backgroundImage') ?? 'assets/images/backgroundimage.jpeg';
+          prefs.getString('backgroundImage') ?? 'assets/images/sequoia.jpeg';
       backgroundImageNotifier.value = bg;
       setState(() => _selectedBgImage = bg);
     } else {
-      backgroundImageNotifier.value = 'assets/images/backgroundimage.jpeg';
+      backgroundImageNotifier.value = 'assets/images/sequoia.jpeg';
     }
   }
 
@@ -164,7 +164,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   underline: const SizedBox(),
                   items: const [
                     DropdownMenuItem(
-                      value: 'assets/images/backgroundimage.jpeg',
+                      value: 'assets/images/sequoia.jpeg',
                       child: Text('Par d\'efaut'),
                     ),
                     DropdownMenuItem(

@@ -29,7 +29,7 @@ final ValueNotifier<AppTheme> themeNotifier = ValueNotifier(AppTheme.light);
 
 /// Image de fond configurable
 final ValueNotifier<String> backgroundImageNotifier =
-    ValueNotifier('assets/images/backgroundimage.jpeg');
+    ValueNotifier('assets/images/sequoia.jpeg');
 
 /// 3) Classe centralisant toutes les couleurs utilisées dans l’app
 class AppColors {
@@ -210,7 +210,7 @@ Future<void> main() async {
     backgroundImageNotifier.value = 'assets/images/sequoia.jpeg';
   } else {
     backgroundImageNotifier.value =
-        storedBg ?? 'assets/images/backgroundimage.jpeg';
+        storedBg ?? 'assets/images/sequoia.jpeg';
   }
 
   runApp(
