@@ -67,6 +67,7 @@ flutter:
   assets:
     - assets/images/tokan.svg
     - assets/images/sequoia.jpeg
+    - assets/images/backgroundimage.jpeg
     - assets/icons/dashboard.svg
     - assets/icons/tasks.svg
     - assets/icons/calendar.svg

@@ -27,6 +27,10 @@ enum AppTheme { light, dark, sequoia }
 /// 2) ValueNotifier global, initialisé à Clair (sera écrasé si prefs contient autre chose)
 final ValueNotifier<AppTheme> themeNotifier = ValueNotifier(AppTheme.light);
 
+/// Image de fond configurable
+final ValueNotifier<String> backgroundImageNotifier =
+    ValueNotifier('assets/images/backgroundimage.jpeg');
+
 /// 3) Classe centralisant toutes les couleurs utilisées dans l’app
 class AppColors {
   static const Color darkBackground      = Color(0xFF212121);
@@ -195,6 +199,14 @@ Future<void> main() async {
           (e) => e.toString() == stored,
       orElse: () => AppTheme.light,
     );
+  }
+
+  // Charger l'image de fond sauvegardée
+  final storedBg = prefs.getString('backgroundImage');
+  if (storedBg != null) {
+    backgroundImageNotifier.value = storedBg;
+  } else if (themeNotifier.value == AppTheme.sequoia) {
+    backgroundImageNotifier.value = 'assets/images/sequoia.jpeg';
   }
 
   runApp(
