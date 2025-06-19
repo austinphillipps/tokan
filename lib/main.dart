@@ -41,11 +41,11 @@ class AppColors {
 /// 4) Définition du thème clair
 final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
-  scaffoldBackgroundColor: Colors.white,
+  scaffoldBackgroundColor: AppColors.lightGreyBackground,
   colorScheme: const ColorScheme.light(
     primary: AppColors.purple,
     secondary: AppColors.blue,
-    background: Colors.white,
+    background: AppColors.lightGreyBackground,
     onBackground: Colors.black,
     onPrimary: Colors.white,
     onSecondary: Colors.white,
