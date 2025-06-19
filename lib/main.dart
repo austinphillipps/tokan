@@ -47,7 +47,10 @@ class AppColors {
 /// 4) Définition du thème clair
 final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
-  scaffoldBackgroundColor: Colors.white,
+  // Use a transparent scaffold background so the optional background image
+  // remains visible. Widgets will therefore have transparent backgrounds
+  // unless otherwise specified.
+  scaffoldBackgroundColor: Colors.transparent,
   colorScheme: const ColorScheme.light(
     primary: AppColors.blue,
     secondary: AppColors.green,

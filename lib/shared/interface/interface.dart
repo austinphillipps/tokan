@@ -239,8 +239,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return ValueListenableBuilder<String>(
       valueListenable: backgroundImageNotifier,
       builder: (context, bgImage, _) {
+        final isLight = themeNotifier.value == AppTheme.light;
         return Container(
           decoration: BoxDecoration(
+            // Provide a white fallback when no background image is set in
+            // light mode, keeping other themes unchanged.
+            color: isLight ? Colors.white : null,
             image: DecorationImage(
               image: AssetImage(bgImage),
               fit: BoxFit.cover,
