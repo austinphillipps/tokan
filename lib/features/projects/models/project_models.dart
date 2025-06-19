@@ -26,6 +26,9 @@ class Collaborator {
 }
 
 /// Modèle représentant un projet
+enum ProjectType { simple }
+
+/// Modèle représentant un projet
 class Project {
   String id;
   String name;
@@ -35,7 +38,10 @@ class Project {
   List<Collaborator> collaborators;
   String? color; // code hexadécimal (ex: "ff00ff00")
 
-  /// ← NOUVEAU : liste des plugins installés pour ce projet
+  /// Type du projet
+  ProjectType type;
+
+  /// Liste des plugins installés pour ce projet
   List<String>? plugins;
 
   Project({
@@ -46,6 +52,7 @@ class Project {
     this.objective,
     List<Collaborator>? collaborators,
     this.color,
+    this.type = ProjectType.simple,
     this.plugins, // ← prend en charge la liste des plugins (ex: ['crm', ...])
   }) : collaborators = collaborators ?? [];
 
@@ -58,6 +65,7 @@ class Project {
     String? objective,
     List<Collaborator>? collaborators,
     String? color,
+    ProjectType? type,
     List<String>? plugins, // ← on ajoute ce champ pour la copie
   }) {
     return Project(
@@ -68,6 +76,7 @@ class Project {
       objective: objective ?? this.objective,
       collaborators: collaborators ?? this.collaborators,
       color: color ?? this.color,
+      type: type ?? this.type,
       plugins: plugins ?? this.plugins,
     );
   }
@@ -78,6 +87,7 @@ class Project {
       'name': name,
       'description': description,
       'ownerId': ownerId,
+      'type': 'simple',
       if (objective != null) 'objective': objective,
       if (color != null) 'color': color,
       'collaborators': collaborators.map((c) => c.toMap()).toList(),
@@ -93,6 +103,7 @@ class Project {
       name: map['name'] as String? ?? '',
       description: map['description'] as String? ?? '',
       ownerId: map['ownerId'] as String? ?? '',
+      type: ProjectType.simple,
       objective: map['objective'] as String?,
       color: map['color'] as String?,
       collaborators: (map['collaborators'] as List<dynamic>?)

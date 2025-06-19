@@ -21,7 +21,8 @@ class _ProjectProgressWidgetState extends State<ProjectProgressWidget> {
 
   StreamSubscription<List<Project>>? _projectsSub;
   List<_ProjectData> _projectsData = [];
-  bool _isLoading = true;
+  bool _isLoading = false;
+  bool _initialized = false;
 
   /// Conserve l’état d’expansion pour chaque projet
   final Set<String> _expandedProjectIds = {};
@@ -48,9 +49,14 @@ class _ProjectProgressWidgetState extends State<ProjectProgressWidget> {
 
   Future<void> _loadAllTasks(List<Project> projects) async {
     setState(() {
-      _isLoading = true;
+      _initialized = true;
       _projectsData = [];
+      _isLoading = projects.isNotEmpty;
     });
+
+    if (projects.isEmpty) {
+      return;
+    }
 
     final List<_ProjectData> temp = [];
     final List<Future<void>> futures = [];
@@ -108,10 +114,15 @@ class _ProjectProgressWidgetState extends State<ProjectProgressWidget> {
     final bool isSequoia = themeNotifier.value == AppTheme.sequoia;
     final Color glassBg = AppColors.glassBackground;
 
+    if (!_initialized || (!_isLoading && _projectsData.isEmpty)) {
+      return const SizedBox.shrink();
+    }
+
     // On enveloppe tout le widget dans un Container glassBackground
     return Container(
       color: glassBg,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Entête "PROJETS EN COURS" avec glassHeader en arrière-plan
@@ -127,25 +138,23 @@ class _ProjectProgressWidgetState extends State<ProjectProgressWidget> {
               ),
             ),
           ),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _projectsData.isEmpty
-                ? const Center(
-              child: Text(
-                'Aucun projet trouvé',
-                style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
-              ),
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(child: CircularProgressIndicator()),
             )
-                : ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding:
+                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
               itemCount: _projectsData.length,
               itemBuilder: (context, index) {
                 final pd = _projectsData[index];
                 return _buildProjectCard(pd, context, glassBg);
               },
             ),
-          ),
         ],
       ),
     );

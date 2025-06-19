@@ -11,6 +11,8 @@ import 'package:provider/provider.dart';
 
 // Vos providers existants
 import 'core/providers/plugin_provider.dart';
+import 'features/dashboard/providers/dashboard_widget_provider.dart';
+import 'features/dashboard/widgets/project_progress_widget.dart';
 
 import 'features/auth/services/auth_service.dart';
 import 'features/auth/views/login_screen.dart';
@@ -22,8 +24,12 @@ import 'firebase_options.dart';
 /// 1) Enum à trois valeurs
 enum AppTheme { light, dark, sequoia }
 
-/// 2) ValueNotifier global, initialisé à Sequoia (sera écrasé si prefs contient autre chose)
-final ValueNotifier<AppTheme> themeNotifier = ValueNotifier(AppTheme.sequoia);
+/// 2) ValueNotifier global, initialisé à Clair (sera écrasé si prefs contient autre chose)
+final ValueNotifier<AppTheme> themeNotifier = ValueNotifier(AppTheme.light);
+
+/// Image de fond configurable
+final ValueNotifier<String> backgroundImageNotifier =
+    ValueNotifier('assets/images/sequoia.jpeg');
 
 /// 3) Classe centralisant toutes les couleurs utilisées dans l’app
 class AppColors {
@@ -41,28 +47,31 @@ class AppColors {
 /// 4) Définition du thème clair
 final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
-  scaffoldBackgroundColor: Colors.white,
+  // Use a transparent scaffold background so the optional background image
+  // remains visible. Widgets will therefore have transparent backgrounds
+  // unless otherwise specified.
+  scaffoldBackgroundColor: Colors.transparent,
   colorScheme: const ColorScheme.light(
-    primary: AppColors.purple,
-    secondary: AppColors.blue,
+    primary: AppColors.blue,
+    secondary: AppColors.green,
     background: Colors.white,
     onBackground: Colors.black,
     onPrimary: Colors.white,
     onSecondary: Colors.white,
   ),
   appBarTheme: const AppBarTheme(
-    backgroundColor: AppColors.purple,
+    backgroundColor: AppColors.blue,
     foregroundColor: Colors.white,
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: AppColors.purple,
+      backgroundColor: AppColors.blue,
       foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
   ),
   textButtonTheme: TextButtonThemeData(
-    style: TextButton.styleFrom(foregroundColor: AppColors.purple),
+    style: TextButton.styleFrom(foregroundColor: AppColors.blue),
   ),
   iconTheme: const IconThemeData(color: AppColors.blue),
   bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -96,7 +105,7 @@ final ThemeData darkTheme = ThemeData(
   scaffoldBackgroundColor: AppColors.darkBackground,
   colorScheme: const ColorScheme.dark(
     primary: AppColors.blue,
-    secondary: AppColors.purple,
+    secondary: AppColors.green,
     background: AppColors.darkBackground,
     surface: AppColors.darkBackground,
     onBackground: Colors.white,
@@ -115,7 +124,7 @@ final ThemeData darkTheme = ThemeData(
     ),
   ),
   textButtonTheme: TextButtonThemeData(
-    style: TextButton.styleFrom(foregroundColor: AppColors.purple),
+    style: TextButton.styleFrom(foregroundColor: AppColors.blue),
   ),
   iconTheme: const IconThemeData(color: AppColors.blue),
   bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -191,14 +200,27 @@ Future<void> main() async {
   if (stored != null) {
     themeNotifier.value = AppTheme.values.firstWhere(
           (e) => e.toString() == stored,
-      orElse: () => AppTheme.sequoia,
+      orElse: () => AppTheme.light,
     );
+  }
+
+  // Charger l'image de fond en fonction du thème
+  final storedBg = prefs.getString('backgroundImage');
+  if (themeNotifier.value == AppTheme.sequoia) {
+    backgroundImageNotifier.value = 'assets/images/sequoia.jpeg';
+  } else {
+    backgroundImageNotifier.value =
+        storedBg ?? 'assets/images/sequoia.jpeg';
   }
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => PluginProvider()),
+        ChangeNotifierProvider(
+          create: (_) => DashboardWidgetProvider()
+            ..addWidget(const ProjectProgressWidget()),
+        ),
         // Les providers dépendant de l'utilisateur seront instanciés
         // plus tard, une fois authentifié, pour éviter les erreurs.
       ],

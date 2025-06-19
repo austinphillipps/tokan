@@ -63,7 +63,7 @@ class ProjectsScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 12),
                       child: Text(
-                        'Mes Projets',
+                        'Projets',
                         style: theme.textTheme.headlineLarge?.copyWith(
                           color: titleColor,
                           fontWeight: FontWeight.bold,
@@ -93,7 +93,7 @@ class ProjectsScreen extends StatelessWidget {
                         ),
                       ),
                       icon: const Icon(Icons.add),
-                      label: const Text('Créer un nouveau projet'),
+                      label: const Text('Créer un projet'),
                       onPressed: () => _showCreateProjectDialog(context),
                     ),
                   ],
@@ -123,7 +123,7 @@ class ProjectsScreen extends StatelessWidget {
     );
   }
 
-  /// Dialogue pour saisir seulement le nom d’un nouveau projet
+  /// Dialogue pour créer un projet
   Future<void> _showCreateProjectDialog(BuildContext context) async {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -133,34 +133,39 @@ class ProjectsScreen extends StatelessWidget {
     final created = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        backgroundColor:
-        isDark ? AppColors.darkGreyBackground : theme.colorScheme.surface,
-        title: Text(
-          'Nouveau projet',
-          style:
-          theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.onBackground),
-        ),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: nameCtrl,
-            decoration: InputDecoration(
-              labelText: 'Nom du projet',
-              hintText: 'Entrez un nom',
-              labelStyle: TextStyle(color: theme.colorScheme.onBackground),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: theme.colorScheme.onBackground.withOpacity(0.3),
-                ),
-              ),
-            ),
-            style: TextStyle(color: theme.colorScheme.onBackground),
-            validator: (v) =>
-            v == null || v.trim().isEmpty ? 'Le nom est requis' : null,
-            autofocus: true,
+          backgroundColor:
+              isDark ? AppColors.darkGreyBackground : theme.colorScheme.surface,
+          title: Text(
+            'Nouveau projet',
+            style:
+                theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.onBackground),
           ),
-        ),
-        actions: [
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Nom du projet',
+                    hintText: 'Entrez un nom',
+                    labelStyle: TextStyle(color: theme.colorScheme.onBackground),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.onBackground.withOpacity(0.3),
+                      ),
+                    ),
+                  ),
+                  style: TextStyle(color: theme.colorScheme.onBackground),
+                  validator: (v) => v == null || v.trim().isEmpty ? 'Le nom est requis' : null,
+                  autofocus: true,
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+          actions: [
           TextButton(
             onPressed: () => Navigator.of(c).pop(false),
             child: Text(
@@ -180,6 +185,7 @@ class ProjectsScreen extends StatelessWidget {
                     ownerId: '', // sera géré par le service
                     collaborators: const [],
                     color: null,
+                    type: ProjectType.simple,
                   ),
                 );
                 Navigator.of(c).pop(true);

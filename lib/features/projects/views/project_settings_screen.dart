@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../../../main.dart'; // pour AppColors
 import 'package:tokan/core/services/plugin_registry.dart';
+import 'package:provider/provider.dart';
+import '../../../core/providers/plugin_provider.dart';
 import 'package:tokan/features/projects/services/project_service.dart';
 
 /// Écran de paramètres d’un projet,
@@ -55,6 +57,7 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final pluginProv = context.watch<PluginProvider>();
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
@@ -65,18 +68,27 @@ class _ProjectSettingsScreenState extends State<ProjectSettingsScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-        children: PluginRegistry()
-            .availablePlugins
-            .map((plugin) => SwitchListTile(
-          title: Text(plugin.displayName,
-              style: const TextStyle(color: Colors.white)),
-          secondary: Icon(plugin.iconData, color: Colors.white),
-          activeColor: AppColors.green,
-          value: _activated[plugin.id] ?? false,
-          onChanged: (val) => _toggle(plugin.id, val),
-        ))
-            .toList(),
-      ),
+              children: PluginRegistry()
+                  .availablePlugins
+                  .map((plugin) {
+                final installed = pluginProv.isInstalled(plugin.id);
+                if (!installed) {
+                  return ListTile(
+                    leading: Icon(plugin.iconData, color: Colors.white),
+                    title: Text('Plugin ${plugin.displayName} non installé',
+                        style: const TextStyle(color: Colors.white)),
+                  );
+                }
+                return SwitchListTile(
+                  title: Text(plugin.displayName,
+                      style: const TextStyle(color: Colors.white)),
+                  secondary: Icon(plugin.iconData, color: Colors.white),
+                  activeColor: AppColors.green,
+                  value: _activated[plugin.id] ?? false,
+                  onChanged: (val) => _toggle(plugin.id, val),
+                );
+              }).toList(),
+            ),
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart'
 import 'package:firebase_auth/firebase_auth.dart';
 import 'register_screen.dart';
 import '../../../shared/interface/interface.dart'; // Ajuste le chemin si besoin
+import '../../../main.dart'; // Pour AppTheme et themeNotifier
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -83,14 +84,9 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = [
-      TargetPlatform.windows,
-      TargetPlatform.linux,
-      TargetPlatform.macOS,
-    ].contains(defaultTargetPlatform);
 
-    return Scaffold(
-      backgroundColor: Colors.black,
+    Widget content = Scaffold(
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -202,6 +198,16 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ),
+    );
+
+    return Container(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/sequoia.jpeg'),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: content,
     );
   }
 

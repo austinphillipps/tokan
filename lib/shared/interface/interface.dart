@@ -1,9 +1,8 @@
 // lib/shared/interface/interface.dart
 
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';      // Pour PointerEnterEvent / PointerExitEvent
 import 'package:provider/provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/providers/plugin_provider.dart';
 import 'package:tokan/core/contract/plugin_contract.dart';
@@ -19,6 +18,7 @@ import '../../features/projects/views/projects_screen.dart';
 import '../../settings/views/settings_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../features/auth/widgets/profile_info_dialog.dart';
 
 import '../../main.dart'; // Pour AppTheme, themeNotifier et AppColors
 import '../../features/notifications/services/notification_service.dart';
@@ -31,9 +31,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  bool _sidebarExpanded = false;
-  bool _showLabels = false;
-  Timer? _labelTimer;
+  bool _sidebarExpanded = true;
+  bool _showLabels = true;
   final ValueNotifier<int> _calendarRefreshNotifier = ValueNotifier<int>(0);
   final NotificationService _notifService = NotificationService();
 
@@ -41,36 +40,59 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _notifService.init();
+    _checkProfileCompletion();
+  }
+
+  Future<void> _checkProfileCompletion() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+    final data = doc.data() ?? {};
+    final first = (data['firstName'] ?? '').toString().trim();
+    final last = (data['lastName'] ?? '').toString().trim();
+    final phone = (data['phoneNumber'] ?? '').toString().trim();
+    if (first.isEmpty || last.isEmpty || phone.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const ProfileInfoDialog(),
+        );
+      });
+    }
   }
 
   @override
   void dispose() {
-    _labelTimer?.cancel();
     _notifService.dispose();
     super.dispose();
   }
 
-  void _onMouseEnter(PointerEnterEvent _) {
-    _labelTimer?.cancel();
-    setState(() => _sidebarExpanded = true);
-    _labelTimer = Timer(const Duration(milliseconds: 200), () {
-      if (_sidebarExpanded) setState(() => _showLabels = true);
-    });
-  }
-
-  void _onMouseExit(PointerExitEvent _) {
-    _labelTimer?.cancel();
+  void _toggleSidebar() {
     setState(() {
-      _showLabels = false;
-      _sidebarExpanded = false;
+      _sidebarExpanded = !_sidebarExpanded;
+      if (!_sidebarExpanded) {
+        _showLabels = false; // Hide labels immediately when collapsing
+      }
     });
+    if (_sidebarExpanded) {
+      // Delay showing labels until the expansion animation completes
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (mounted) {
+          setState(() => _showLabels = true);
+        }
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isSequoia = themeNotifier.value == AppTheme.sequoia;
-    final isDark    = theme.brightness == Brightness.dark;
+    final isLight = themeNotifier.value == AppTheme.light;
     final pluginProv = context.watch<PluginProvider>();
 
     // 1) Pages "de base"
@@ -106,18 +128,34 @@ class _HomeScreenState extends State<HomeScreen> {
       basePages[8],
     ];
 
-    // Icônes correspondantes
-    final icons = <IconData>[
-      Icons.home,
-      Icons.task_alt,
-      Icons.calendar_today,
-      Icons.group,
-      Icons.message,
-      Icons.work,           // Projets
-      for (final p in plugins) p.iconData,
-      Icons.notifications,
-      Icons.library_books,
-      Icons.settings,
+    // Icônes correspondantes (SVG pour un style plus minimaliste)
+    Widget _svg(String name) {
+      final isDarkStyle =
+          themeNotifier.value == AppTheme.dark ||
+              themeNotifier.value == AppTheme.sequoia;
+      final forceWhite = isDarkStyle &&
+          (name == 'notifications.svg' ||
+              name == 'library.svg' ||
+              name == 'settings.svg');
+      return SvgPicture.asset(
+        'assets/icons/' + name,
+        width: 24,
+        height: 24,
+        colorFilter:
+            forceWhite ? const ColorFilter.mode(Colors.white, BlendMode.srcIn) : null,
+      );
+    }
+    final icons = <Widget>[
+      SvgPicture.asset('assets/icons/dashboard.svg', width: 24, height: 24),
+      _svg('tasks.svg'),
+      _svg('calendar.svg'),
+      _svg('collaborators.svg'),
+      _svg('messages.svg'),
+      _svg('projects.svg'),
+      for (final p in plugins) Icon(p.iconData),
+      _svg('notifications.svg'),
+      _svg('library.svg'),
+      _svg('settings.svg'),
     ];
 
     // Labels correspondantes
@@ -141,61 +179,67 @@ class _HomeScreenState extends State<HomeScreen> {
     // Utiliser désormais la couleur glassBackground définie dans AppColors
     final selectedBg  = AppColors.glassHeader;
 
-    Widget sidebar = MouseRegion(
-      onEnter: _onMouseEnter,
-      onExit: _onMouseExit,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: _sidebarExpanded ? 180 : 60,
-        color: sidebarBg.withOpacity(isSequoia ? 0.6 : 1.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 24),
-            // Items du haut
-            for (var i = 0; i < pages.length - 3; i++)
-              i == 4
-                  ? _buildMessagesNavItem(
-                index: i,
-                iconData: icons[i],
-                label: labels[i],
-                selectedBg: selectedBg,
-              )
-                  : _buildNavItem(
-                iconData: icons[i],
-                label: labels[i],
-                showLabel: _showLabels,
-                isSelected: _selectedIndex == i,
-                selectedBg: selectedBg,
-                onTap: () => setState(() => _selectedIndex = i),
+    Widget sidebar = AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: _sidebarExpanded ? 180 : 60,
+      color: sidebarBg.withOpacity(isSequoia ? 0.6 : 1.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 24),
+          // Items du haut
+          for (var i = 0; i < pages.length - 3; i++)
+            i == 4
+                ? _buildMessagesNavItem(
+              index: i,
+              icon: icons[i],
+              label: labels[i],
+              selectedBg: selectedBg,
+            )
+                : _buildNavItem(
+              icon: icons[i],
+              label: labels[i],
+              showLabel: _showLabels,
+              isSelected: _selectedIndex == i,
+              selectedBg: selectedBg,
+              onTap: () => setState(() => _selectedIndex = i),
+            ),
+          const Spacer(),
+          // Items fixes en bas
+          for (var i = pages.length - 3; i < pages.length; i++)
+            i == pages.length - 3
+                ? _buildNotificationsNavItem(
+              index: i,
+              icon: icons[i],
+              label: labels[i],
+              selectedBg: selectedBg,
+            )
+                : _buildNavItem(
+              icon: icons[i],
+              label: labels[i],
+              showLabel: _showLabels,
+              isSelected: _selectedIndex == i,
+              selectedBg: selectedBg,
+              onTap: () => setState(() => _selectedIndex = i),
+            ),
+          InkWell(
+            onTap: _toggleSidebar,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Icon(
+                _sidebarExpanded ? Icons.chevron_left : Icons.chevron_right,
               ),
-            const Spacer(),
-            // Items fixes en bas
-            for (var i = pages.length - 3; i < pages.length; i++)
-              i == pages.length - 3
-                  ? _buildNotificationsNavItem(
-                index: i,
-                iconData: icons[i],
-                label: labels[i],
-                selectedBg: selectedBg,
-              )
-                  : _buildNavItem(
-                iconData: icons[i],
-                label: labels[i],
-                showLabel: _showLabels,
-                isSelected: _selectedIndex == i,
-                selectedBg: selectedBg,
-                onTap: () => setState(() => _selectedIndex = i),
-              ),
-            const SizedBox(height: 24),
-          ],
-        ),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
       ),
     );
 
     Widget content = Scaffold(
-      backgroundColor: isSequoia ? Colors.transparent : mainBg,
+      backgroundColor: (isSequoia || isLight) ? Colors.transparent : mainBg,
       body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           sidebar,
           VerticalDivider(width: 1, color: dividerColor),
@@ -204,30 +248,36 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
 
-    if (isSequoia) {
-      return Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/sequoia.jpeg'),
-            fit: BoxFit.cover,
+    return ValueListenableBuilder<String>(
+      valueListenable: backgroundImageNotifier,
+      builder: (context, bgImage, _) {
+        final isLight = themeNotifier.value == AppTheme.light;
+        return Container(
+          decoration: BoxDecoration(
+            // Provide a white fallback when no background image is set in
+            // light mode, keeping other themes unchanged.
+            color: isLight ? Colors.white : null,
+            image: DecorationImage(
+              image: AssetImage(bgImage),
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: content,
-      );
-    }
-    return content;
+          child: content,
+        );
+      },
+    );
   }
 
   Widget _buildMessagesNavItem({
     required int index,
-    required IconData iconData,
+    required Widget icon,
     required String label,
     required Color selectedBg,
   }) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
       return _buildNavItem(
-        iconData: iconData,
+        icon: icon,
         label: label,
         showLabel: _showLabels,
         isSelected: _selectedIndex == index,
@@ -252,7 +302,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (unread.contains(uid)) count++;
         }
         return _buildNavItem(
-          iconData: iconData,
+          icon: icon,
           label: label,
           showLabel: _showLabels,
           isSelected: _selectedIndex == index,
@@ -266,14 +316,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildNotificationsNavItem({
     required int index,
-    required IconData iconData,
+    required Widget icon,
     required String label,
     required Color selectedBg,
   }) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
       return _buildNavItem(
-        iconData: iconData,
+        icon: icon,
         label: label,
         showLabel: _showLabels,
         isSelected: _selectedIndex == index,
@@ -303,7 +353,7 @@ class _HomeScreenState extends State<HomeScreen> {
           builder: (ctx2, notifSnap) {
             final count = (notifSnap.data?.size ?? 0) + pending;
             return _buildNavItem(
-              iconData: iconData,
+              icon: icon,
               label: label,
               showLabel: _showLabels,
               isSelected: _selectedIndex == index,
@@ -318,7 +368,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildNavItem({
-    required IconData iconData,
+    required Widget icon,
     required String label,
     required bool showLabel,
     required bool isSelected,
@@ -339,7 +389,10 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Stack(
                 children: [
-                  Icon(iconData, size: 24, color: color),
+                  IconTheme(
+                    data: IconThemeData(color: color, size: 24),
+                    child: icon,
+                  ),
                   if (badgeCount != null && badgeCount > 0)
                     Positioned(
                       right: 0,
@@ -362,7 +415,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               if (showLabel) ...[
                 const SizedBox(width: 12),
-                Text(label, style: TextStyle(color: color)),
+                Text(
+                  label,
+                  style: TextStyle(color: color, fontWeight: FontWeight.w600),
+                ),
               ] else
                 Tooltip(message: label, child: const SizedBox.shrink()),
             ],

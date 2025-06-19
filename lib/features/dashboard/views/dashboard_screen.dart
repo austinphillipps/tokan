@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tokan/core/providers/plugin_provider.dart';
 import 'package:tokan/core/contract/plugin_contract.dart';
+import 'package:intl/intl.dart';
+import '../providers/dashboard_widget_provider.dart';
+import 'manage_dashboard_widgets_sheet.dart';
+import '../../../main.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -10,15 +14,55 @@ class DashboardScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final pluginProv = context.watch<PluginProvider>();
     final installedPlugins = pluginProv.installedPlugins;
+    final dashboardProv = context.watch<DashboardWidgetProvider>();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Tableau de bord principal', style: theme.textTheme.titleLarge),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              StreamBuilder<DateTime>(
+                stream: Stream<DateTime>.periodic(
+                    const Duration(seconds: 1), (_) => DateTime.now()),
+                builder: (context, snapshot) {
+                  final now = snapshot.data ?? DateTime.now();
+                  final time = DateFormat('HH:mm:ss').format(now);
+                  final date = DateFormat('dd MMM yyyy').format(now);
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.glassHeader,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '$time \u2022 $date',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: theme.colorScheme.onPrimary,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.widgets),
+                tooltip: 'Gérer les widgets',
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (_) => const ManageDashboardWidgetsSheet(),
+                  );
+                },
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
           // … vos autres widgets dashboard …
+
+          for (final w in dashboardProv.widgets) w,
 
           if (installedPlugins.isNotEmpty) ...[
             const Divider(height: 32),
