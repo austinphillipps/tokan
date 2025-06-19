@@ -201,12 +201,13 @@ Future<void> main() async {
     );
   }
 
-  // Charger l'image de fond sauvegardée
+  // Charger l'image de fond en fonction du thème
   final storedBg = prefs.getString('backgroundImage');
-  if (storedBg != null) {
-    backgroundImageNotifier.value = storedBg;
-  } else if (themeNotifier.value == AppTheme.sequoia) {
+  if (themeNotifier.value == AppTheme.sequoia) {
     backgroundImageNotifier.value = 'assets/images/sequoia.jpeg';
+  } else {
+    backgroundImageNotifier.value =
+        storedBg ?? 'assets/images/backgroundimage.jpeg';
   }
 
   runApp(
