@@ -159,7 +159,7 @@ class _TasksPageState extends State<TasksPage> {
             showTaskPanel = true;
           });
         },
-        backgroundColor: AppColors.purple,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         child: const Icon(Icons.add),
       ),
     );
