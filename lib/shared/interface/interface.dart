@@ -128,23 +128,26 @@ class _HomeScreenState extends State<HomeScreen> {
       basePages[8],
     ];
 
-    // Icônes correspondantes (SVG pour un style plus minimaliste)
-    Widget _svg(String name) => SvgPicture.asset(
+    // Icon builders so we can apply colors dynamically
+    Widget _svg(String name, Color color) => SvgPicture.asset(
           'assets/icons/' + name,
           width: 24,
           height: 24,
+          colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
         );
-    final icons = <Widget>[
-      SvgPicture.asset('assets/icons/dashboard.svg', width: 24, height: 24),
-      _svg('tasks.svg'),
-      _svg('calendar.svg'),
-      _svg('collaborators.svg'),
-      _svg('messages.svg'),
-      _svg('projects.svg'),
-      for (final p in plugins) Icon(p.iconData),
-      _svg('notifications.svg'),
-      _svg('library.svg'),
-      _svg('settings.svg'),
+    Widget _icon(IconData data, Color color) => Icon(data, color: color);
+
+    final iconBuilders = <Widget Function(Color)>[
+      (c) => _svg('dashboard.svg', c),
+      (c) => _svg('tasks.svg', c),
+      (c) => _svg('calendar.svg', c),
+      (c) => _svg('collaborators.svg', c),
+      (c) => _svg('messages.svg', c),
+      (c) => _svg('projects.svg', c),
+      for (final p in plugins) (Color c) => _icon(p.iconData, c),
+      (c) => _svg('notifications.svg', c),
+      (c) => _svg('library.svg', c),
+      (c) => _svg('settings.svg', c),
     ];
 
     // Labels correspondantes
@@ -181,12 +184,12 @@ class _HomeScreenState extends State<HomeScreen> {
             i == 4
                 ? _buildMessagesNavItem(
               index: i,
-              icon: icons[i],
+              iconBuilder: iconBuilders[i],
               label: labels[i],
               selectedBg: selectedBg,
             )
                 : _buildNavItem(
-              icon: icons[i],
+              iconBuilder: iconBuilders[i],
               label: labels[i],
               showLabel: _showLabels,
               isSelected: _selectedIndex == i,
@@ -199,12 +202,12 @@ class _HomeScreenState extends State<HomeScreen> {
             i == pages.length - 3
                 ? _buildNotificationsNavItem(
               index: i,
-              icon: icons[i],
+              iconBuilder: iconBuilders[i],
               label: labels[i],
               selectedBg: selectedBg,
             )
                 : _buildNavItem(
-              icon: icons[i],
+              iconBuilder: iconBuilders[i],
               label: labels[i],
               showLabel: _showLabels,
               isSelected: _selectedIndex == i,
@@ -259,14 +262,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildMessagesNavItem({
     required int index,
-    required Widget icon,
+    required Widget Function(Color) iconBuilder,
     required String label,
     required Color selectedBg,
   }) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
       return _buildNavItem(
-        icon: icon,
+        iconBuilder: iconBuilder,
         label: label,
         showLabel: _showLabels,
         isSelected: _selectedIndex == index,
@@ -291,7 +294,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (unread.contains(uid)) count++;
         }
         return _buildNavItem(
-          icon: icon,
+          iconBuilder: iconBuilder,
           label: label,
           showLabel: _showLabels,
           isSelected: _selectedIndex == index,
@@ -305,14 +308,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildNotificationsNavItem({
     required int index,
-    required Widget icon,
+    required Widget Function(Color) iconBuilder,
     required String label,
     required Color selectedBg,
   }) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
       return _buildNavItem(
-        icon: icon,
+        iconBuilder: iconBuilder,
         label: label,
         showLabel: _showLabels,
         isSelected: _selectedIndex == index,
@@ -342,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
           builder: (ctx2, notifSnap) {
             final count = (notifSnap.data?.size ?? 0) + pending;
             return _buildNavItem(
-              icon: icon,
+              iconBuilder: iconBuilder,
               label: label,
               showLabel: _showLabels,
               isSelected: _selectedIndex == index,
@@ -357,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildNavItem({
-    required Widget icon,
+    required Widget Function(Color) iconBuilder,
     required String label,
     required bool showLabel,
     required bool isSelected,
@@ -368,6 +371,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final color = isSelected
         ? Theme.of(context).colorScheme.primary
         : Theme.of(context).colorScheme.onSurface;
+    final icon = iconBuilder(color);
+
     return Material(
       color: isSelected ? selectedBg : Colors.transparent,
       child: InkWell(
@@ -378,10 +383,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Stack(
                 children: [
-                  IconTheme(
-                    data: IconThemeData(color: color, size: 24),
-                    child: icon,
-                  ),
+                  icon,
                   if (badgeCount != null && badgeCount > 0)
                     Positioned(
                       right: 0,
