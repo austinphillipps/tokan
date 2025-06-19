@@ -403,7 +403,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               if (showLabel) ...[
                 const SizedBox(width: 12),
-                Text(label, style: TextStyle(color: color)),
+                Text(
+                  label,
+                  style: TextStyle(color: color, fontWeight: FontWeight.w600),
+                ),
               ] else
                 Tooltip(message: label, child: const SizedBox.shrink()),
             ],
