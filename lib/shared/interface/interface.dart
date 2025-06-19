@@ -92,6 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isSequoia = themeNotifier.value == AppTheme.sequoia;
+    final isLight = themeNotifier.value == AppTheme.light;
     final pluginProv = context.watch<PluginProvider>();
 
     // 1) Pages "de base"
@@ -225,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     Widget content = Scaffold(
-      backgroundColor: isSequoia ? Colors.transparent : mainBg,
+      backgroundColor: (isSequoia || isLight) ? Colors.transparent : mainBg,
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
