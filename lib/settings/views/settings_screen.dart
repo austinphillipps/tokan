@@ -181,7 +181,9 @@ class _SettingsPageState extends State<SettingsPage> {
       ],
 
           const SizedBox(height: 16),
-          const Divider(color: Colors.white24),
+          Divider(
+            color: isDarkStyle ? Colors.white24 : Colors.grey.shade800,
+          ),
 
           // SECTION « Compte »
           Text(
@@ -216,7 +218,9 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
 
           const SizedBox(height: 16),
-          const Divider(color: Colors.white24),
+          Divider(
+            color: isDarkStyle ? Colors.white24 : Colors.grey.shade800,
+          ),
 
           // SECTION « À propos »
           Text(
