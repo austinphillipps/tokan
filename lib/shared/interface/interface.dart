@@ -129,11 +129,22 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     // Icônes correspondantes (SVG pour un style plus minimaliste)
-    Widget _svg(String name) => SvgPicture.asset(
-          'assets/icons/' + name,
-          width: 24,
-          height: 24,
-        );
+    Widget _svg(String name) {
+      final isDarkStyle =
+          themeNotifier.value == AppTheme.dark ||
+              themeNotifier.value == AppTheme.sequoia;
+      final forceWhite = isDarkStyle &&
+          (name == 'notifications.svg' ||
+              name == 'library.svg' ||
+              name == 'settings.svg');
+      return SvgPicture.asset(
+        'assets/icons/' + name,
+        width: 24,
+        height: 24,
+        colorFilter:
+            forceWhite ? const ColorFilter.mode(Colors.white, BlendMode.srcIn) : null,
+      );
+    }
     final icons = <Widget>[
       SvgPicture.asset('assets/icons/dashboard.svg', width: 24, height: 24),
       _svg('tasks.svg'),
