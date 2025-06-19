@@ -84,16 +84,9 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = [
-      TargetPlatform.windows,
-      TargetPlatform.linux,
-      TargetPlatform.macOS,
-    ].contains(defaultTargetPlatform);
-
-    final isSequoia = themeNotifier.value == AppTheme.sequoia;
 
     Widget content = Scaffold(
-      backgroundColor: isSequoia ? Colors.transparent : Colors.black,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -207,18 +200,15 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
 
-    if (isSequoia) {
-      return Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/sequoia.jpeg'),
-            fit: BoxFit.cover,
-          ),
+    return Container(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/sequoia.jpeg'),
+          fit: BoxFit.cover,
         ),
-        child: content,
-      );
-    }
-    return content;
+      ),
+      child: content,
+    );
   }
 
   Widget _buildTextField({

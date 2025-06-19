@@ -55,10 +55,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isSequoia = themeNotifier.value == AppTheme.sequoia;
-
     Widget content = Scaffold(
-      backgroundColor: isSequoia ? Colors.transparent : Colors.black,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -205,18 +203,15 @@ class _RegisterPageState extends State<RegisterPage> {
       ),
     );
 
-    if (isSequoia) {
-      return Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/sequoia.jpeg'),
-            fit: BoxFit.cover,
-          ),
+    return Container(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/sequoia.jpeg'),
+          fit: BoxFit.cover,
         ),
-        child: content,
-      );
-    }
-    return content;
+      ),
+      child: content,
+    );
   }
 
   Widget _buildTextField({
