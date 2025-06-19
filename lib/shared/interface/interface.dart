@@ -229,7 +229,6 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(width: 1),
           sidebar,
           VerticalDivider(width: 1, color: dividerColor),
           Expanded(child: pages[_selectedIndex]),
