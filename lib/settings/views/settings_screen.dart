@@ -32,17 +32,29 @@ class _SettingsPageState extends State<SettingsPage> {
   /// Sauvegarde et applique le thème sélectionné
   Future<void> _onThemeChanged(AppTheme? newTheme) async {
     if (newTheme == null) return;
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
       _selectedTheme = newTheme;
       themeNotifier.value = newTheme;
     });
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setString('appTheme', newTheme.toString());
+
+    if (newTheme == AppTheme.sequoia) {
+      backgroundImageNotifier.value = 'assets/images/sequoia.jpeg';
+    } else if (newTheme == AppTheme.light) {
+      final bg =
+          prefs.getString('backgroundImage') ?? 'assets/images/backgroundimage.jpeg';
+      backgroundImageNotifier.value = bg;
+      setState(() => _selectedBgImage = bg);
+    } else {
+      backgroundImageNotifier.value = 'assets/images/backgroundimage.jpeg';
+    }
   }
 
   /// Sauvegarde et applique l'image de fond sélectionnée
   Future<void> _onBgImageChanged(String? newImage) async {
     if (newImage == null) return;
+    if (_selectedTheme != AppTheme.light) return;
     setState(() {
       _selectedBgImage = newImage;
       backgroundImageNotifier.value = newImage;
@@ -133,38 +145,40 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
 
-      const SizedBox(height: 8),
-      Container(
-        decoration: BoxDecoration(
-          color: tileBgColor,
-          borderRadius: BorderRadius.circular(4),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        child: Row(
-          children: [
-            Icon(Icons.image, color: accentColor),
-            const SizedBox(width: 12),
-            Expanded(
-              child: DropdownButton<String>(
-                isExpanded: true,
-                value: _selectedBgImage,
-                underline: const SizedBox(),
-                items: const [
-                  DropdownMenuItem(
-                    value: 'assets/images/backgroundimage.jpeg',
-                    child: Text('Par d\'efaut'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'assets/images/sequoia.jpeg',
-                    child: Text('Sequoia'),
-                  ),
-                ],
-                onChanged: _onBgImageChanged,
+      if (_selectedTheme == AppTheme.light) ...[
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: tileBgColor,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: Row(
+            children: [
+              Icon(Icons.image, color: accentColor),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: _selectedBgImage,
+                  underline: const SizedBox(),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'assets/images/backgroundimage.jpeg',
+                      child: Text('Par d\'efaut'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'assets/images/sequoia.jpeg',
+                      child: Text('Sequoia'),
+                    ),
+                  ],
+                  onChanged: _onBgImageChanged,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
+      ],
 
           const SizedBox(height: 16),
           const Divider(color: Colors.white24),
