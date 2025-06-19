@@ -7,18 +7,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../main.dart'; // Pour accéder à AppColors
 
 import '../../tasks/models/custom_task_model.dart';
-import '../../tasks/models/task_folder_model.dart';
 
 class TasksListView extends StatelessWidget {
   final List<CustomTask> tasks;
-  final List<TaskFolder> folders;
   final Function(CustomTask) onToggleStatus;
   final Function(CustomTask, String?) onCollaboratorChanged;
   final Function(CustomTask, String?) onProjectChanged;
   final Function(CustomTask, DateTime?) onDeadlineChanged;
   final Function(CustomTask) onOpenDetail;
   final VoidCallback onAddTask;
-  final VoidCallback onCreateFolder;
   final Function(CustomTask) onDeleteTask;
 
   // ← Paramètres pour la sélection multiple
@@ -30,14 +27,12 @@ class TasksListView extends StatelessWidget {
   const TasksListView({
     Key? key,
     required this.tasks,
-    required this.folders,
     required this.onToggleStatus,
     required this.onCollaboratorChanged,
     required this.onProjectChanged,
     required this.onDeadlineChanged,
     required this.onOpenDetail,
     required this.onAddTask,
-    required this.onCreateFolder,
     required this.onDeleteTask,
 
     // ← Nouveaux paramètres :
@@ -74,21 +69,6 @@ class TasksListView extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
-                TextButton.icon(
-                  onPressed: onCreateFolder,
-                  style: TextButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.primary,
-                  ),
-                  icon: const Icon(Icons.create_new_folder),
-                  label: Text(
-                    'Nouveau dossier',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -96,9 +76,8 @@ class TasksListView extends StatelessWidget {
       );
     }
 
-    final rootTasks = tasks.where((t) => t.folderId == null || t.folderId!.isEmpty).toList();
-    final enCours = rootTasks.where((t) => t.status != 'completed').toList();
-    final terminees = rootTasks.where((t) => t.status == 'completed').toList();
+    final enCours = tasks.where((t) => t.status != 'completed').toList();
+    final terminees = tasks.where((t) => t.status == 'completed').toList();
 
     // On enveloppe le Column principal dans un GestureDetector transparent :
     return GestureDetector(
@@ -209,73 +188,6 @@ class TasksListView extends StatelessWidget {
                     ],
                   )),
                 ],
-                // Sections dossiers
-                ...folders.map((folder) {
-                  final list =
-                  tasks.where((t) => t.folderId == folder.id).toList();
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 4),
-                        child: Text(
-                          folder.name,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onBackground
-                                .withOpacity(0.7),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      if (list.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          child: Text(
-                            'Aucune tâche',
-                            style: TextStyle(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onBackground
-                                  .withOpacity(0.6),
-                            ),
-                          ),
-                        )
-                      else
-                        ...list.map((task) => Column(
-                          children: [
-                            _TaskRow(
-                              key: ValueKey(task.id),
-                              task: task,
-                              onToggle: onToggleStatus,
-                              onCollaboratorChanged: onCollaboratorChanged,
-                              onProjectChanged: onProjectChanged,
-                              onDeadlineChanged: onDeadlineChanged,
-                              onOpenDetail: onOpenDetail,
-                              onDelete: onDeleteTask,
-                              multiSelectMode: multiSelectMode,
-                              isSelected:
-                              selectedTaskIds.contains(task.id),
-                              onTaskSelectToggle: onTaskSelectToggle,
-                            ),
-                            Divider(
-                              height: 1,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onBackground
-                                  .withOpacity(0.3),
-                            ),
-                          ],
-                        )),
-                    ],
-                  );
-                }).toList(),
                 // Boutons pour ajouter une tâche ou un dossier
                 Padding(
                   padding:
@@ -302,24 +214,6 @@ class TasksListView extends StatelessWidget {
                           ),
                           onPressed: onAddTask,
                         ),
-                        const SizedBox(width: 16),
-                        TextButton.icon(
-                          icon: const Icon(Icons.create_new_folder),
-                          label: Text(
-                            "Nouveau dossier",
-                            style: TextStyle(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onBackground
-                                  .withOpacity(0.7),
-                            ),
-                          ),
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12, horizontal: 16),
-                          ),
-                          onPressed: onCreateFolder,
-                        ),
                       ],
                     ),
                   ),
@@ -341,16 +235,7 @@ class TasksListView extends StatelessWidget {
       ),
       child: Row(
         children: [
-          SizedBox(
-            width: 40,
-            child: IconButton(
-              icon: const Icon(Icons.folder, size: 20),
-              tooltip: 'Dossiers',
-              onPressed: () {},
-              padding: EdgeInsets.zero,
-              splashRadius: 20,
-            ),
-          ), // Pour la colonne statut (cercle)
+          const SizedBox(width: 40), // Pour la colonne statut (cercle)
           _vDiv(context),
           Expanded(
             flex: 3,
@@ -851,7 +736,9 @@ class _TaskRowState extends State<_TaskRow> {
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         decoration: BoxDecoration(
-          color: _hoverRow ? AppColors.glassHeader : AppColors.glassBackground,
+          color: isDark
+              ? (_hoverRow ? AppColors.glassHeader : AppColors.glassBackground)
+              : (_hoverRow ? Colors.white70 : Colors.white),
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
