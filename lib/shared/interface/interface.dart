@@ -236,18 +236,20 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
 
-    if (isSequoia) {
-      return Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/sequoia.jpeg'),
-            fit: BoxFit.cover,
+    return ValueListenableBuilder<String>(
+      valueListenable: backgroundImageNotifier,
+      builder: (context, bgImage, _) {
+        return Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage(bgImage),
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: content,
-      );
-    }
-    return content;
+          child: content,
+        );
+      },
+    );
   }
 
   Widget _buildMessagesNavItem({
