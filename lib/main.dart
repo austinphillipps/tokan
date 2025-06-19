@@ -45,26 +45,26 @@ final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
   scaffoldBackgroundColor: Colors.white,
   colorScheme: const ColorScheme.light(
-    primary: AppColors.purple,
-    secondary: AppColors.blue,
+    primary: AppColors.blue,
+    secondary: AppColors.green,
     background: Colors.white,
     onBackground: Colors.black,
     onPrimary: Colors.white,
     onSecondary: Colors.white,
   ),
   appBarTheme: const AppBarTheme(
-    backgroundColor: AppColors.purple,
+    backgroundColor: AppColors.blue,
     foregroundColor: Colors.white,
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: AppColors.purple,
+      backgroundColor: AppColors.blue,
       foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
   ),
   textButtonTheme: TextButtonThemeData(
-    style: TextButton.styleFrom(foregroundColor: AppColors.purple),
+    style: TextButton.styleFrom(foregroundColor: AppColors.blue),
   ),
   iconTheme: const IconThemeData(color: AppColors.blue),
   bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -98,7 +98,7 @@ final ThemeData darkTheme = ThemeData(
   scaffoldBackgroundColor: AppColors.darkBackground,
   colorScheme: const ColorScheme.dark(
     primary: AppColors.blue,
-    secondary: AppColors.purple,
+    secondary: AppColors.green,
     background: AppColors.darkBackground,
     surface: AppColors.darkBackground,
     onBackground: Colors.white,
@@ -117,7 +117,7 @@ final ThemeData darkTheme = ThemeData(
     ),
   ),
   textButtonTheme: TextButtonThemeData(
-    style: TextButton.styleFrom(foregroundColor: AppColors.purple),
+    style: TextButton.styleFrom(foregroundColor: AppColors.blue),
   ),
   iconTheme: const IconThemeData(color: AppColors.blue),
   bottomNavigationBarTheme: const BottomNavigationBarThemeData(

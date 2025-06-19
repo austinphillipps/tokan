@@ -140,19 +140,6 @@ class _HomeScreenState extends State<HomeScreen> {
       Icons.settings,
     ];
 
-    // Couleurs des icônes (dans le même ordre)
-    final iconColors = <Color>[
-      Colors.black,
-      Colors.green,
-      Colors.orange,
-      Colors.purple,
-      Colors.blueGrey,
-      Colors.teal,
-      for (final _ in plugins) Colors.blueGrey,
-      Colors.red,
-      Colors.blue,
-      Colors.grey,
-    ];
 
     // Labels correspondantes
     final labels = <String>[
@@ -188,12 +175,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 index: i,
                 iconData: icons[i],
                 label: labels[i],
-                color: iconColors[i],
               )
                   : _buildNavItem(
                 iconData: icons[i],
                 label: labels[i],
-                color: iconColors[i],
                 showLabel: _showLabels,
                 isSelected: _selectedIndex == i,
                 onTap: () => setState(() => _selectedIndex = i),
@@ -206,12 +191,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 index: i,
                 iconData: icons[i],
                 label: labels[i],
-                color: iconColors[i],
               )
                   : _buildNavItem(
                 iconData: icons[i],
                 label: labels[i],
-                color: iconColors[i],
                 showLabel: _showLabels,
                 isSelected: _selectedIndex == i,
                 onTap: () => setState(() => _selectedIndex = i),
@@ -260,14 +243,12 @@ class _HomeScreenState extends State<HomeScreen> {
     required int index,
     required IconData iconData,
     required String label,
-    required Color color,
   }) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
       return _buildNavItem(
         iconData: iconData,
         label: label,
-        color: color,
         showLabel: _showLabels,
         isSelected: _selectedIndex == index,
         onTap: () => setState(() => _selectedIndex = index),
@@ -292,7 +273,6 @@ class _HomeScreenState extends State<HomeScreen> {
         return _buildNavItem(
           iconData: iconData,
           label: label,
-          color: color,
           showLabel: _showLabels,
           isSelected: _selectedIndex == index,
           badgeCount: count > 0 ? count : null,
@@ -306,14 +286,12 @@ class _HomeScreenState extends State<HomeScreen> {
     required int index,
     required IconData iconData,
     required String label,
-    required Color color,
   }) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
       return _buildNavItem(
         iconData: iconData,
         label: label,
-        color: color,
         showLabel: _showLabels,
         isSelected: _selectedIndex == index,
         onTap: () => setState(() => _selectedIndex = index),
@@ -343,7 +321,6 @@ class _HomeScreenState extends State<HomeScreen> {
             return _buildNavItem(
               iconData: iconData,
               label: label,
-              color: color,
               showLabel: _showLabels,
               isSelected: _selectedIndex == index,
               badgeCount: count > 0 ? count : null,
@@ -358,7 +335,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildNavItem({
     required IconData iconData,
     required String label,
-    required Color color,
     required bool showLabel,
     required bool isSelected,
     required VoidCallback onTap,
@@ -367,7 +343,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return _SidebarButton(
       iconData: iconData,
       label: label,
-      color: color,
       showLabel: showLabel,
       isSelected: isSelected,
       onTap: onTap,
@@ -379,7 +354,6 @@ class _HomeScreenState extends State<HomeScreen> {
 class _SidebarButton extends StatefulWidget {
   final IconData iconData;
   final String label;
-  final Color color;
   final bool showLabel;
   final bool isSelected;
   final VoidCallback onTap;
@@ -389,7 +363,6 @@ class _SidebarButton extends StatefulWidget {
     Key? key,
     required this.iconData,
     required this.label,
-    required this.color,
     required this.showLabel,
     required this.isSelected,
     required this.onTap,
@@ -405,9 +378,10 @@ class _SidebarButtonState extends State<_SidebarButton> {
 
   @override
   Widget build(BuildContext context) {
-    final normalColor = widget.color.withOpacity(0.6);
-    final hoverColor = widget.color;
-    final selectedColor = widget.color;
+    final colorScheme = Theme.of(context).colorScheme;
+    final normalColor = colorScheme.onSurface.withOpacity(0.6);
+    final hoverColor = colorScheme.onSurface;
+    final selectedColor = colorScheme.primary;
     const hoverBg = Color(0xFFE5E5EA);
     const selectedBg = Color(0xFFE5E5EA);
 

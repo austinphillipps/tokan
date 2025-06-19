@@ -59,7 +59,8 @@ class TasksListView extends StatelessWidget {
                 TextButton.icon(
                   onPressed: onAddTask,
                   style: TextButton.styleFrom(
-                    foregroundColor: AppColors.purple,
+                    foregroundColor:
+                        Theme.of(context).colorScheme.primary,
                   ),
                   icon: const Icon(Icons.add),
                   label: Text(
