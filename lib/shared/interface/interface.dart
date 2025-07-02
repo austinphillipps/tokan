@@ -20,7 +20,41 @@ import '../../features/projects/views/projects_screen.dart';
 import '../../settings/views/settings_screen.dart';
 import '../../features/notifications/services/notification_service.dart';
 
+import 'dart:ui';
 import '../../main.dart'; // Pour AppTheme, themeNotifier et AppColors
+
+/// Widget réutilisable pour effet "glass" (blanc/translucide + flou)
+class GlassContainer extends StatelessWidget {
+  final Widget child;
+  final double? width;
+  final double? height;
+  final BorderRadius? borderRadius;
+  const GlassContainer({Key? key, this.width, this.height, this.borderRadius, required this.child}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    // Couleur selon thème : blanc translucide en light, verre noir en dark/sequoia
+    final color = (theme.brightness == Brightness.light && themeNotifier.value != AppTheme.sequoia)
+        ? AppColors.whiteGlassBackground
+        : AppColors.glassBackground;
+    return ClipRRect(
+      borderRadius: borderRadius ?? BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: color,
+            // vous pouvez ajouter une bordure ou ombre ici
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+} // Pour AppTheme, themeNotifier et AppColors
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -39,7 +73,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _notifService.init();
-    // AuthGate a déjà validé le profil, on n'affiche plus de formulaire ici.
   }
 
   @override
@@ -104,10 +137,10 @@ class _HomeScreenState extends State<HomeScreen> {
       color: color,
     );
 
-    // Calcul de la couleur de nos icônes spéciales
-    final iconColor = (theme.brightness == Brightness.dark || isSequoia)
-        ? Colors.white
-        : Colors.black;
+    // Couleurs communes
+    final bool isLight = theme.brightness == Brightness.light && !isSequoia;
+    final iconColor = isLight ? Colors.white : Colors.white; // always white for menu
+    final navItemColor = isLight ? Colors.white : Theme.of(context).colorScheme.onSurface;
 
     // Icônes de la barre
     final icons = <Widget>[
@@ -118,7 +151,6 @@ class _HomeScreenState extends State<HomeScreen> {
       _svg('messages.svg'),
       _svg('projects.svg'),
       for (final p in plugins) Icon(p.iconData),
-      // Trois dernières icônes avec override de couleur
       _svg('notifications.svg', color: iconColor),
       _svg('library.svg',      color: iconColor),
       _svg('settings.svg',     color: iconColor),
@@ -140,69 +172,93 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Couleurs
     final sidebarBg = theme.colorScheme.surface;
-    final mainBg = theme.colorScheme.background;
-    final dividerColor = theme.colorScheme.onBackground.withOpacity(0.3);
-    final selectedBg = AppColors.glassHeader;
+    // couleur du contour vertical de la sidebar
+    final dividerColor = isLight
+        ? Colors.white.withOpacity(0.3)  // blanc translucide en light
+        : theme.colorScheme.onBackground.withOpacity(0.3);
+    // couleur du survol et état actif selon thème clair ou non
+    final selectedBg = isLight
+        ? AppColors.whiteGlassBackground // blanc translucide en clair
+        : AppColors.glassHeader;
 
-    Widget sidebar = AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      width: _sidebarExpanded ? 180 : 60,
-      color: sidebarBg.withOpacity(isSequoia ? 0.6 : 1.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 24),
-          // Items du haut
-          for (var i = 0; i < pages.length - 3; i++)
-            i == 4
-                ? _buildMessagesNavItem(
-              index: i,
-              icon: icons[i],
-              label: labels[i],
-              selectedBg: selectedBg,
-            )
-                : _buildNavItem(
-              icon: icons[i],
-              label: labels[i],
-              showLabel: _showLabels,
-              isSelected: _selectedIndex == i,
-              selectedBg: selectedBg,
-              onTap: () => setState(() => _selectedIndex = i),
-            ),
-          const Spacer(),
-          // Items fixes en bas
-          for (var i = pages.length - 3; i < pages.length; i++)
-            i == pages.length - 3
-                ? _buildNotificationsNavItem(
-              index: i,
-              icon: icons[i],
-              label: labels[i],
-              selectedBg: selectedBg,
-            )
-                : _buildNavItem(
-              icon: icons[i],
-              label: labels[i],
-              showLabel: _showLabels,
-              isSelected: _selectedIndex == i,
-              selectedBg: selectedBg,
-              onTap: () => setState(() => _selectedIndex = i),
-            ),
-          InkWell(
-            onTap: _toggleSidebar,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Icon(
-                _sidebarExpanded ? Icons.chevron_left : Icons.chevron_right,
+    Widget sidebar = Stack(
+      children: [
+        // Fond flou du menu
+        ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              width: _sidebarExpanded ? 180 : 60,
+              height: double.infinity,
+              decoration: BoxDecoration(
+                color: (theme.brightness == Brightness.light && !isSequoia)
+                    ? Colors.white.withOpacity(0.8)
+                    : sidebarBg.withOpacity(0.6),
               ),
             ),
           ),
-          const SizedBox(height: 24),
-        ],
-      ),
+        ),
+        // Contenu de la sidebar
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: _sidebarExpanded ? 180 : 60,
+          color: Colors.transparent,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 24),
+              for (var i = 0; i < pages.length - 3; i++)
+                i == 4
+                    ? _buildMessagesNavItem(
+                  index: i,
+                  icon: icons[i],
+                  label: labels[i],
+                  selectedBg: selectedBg,
+                )
+                    : _buildNavItem(
+                  icon: icons[i],
+                  label: labels[i],
+                  showLabel: _showLabels,
+                  isSelected: _selectedIndex == i,
+                  selectedBg: selectedBg,
+                  onTap: () => setState(() => _selectedIndex = i),
+                ),
+              const Spacer(),
+              for (var i = pages.length - 3; i < pages.length; i++)
+                i == pages.length - 3
+                    ? _buildNotificationsNavItem(
+                  index: i,
+                  icon: icons[i],
+                  label: labels[i],
+                  selectedBg: selectedBg,
+                )
+                    : _buildNavItem(
+                  icon: icons[i],
+                  label: labels[i],
+                  showLabel: _showLabels,
+                  isSelected: _selectedIndex == i,
+                  selectedBg: selectedBg,
+                  onTap: () => setState(() => _selectedIndex = i),
+                ),
+              InkWell(
+                onTap: _toggleSidebar,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Icon(
+                    _sidebarExpanded ? Icons.chevron_left : Icons.chevron_right,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ],
     );
 
+    // Contenu principal avec fond Sequoia
     Widget content = Scaffold(
-      backgroundColor: isSequoia ? Colors.transparent : mainBg,
+      backgroundColor: Colors.transparent,
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -213,18 +269,15 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
 
-    if (isSequoia) {
-      return Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/sequoia.jpeg'),
-            fit: BoxFit.cover,
-          ),
+    return Container(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/sequoia.jpeg'),
+          fit: BoxFit.cover,
         ),
-        child: content,
-      );
-    }
-    return content;
+      ),
+      child: content,
+    );
   }
 
   Widget _buildMessagesNavItem({
@@ -335,13 +388,19 @@ class _HomeScreenState extends State<HomeScreen> {
     required VoidCallback onTap,
     int? badgeCount,
   }) {
-    final color = isSelected
-        ? Theme.of(context).colorScheme.primary
-        : Theme.of(context).colorScheme.onSurface;
+    final bool isLight = Theme.of(context).brightness == Brightness.light && themeNotifier.value != AppTheme.sequoia;
+    // couleur des icônes pour menu en light: noir
+    final iconColor = isLight ? Colors.black : Colors.white;
+    // couleur du texte dans la sidebar et nav
+    final navItemColor = isLight ? Colors.black : Theme.of(context).colorScheme.onSurface;
+    // couleur des icônes et textes
+    final itemColor = isLight ? Colors.black : Theme.of(context).colorScheme.onSurface;
     return Material(
       color: isSelected ? selectedBg : Colors.transparent,
       child: InkWell(
         onTap: onTap,
+        hoverColor: selectedBg,
+        splashColor: selectedBg.withOpacity(0.3),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
           child: Row(
@@ -349,7 +408,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Stack(
                 children: [
                   IconTheme(
-                    data: IconThemeData(color: color, size: 24),
+                    data: IconThemeData(color: itemColor, size: 24),
                     child: icon,
                   ),
                   if (badgeCount != null && badgeCount > 0)
@@ -379,7 +438,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   label,
                   style:
-                  TextStyle(color: color, fontWeight: FontWeight.w600),
+                  TextStyle(color: itemColor, fontWeight: FontWeight.w600),
                 ),
               ] else
                 Tooltip(message: label, child: const SizedBox.shrink()),

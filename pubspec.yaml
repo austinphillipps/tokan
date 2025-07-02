@@ -1,7 +1,7 @@
 name: tokan
 description: a caribbean legacy
 publish_to: 'none'
-version: 1.0.4
+version: 1.0.5
 
 environment:
   sdk: '>=2.18.0 <3.0.0'

@@ -1,3 +1,5 @@
+// lib/services/update_service.dart
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -7,9 +9,9 @@ import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 
-/// Service de mise à jour multiplate‑forme (Windows + macOS).
+/// Service de mise à jour multiplate-forme (Windows + macOS).
 ///
-/// Le fichier JSON hébergé doit avoir la structure suivante :
+/// Le fichier JSON hébergé doit avoir la structure suivante :
 /// ```json
 /// {
 ///   "latest_version": "1.0.5",
@@ -26,15 +28,9 @@ class UpdateService {
   static const String _versionUrl =
       'https://framecastle-studio.com/updates/version.json';
 
-  // Garde en mémoire qu'on a déjà vérifié cette session
-  static bool _hasChecked = false;
-
   /// Point d’entrée appelé depuis l’UI pour vérifier puis proposer une mise à jour.
   static Future<void> checkForUpdate(BuildContext context) async {
-    if (_hasChecked) return;
-    _hasChecked = true;
-
-    debugPrint('🔍 Checking update at $_versionUrl');
+    debugPrint('🔍 Checking update…');
 
     try {
       final response = await http.get(Uri.parse(_versionUrl));
@@ -51,7 +47,6 @@ class UpdateService {
         return;
       }
 
-      // --- Sélectionne l’URL d’update selon la plateforme ----------------------------------
       String? updateUrl;
       if (Platform.isWindows) {
         updateUrl = (data['windows'] as Map<String, dynamic>?)?['url'] as String?;
@@ -74,7 +69,6 @@ class UpdateService {
       }
       debugPrint('⚡ New version detected');
 
-      // --- Demande confirmation à l’utilisateur ---------------------------------------------
       // ignore: use_build_context_synchronously
       final confirm = await showDialog<bool>(
         context: context,
@@ -82,7 +76,9 @@ class UpdateService {
         builder: (_) => AlertDialog(
           title: const Text('Mise à jour disponible'),
           content: Text(
-              'Une nouvelle version ($latestVersion) est disponible. Voulez‑vous installer maintenant ?'),
+              'Une nouvelle version ($latestVersion) est disponible. '
+                  'Voulez-vous télécharger et installer maintenant ?'
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -96,9 +92,11 @@ class UpdateService {
         ),
       );
 
-      if (confirm == true) await _downloadAndInstall(updateUrl);
+      if (confirm == true) {
+        await _downloadAndInstall(updateUrl);
+      }
     } catch (e, st) {
-      debugPrint('❌ Erreur mise à jour : $e\n$st');
+      debugPrint('❌ Erreur mise à jour : $e\n$st');
     }
   }
 
@@ -108,7 +106,6 @@ class UpdateService {
   static Future<void> _downloadAndInstall(String url) async {
     debugPrint('⬇️ Downloading update from $url');
 
-    // 1) Télécharge le fichier dans le dossier temporaire
     final tmpDir = await getTemporaryDirectory();
     final fileName = _suggestedFileName(url);
     final filePath = '${tmpDir.path}/$fileName';
@@ -121,7 +118,6 @@ class UpdateService {
     await file.writeAsBytes(bytes);
     debugPrint('💾 Update downloaded to $filePath');
 
-    // 2) Exécute l’installateur selon la plateforme
     if (Platform.isWindows) {
       await Process.start(filePath, [], mode: ProcessStartMode.detached);
     } else if (Platform.isMacOS) {
@@ -129,12 +125,11 @@ class UpdateService {
         await Process.start('installer', ['-pkg', filePath, '-target', '/'],
             mode: ProcessStartMode.detached);
       } else {
-        await Process.start('open', [filePath],
-            mode: ProcessStartMode.detached);
+        await Process.start('open', [filePath], mode: ProcessStartMode.detached);
       }
     }
 
-    // 3) Ferme l’application courante pour laisser l’installateur faire son travail
+    // Ferme l’application pour laisser l’installateur faire son travail
     exit(0);
   }
 
@@ -148,17 +143,15 @@ class UpdateService {
     return 'update_installer.$extension';
   }
 
-  /// Compare deux versions « major.minor.patch ».
+  /// Compare deux versions « major.minor.patch ».
   static bool _isNewer(String current, String latest) {
     List<int> toInts(String v) =>
         v.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-    final c = toInts(current);
-    final l = toInts(latest);
+    final c = toInts(current), l = toInts(latest);
     for (var i = 0; i < l.length; i++) {
-      final cv = c.length > i ? c[i] : 0;
-      final lv = l[i];
-      if (cv < lv) return true;
-      if (cv > lv) return false;
+      final ci = c.length > i ? c[i] : 0;
+      if (ci < l[i]) return true;
+      if (ci > l[i]) return false;
     }
     return false;
   }

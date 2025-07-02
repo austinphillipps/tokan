@@ -1,112 +1,74 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tokan/services/update_manager.dart';
-import '../../main.dart'; // Pour AppTheme & themeNotifier
+import '../../../services/update_manager.dart';
 
-class VersionDetailScreen extends StatefulWidget {
+class VersionDetailScreen extends StatelessWidget {
   const VersionDetailScreen({Key? key}) : super(key: key);
 
   @override
-  _VersionDetailScreenState createState() => _VersionDetailScreenState();
-}
-
-class _VersionDetailScreenState extends State<VersionDetailScreen> {
-  late final UpdateManager _updateManager;
-
-  @override
-  void initState() {
-    super.initState();
-    // Initialise le gestionnaire et lance la vérification
-    _updateManager = UpdateManager();
-    _updateManager.checkForUpdate();
-  }
-
-  @override
-  void dispose() {
-    _updateManager.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDarkStyle = themeNotifier.value == AppTheme.dark;
+    final mgr = context.watch<UpdateManager>();
 
-    return ChangeNotifierProvider<UpdateManager>.value(
-      value: _updateManager,
-      child: Consumer<UpdateManager>(
-        builder: (context, manager, _) {
-          final status = manager.status;
-          final current = manager.currentVersion ?? '...';
-          final latest = manager.latestVersion ?? '...';
+    return Scaffold(
+      appBar: AppBar(title: const Text('Détails de la version')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Version actuelle : ${mgr.currentVersion}'),
+            const SizedBox(height: 8),
+            Text('Dernière version : ${mgr.latestVersion}'),
+            const SizedBox(height: 24),
 
-          return Scaffold(
-            backgroundColor: isDarkStyle
-                ? Colors.grey[900]
-                : Theme.of(context).scaffoldBackgroundColor,
-            appBar: AppBar(title: const Text('Détails de la mise à jour')),
-            body: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text('Version actuelle : $current'),
-                  Text('Dernière version : $latest'),
-                  const SizedBox(height: 24),
-
-                  // État de vérification
-                  if (status == UpdateStatus.checking) ...[
-                    const Center(child: CircularProgressIndicator()),
-                    const SizedBox(height: 8),
-                    const Text('Vérification de la mise à jour...'),
-                  ],
-
-                  // À jour
-                  if (status == UpdateStatus.upToDate) ...[
-                    const Icon(Icons.check_circle, size: 48, color: Colors.green),
-                    const SizedBox(height: 8),
-                    const Text('Votre application est à jour.'),
-                  ],
-
-                  // Erreur
-                  if (status == UpdateStatus.error) ...[
-                    const Icon(Icons.error, size: 48, color: Colors.red),
-                    const SizedBox(height: 8),
-                    Text('Erreur : ${manager.errorMessage ?? 'Impossible de vérifier.'}'),
-                  ],
-
-                  // Mise à jour dispo
-                  if (status == UpdateStatus.available) ...[
-                    const Text('Une mise à jour est disponible !'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: manager.downloadUpdate,
-                      child: const Text('Télécharger la mise à jour'),
-                    ),
-                  ],
-
-                  // En cours de téléchargement
-                  if (status == UpdateStatus.downloading) ...[
-                    Text('Téléchargement : ${(manager.progress * 100).toStringAsFixed(0)} %'),
-                    const SizedBox(height: 8),
-                    LinearProgressIndicator(value: manager.progress),
-                  ],
-
-                  // Téléchargé
-                  if (status == UpdateStatus.downloaded) ...[
-                    const Text('Téléchargement terminé.'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: manager.installUpdate,
-                      child: const Text('Installer la mise à jour'),
-                    ),
-                  ],
-                ],
+            // Bouton Vérifier/Télécharger
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: (mgr.status == UpdateStatus.checking ||
+                    mgr.status == UpdateStatus.downloading)
+                    ? null
+                    : () => mgr.checkForUpdate(context),
+                child: mgr.status == UpdateStatus.checking
+                    ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+                    : const Text('Vérifier les mises à jour'),
               ),
             ),
-          );
-        },
+
+            const SizedBox(height: 16),
+
+            // Progression
+            if (mgr.status == UpdateStatus.downloading) ...[
+              const Text('Téléchargement en cours :'),
+              const SizedBox(height: 8),
+              LinearProgressIndicator(value: mgr.progress),
+              const SizedBox(height: 16),
+            ],
+
+            // Erreur
+            if (mgr.status == UpdateStatus.error && mgr.errorMessage != null) ...[
+              Text('Erreur : ${mgr.errorMessage}',
+                  style: const TextStyle(color: Colors.red)),
+              const SizedBox(height: 16),
+            ],
+
+            // Installation manuelle
+            if (mgr.status == UpdateStatus.downloaded) ...[
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: mgr.installUpdate,
+                  child: const Text('Installer la mise à jour'),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

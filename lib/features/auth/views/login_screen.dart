@@ -4,8 +4,7 @@ import 'package:flutter/services.dart' show TextInputAction;
 import 'package:flutter/foundation.dart' show debugPrint, debugPrintStack;
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../../services/update_service.dart';          // ← UpdateService
-import '../../../shared/interface/interface.dart';       // HomeScreen
+import '../../../shared/interface/interface.dart'; // HomeScreen
 import 'register_screen.dart';
 
 class LoginPage extends StatefulWidget {
@@ -22,7 +21,7 @@ class _LoginPageState extends State<LoginPage> {
   bool   _showPassword = false;
   String? _errorMessage;
 
-// autorise lettres, chiffres, point, plus et tiret dans la partie locale
+  // autorise lettres, chiffres, point, plus et tiret dans la partie locale
   final _emailRegex = RegExp(r'^[\w.+-]+@([\w-]+\.)+[\w-]{2,4}$');
 
   @override
@@ -55,15 +54,10 @@ class _LoginPageState extends State<LoginPage> {
         password: _passwordCtrl.text.trim(),
       );
 
-      // Petite pause avant d'afficher la mise à jour
+      // Petite pause avant la redirection
       await Future.delayed(const Duration(milliseconds: 300));
 
-      // Sur macOS, on reporte la vérif au dashboard
-      if (!Platform.isMacOS) {
-        await UpdateService.checkForUpdate(context);
-      }
-
-      // Redirection vers le dashboard
+      // La vérification de mise à jour se fait désormais dans DashboardScreen
       Navigator.of(context).pushReplacementNamed('/home');
 
     } on FirebaseAuthException catch (e, st) {
@@ -82,7 +76,7 @@ class _LoginPageState extends State<LoginPage> {
         }
       });
     } catch (e, st) {
-      debugPrint('❌ Erreur inattendue: \$e');
+      debugPrint('❌ Erreur inattendue: $e');
       debugPrintStack(stackTrace: st);
       setState(() => _errorMessage =
       'Erreur inattendue. Veuillez réessayer et consulter la console.');
@@ -243,8 +237,8 @@ class _LoginPageState extends State<LoginPage> {
       transitionDuration: const Duration(milliseconds: 500),
       reverseTransitionDuration: const Duration(milliseconds: 500),
       transitionsBuilder: (_, anim, __, child) {
-        final fade   = CurvedAnimation(parent: anim, curve: Curves.easeInOut);
-        final scale  = Tween<double>(begin: 0.8, end: 1.0)
+        final fade  = CurvedAnimation(parent: anim, curve: Curves.easeInOut);
+        final scale = Tween<double>(begin: 0.8, end: 1.0)
             .animate(CurvedAnimation(parent: anim, curve: Curves.elasticOut));
         return FadeTransition(opacity: fade, child: ScaleTransition(scale: scale, child: child));
       },

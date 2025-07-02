@@ -22,19 +22,21 @@ import 'features/dashboard/widgets/project_progress_widget.dart';
 import 'features/auth/views/login_screen.dart';
 import 'features/auth/views/register_screen.dart';
 import 'features/auth/views/auth_gate.dart';
-import 'features/auth/views/profile_setup_screen.dart'; // ajouté pour la config de profil
+import 'features/auth/views/profile_setup_screen.dart';
 import 'shared/interface/interface.dart'; // HomeScreen
 
-// ← IMPORT DU UpdateManager
-import 'services/update_manager.dart';
+import 'services/update_manager.dart';    // ← UpdateManager
 
-/// 1) Enum à trois valeurs (clair, sombre, séquoia)
+/// Global navigator key for dialogs and navigation outside widget context
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+/// Enum for theme selection
 enum AppTheme { light, dark, sequoia }
 
-/// 2) ValueNotifier global pour le thème
-final ValueNotifier<AppTheme> themeNotifier = ValueNotifier(AppTheme.light);
+/// Notifier to switch themes at runtime
+final ValueNotifier<AppTheme> themeNotifier = ValueNotifier<AppTheme>(AppTheme.light);
 
-/// 3) Couleurs de l’app
+/// Application colors
 class AppColors {
   static const Color darkBackground       = Color(0xFF212121);
   static const Color darkGreyBackground   = Color(0xFF424242);
@@ -49,132 +51,138 @@ class AppColors {
   static const Color whiteGlassBackground = Color(0x55FFFFFF);
 }
 
-/// 4) Thème clair
-final ThemeData lightTheme = ThemeData(
-  brightness: Brightness.light,
-  colorScheme: const ColorScheme.light(
-    primary: AppColors.blue,
-    secondary: AppColors.green,
-    background: AppColors.lightGreyBackground,
-    surface: Colors.white,
-    onBackground: Colors.black,
-    onSurface: Colors.black,
-    onPrimary: Colors.black,
-    onSecondary: Colors.black,
-  ),
-  canvasColor: Colors.white,
-  cardColor: Colors.white,
-  dialogBackgroundColor: Colors.white,
-  bottomSheetTheme: BottomSheetThemeData(backgroundColor: Colors.white),
-  appBarTheme: const AppBarTheme(
-    backgroundColor: AppColors.blue,
-    foregroundColor: Colors.white,
+/// 1) Define ColorSchemes
+const ColorScheme lightColorScheme = ColorScheme.light(
+  primary: AppColors.blue,
+  secondary: AppColors.green,
+  background: AppColors.lightGreyBackground,
+  surface: Colors.white,
+  onPrimary: Colors.black,
+  onSecondary: Colors.black,
+  onBackground: Colors.black,
+  onSurface: Colors.black,
+);
+
+const ColorScheme darkColorScheme = ColorScheme.dark(
+  primary: AppColors.blue,
+  secondary: AppColors.green,
+  background: AppColors.darkBackground,
+  surface: AppColors.darkBackground,
+  onPrimary: Colors.white,
+  onSecondary: Colors.white,
+  onBackground: Colors.white,
+  onSurface: Colors.white,
+);
+
+/// 2) Light Theme using ColorScheme
+final ThemeData lightTheme = ThemeData.from(
+  colorScheme: lightColorScheme,
+).copyWith(
+  scaffoldBackgroundColor: lightColorScheme.background,
+  canvasColor: lightColorScheme.surface,
+  cardColor: lightColorScheme.surface,
+  dialogBackgroundColor: lightColorScheme.surface,
+  bottomSheetTheme: BottomSheetThemeData(backgroundColor: lightColorScheme.surface),
+  appBarTheme: AppBarTheme(
+    backgroundColor: lightColorScheme.primary,
+    foregroundColor: lightColorScheme.onPrimary,
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: AppColors.blue,
-      foregroundColor: Colors.white,
+      backgroundColor: lightColorScheme.primary,
+      foregroundColor: lightColorScheme.onPrimary,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
   ),
   textButtonTheme: TextButtonThemeData(
-    style: TextButton.styleFrom(foregroundColor: AppColors.blue),
+    style: TextButton.styleFrom(foregroundColor: lightColorScheme.primary),
   ),
-  iconTheme: const IconThemeData(color: Colors.black),
+  iconTheme: IconThemeData(color: lightColorScheme.onSurface),
   textTheme: ThemeData.light().textTheme.apply(
-    bodyColor: Colors.black,
-    displayColor: Colors.black,
+    bodyColor: lightColorScheme.onBackground,
+    displayColor: lightColorScheme.onBackground,
   ),
   switchTheme: SwitchThemeData(
     thumbColor: MaterialStateProperty.all(AppColors.green),
     trackColor: MaterialStateProperty.resolveWith((states) {
-      if (states.contains(MaterialState.selected)) {
-        return AppColors.green.withOpacity(0.5);
-      }
-      return null;
+      return states.contains(MaterialState.selected)
+          ? AppColors.green.withOpacity(0.5)
+          : null;
     }),
   ),
   checkboxTheme: CheckboxThemeData(
     checkColor: MaterialStateProperty.all(Colors.white),
     fillColor: MaterialStateProperty.resolveWith((states) {
-      if (states.contains(MaterialState.selected)) {
-        return AppColors.green;
-      }
-      return null;
+      return states.contains(MaterialState.selected)
+          ? AppColors.green
+          : null;
     }),
   ),
 );
 
-/// 5) Thème sombre
-final ThemeData darkTheme = ThemeData(
-  brightness: Brightness.dark,
-  scaffoldBackgroundColor: AppColors.darkBackground,
-  colorScheme: const ColorScheme.dark(
-    primary: AppColors.blue,
-    secondary: AppColors.green,
-    background: AppColors.darkBackground,
-    surface: AppColors.darkBackground,
-    onBackground: Colors.white,
-    onPrimary: Colors.white,
-    onSecondary: Colors.white,
+/// 3) Dark Theme using ColorScheme
+final ThemeData darkTheme = ThemeData.from(
+  colorScheme: darkColorScheme,
+).copyWith(
+  scaffoldBackgroundColor: darkColorScheme.background,
+  canvasColor: darkColorScheme.surface,
+  cardColor: darkColorScheme.surface,
+  dialogBackgroundColor: darkColorScheme.surface,
+  bottomNavigationBarTheme: BottomNavigationBarThemeData(
+    selectedIconTheme: IconThemeData(color: darkColorScheme.primary),
+    unselectedIconTheme: IconThemeData(color: Colors.grey),
+    backgroundColor: darkColorScheme.background,
   ),
-  appBarTheme: const AppBarTheme(
+  appBarTheme: AppBarTheme(
     backgroundColor: AppColors.darkGreyBackground,
-    foregroundColor: Colors.white,
+    foregroundColor: darkColorScheme.onPrimary,
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: AppColors.blue,
-      foregroundColor: Colors.white,
+      backgroundColor: darkColorScheme.primary,
+      foregroundColor: darkColorScheme.onPrimary,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
   ),
   textButtonTheme: TextButtonThemeData(
-    style: TextButton.styleFrom(foregroundColor: AppColors.blue),
+    style: TextButton.styleFrom(foregroundColor: darkColorScheme.primary),
   ),
-  iconTheme: const IconThemeData(color: AppColors.blue),
-  bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-    selectedIconTheme: IconThemeData(color: AppColors.blue),
-    unselectedIconTheme: IconThemeData(color: Colors.grey),
-    backgroundColor: AppColors.darkBackground,
-  ),
+  iconTheme: IconThemeData(color: darkColorScheme.primary),
   switchTheme: SwitchThemeData(
     thumbColor: MaterialStateProperty.all(AppColors.green),
     trackColor: MaterialStateProperty.resolveWith((states) {
-      if (states.contains(MaterialState.selected)) {
-        return AppColors.green.withOpacity(0.5);
-      }
-      return null;
+      return states.contains(MaterialState.selected)
+          ? AppColors.green.withOpacity(0.5)
+          : null;
     }),
   ),
   checkboxTheme: CheckboxThemeData(
     checkColor: MaterialStateProperty.all(Colors.white),
     fillColor: MaterialStateProperty.resolveWith((states) {
-      if (states.contains(MaterialState.selected)) {
-        return AppColors.green;
-      }
-      return null;
+      return states.contains(MaterialState.selected)
+          ? AppColors.green
+          : null;
     }),
   ),
 );
 
-/// 6) Thème Séquoia (verre dépoli)
+/// 4) Sequoia Theme (frosted glass)
 final ThemeData sequoiaTheme = darkTheme.copyWith(
   scaffoldBackgroundColor: Colors.transparent,
   canvasColor: Colors.black.withOpacity(0.5),
   cardColor: Colors.black.withOpacity(0.5),
   dialogBackgroundColor: Colors.black.withOpacity(0.5),
   bottomSheetTheme: BottomSheetThemeData(backgroundColor: Colors.black.withOpacity(0.5)),
-  listTileTheme: const ListTileThemeData(
+  listTileTheme: ListTileThemeData(
     tileColor: Colors.black54,
     iconColor: Colors.white,
     textColor: Colors.white,
   ),
-  popupMenuTheme: const PopupMenuThemeData(
+  popupMenuTheme: PopupMenuThemeData(
     color: Colors.black54,
     textStyle: TextStyle(color: Colors.white),
   ),
-  chipTheme: const ChipThemeData(
+  chipTheme: ChipThemeData(
     backgroundColor: Colors.black54,
     disabledColor: Colors.black26,
     selectedColor: Colors.black54,
@@ -188,55 +196,9 @@ final ThemeData sequoiaTheme = darkTheme.copyWith(
     backgroundColor: Colors.black54,
     foregroundColor: Colors.white,
   ),
-  bottomNavigationBarTheme:
-  darkTheme.bottomNavigationBarTheme.copyWith(backgroundColor: Colors.black54),
-  navigationRailTheme:
-  darkTheme.navigationRailTheme.copyWith(backgroundColor: Colors.black54),
+  bottomNavigationBarTheme: darkTheme.bottomNavigationBarTheme.copyWith(backgroundColor: Colors.black54),
+  navigationRailTheme: darkTheme.navigationRailTheme.copyWith(backgroundColor: Colors.black54),
 );
-
-/// 7) Service de mise à jour Windows
-class UpdateService {
-  static Future<void> checkForUpdate(BuildContext context) async {
-    try {
-      final response = await http.get(Uri.parse('https://tonsite.com/version.json'));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
-        final latestVersion = data['latest_version'] as String;
-        final exeUrl = data['exe_url'] as String;
-        final info = await PackageInfo.fromPlatform();
-        if (info.version != latestVersion) {
-          showDialog(
-            context: context,
-            builder: (_) => AlertDialog(
-              title: const Text('Mise à jour disponible'),
-              content:
-              const Text('Une nouvelle version est disponible. Voulez-vous l’installer ?'),
-              actions: [
-                TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Plus tard')),
-                TextButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop();
-                    final tmp = await getTemporaryDirectory();
-                    final path = '${tmp.path}/installer.exe';
-                    final req = await HttpClient().getUrl(Uri.parse(exeUrl));
-                    final res = await req.close();
-                    final bytes = await consolidateHttpClientResponseBytes(res);
-                    final file = File(path)..writeAsBytesSync(bytes);
-                    await Process.start(path, [], mode: ProcessStartMode.detached);
-                    exit(0);
-                  },
-                  child: const Text('Mettre à jour'),
-                ),
-              ],
-            ),
-          );
-        }
-      }
-    } catch (_) {
-      // Ignorer les erreurs de mise à jour
-    }
-  }
-}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -252,7 +214,6 @@ Future<void> main() async {
     );
   }
 
-  // Persister toute modification de thème en local ET en Firestore
   themeNotifier.addListener(() async {
     await prefs.setString('appTheme', themeNotifier.value.toString());
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -260,7 +221,8 @@ Future<void> main() async {
       await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
-          .set({'theme': themeNotifier.value.toString()}, SetOptions(merge: true));
+          .set({'theme': themeNotifier.value.toString()},
+          SetOptions(merge: true));
     }
   });
 
@@ -269,10 +231,8 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => PluginProvider()),
         ChangeNotifierProvider(
-          create: (_) => DashboardWidgetProvider()
-            ..addWidget(const ProjectProgressWidget()),
+          create: (_) => DashboardWidgetProvider()..addWidget(const ProjectProgressWidget()),
         ),
-        // ← Fournit maintenant UpdateManager à toute l’app
         ChangeNotifierProvider(create: (_) => UpdateManager()),
       ],
       child: const MyApp(),
@@ -289,21 +249,59 @@ class MyApp extends StatelessWidget {
       valueListenable: themeNotifier,
       builder: (context, currentAppTheme, _) {
         final themeData = {
-          AppTheme.light: lightTheme,
-          AppTheme.dark: darkTheme,
+          AppTheme.light:  lightTheme,
+          AppTheme.dark:   darkTheme,
           AppTheme.sequoia: sequoiaTheme,
         }[currentAppTheme]!;
 
         return MaterialApp(
+          navigatorKey: navigatorKey,
           title: 'Mon App',
           debugShowCheckedModeBanner: false,
           theme: themeData,
+          builder: (context, child) {
+            return Stack(
+              children: [
+                if (child != null) child,
+                Consumer<UpdateManager>(
+                  builder: (context, updateMgr, _) {
+                    if (updateMgr.status == UpdateStatus.downloading) {
+                      return Positioned(
+                        bottom: 16,
+                        right: 16,
+                        child: Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(strokeWidth: 2.5, value: updateMgr.progress),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text('Mise à jour en cours…'),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ],
+            );
+          },
           home: const AuthGate(),
           routes: {
-            '/login': (_) => const LoginPage(),
-            '/register': (_) => const RegisterPage(),
+            '/login':         (_) => const LoginPage(),
+            '/register':      (_) => const RegisterPage(),
             '/profile-setup': (_) => const ProfileSetupScreen(),
-            '/home': (_) => const HomeScreen(),
+            '/home':          (_) => const HomeScreen(),
           },
         );
       },
