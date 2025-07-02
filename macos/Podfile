@@ -1,0 +1,53 @@
+# macos/Podfile
+platform :osx, '11.0'                # Firebase 11+ et Xcode 15 recommandent 11.0 min
+
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'   # évite la télémétrie Cocoapods
+
+project 'Runner', {
+  'Debug'   => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+# ─── Trouve FLUTTER_ROOT depuis Flutter-Generated.xcconfig ────────────────
+def flutter_root
+  generated = File.expand_path(File.join('..', 'Flutter', 'ephemeral',
+                                         'Flutter-Generated.xcconfig'), __FILE__)
+  raise "#{generated} must exist; run `flutter pub get`" unless File.exist?(generated)
+
+  File.foreach(generated) do |line|
+    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found in #{generated}"
+end
+
+require File.expand_path(File.join('packages', 'flutter_tools',
+                                   'bin', 'podhelper'), flutter_root)
+
+flutter_macos_podfile_setup
+
+target 'Runner' do
+  use_frameworks!                   # Swift + Firebase ⇒ frameworks dynamiques
+  use_modular_headers!              # Évite les collisions d'entêtes
+
+  # ⚠️ Ne rajoute PAS manuellement `pod 'FirebaseAuth'` etc.
+  #     Les plugins FlutterFire déclarent déjà toutes les dépendances Firebase.
+  flutter_install_all_macos_pods File.dirname(File.realpath(__FILE__))
+
+  target 'RunnerTests' do
+    inherit! :search_paths
+  end
+end
+
+# ─── Post-install : applie les flags Flutter supplémentaires ──────────────
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_macos_build_settings(target)
+
+    # Xcode 15 + "Sign to Run Locally" : on force l’entitlement file
+    target.build_configurations.each do |config|
+      config.build_settings['CODE_SIGN_ENTITLEMENTS'] = 'Runner/Runner.entitlements'
+    end
+  end
+end

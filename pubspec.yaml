@@ -1,0 +1,96 @@
+name: tokan
+description: a caribbean legacy
+publish_to: 'none'
+version: 1.0.4
+
+environment:
+  sdk: '>=2.18.0 <3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_launcher_icons: ^0.14.4
+
+  # Firebase
+  firebase_core: ^3.14.0
+  firebase_auth: ^5.6.0
+  cloud_firestore: ^5.6.9
+  firebase_messaging: ^15.2.7
+  firebase_storage: ^12.4.7
+  firebase_database: ^11.3.5
+  flutter_secure_storage: ^8.0.0
+  record: ^6.0.0
+  emoji_picker_flutter: ^4.3.0
+  flutter_local_notifications: ^19.2.1
+  image_picker: ^1.1.2
+  equatable: ^2.0.7
+
+  # plugins
+  csv: ^6.0.0
+  share_plus: ^11.0.0
+  path_provider: ^2.1.5
+
+
+  # PDF generation & printing
+  pdf: ^3.11.3
+  printing: ^5.14.2
+
+
+  # Fichiers, graphiques, notifications
+  file_picker: ^10.1.5
+  flutter_svg: ^2.1.0
+  fluttertoast: ^8.2.12
+
+  # State management & storage
+  provider: ^6.1.4
+  shared_preferences: ^2.5.3
+
+  # Sequoia – calendrier, tâches, etc.
+  table_calendar: ^3.2.0
+  intl: any
+  video_player: ^2.9.5
+  video_player_win: ^3.1.1
+
+  # Pour le service de mise à jour
+  http: ^1.4.0
+  package_info_plus: ^8.3.0
+
+  #telephone
+  country_picker: ^2.0.27
+
+
+
+dev_dependencies:
+
+
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: any
+  source_gen: any
+  analyzer: any
+
+
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/tokan.svg
+    - assets/images/sequoia.jpeg
+    - assets/icons/dashboard.svg
+    - assets/icons/tasks.svg
+    - assets/icons/calendar.svg
+    - assets/icons/collaborators.svg
+    - assets/icons/messages.svg
+    - assets/icons/projects.svg
+    - assets/icons/notifications.svg
+    - assets/icons/library.svg
+    - assets/icons/settings.svg
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+
+

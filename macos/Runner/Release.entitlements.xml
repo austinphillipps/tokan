@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- 1. Activer le bac à sable (recommandé même en distribution directe) -->
+  <key>com.apple.security.app-sandbox</key>
+  <true/>
+
+  <!-- 2. Accès réseau sortant (HTTP/HTTPS pour ton update_service) -->
+  <key>com.apple.security.network.client</key>
+  <true/>
+
+  <!-- 3. Lecture / écriture dans le dossier Téléchargements
+         (le DMG ou PKG sera stocké ici avant exécution) -->
+  <key>com.apple.security.files.downloads.read-write</key>
+  <true/>
+
+  <!-- 4. Flutter charge plusieurs frameworks signés différemment ;
+         on désactive la validation stricte des bibliothèques. -->
+  <key>com.apple.security.cs.disable-library-validation</key>
+  <true/>
+
+  <!-- 5. (Optionnel) Permet le JIT si besoin d’Isolate spawn
+         avec compilation à chaud — généralement inutile en Release,
+         mais pratique en mode Debug. -->
+  <!--
+  <key>com.apple.security.cs.allow-jit</key>
+  <true/>
+  -->
+
+  <!-- 6. Groupe trousseau partagé (Firebase Auth, etc.) -->
+  <key>keychain-access-groups</key>
+  <array>
+    <string>$(AppIdentifierPrefix)com.tokan.tokan</string>
+  </array>
+</dict>
+</plist>

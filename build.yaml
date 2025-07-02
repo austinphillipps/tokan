@@ -1,0 +1,11 @@
+builders:
+  tokan|plugin_registry:           # ← "<nom_de_ton_package>|plugin_registry"
+    import: "package:tokan/core/builders/plugin_registry_builder.dart"
+    builder_factories: ["pluginRegistryBuilder"]
+    build_extensions:
+      # Clé  = fichier source
+      # Valeur = fichier généré
+      "lib/core/services/plugin_registry.dart": ["lib/core/services/plugin_registry.g.dart"]
+    auto_apply: root_package       # ne s’applique qu’à ce package
+    build_to: source               # génère le .g.dart dans /lib
+    applies_builders: ["source_gen|combining_builder"]

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+	"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<!-- Sandbox activé pour le mode Debug -->
+		<key>com.apple.security.app-sandbox</key>
+		<true/>
+
+		<!-- Autorise la compilation JIT au runtime -->
+		<key>com.apple.security.cs.allow-jit</key>
+		<true/>
+
+		<!-- Autorise l’allocation de pages exécutables non signées -->
+		<key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+		<true/>
+
+		<!-- Accès réseau sortant -->
+		<key>com.apple.security.network.client</key>
+		<true/>
+
+		<!-- Accès réseau entrant (serveur local) -->
+		<key>com.apple.security.network.server</key>
+		<true/>
+
+		<!-- Accès au keychain -->
+		<key>keychain-access-groups</key>
+		<array>
+			<string>$(AppIdentifierPrefix)com.tokan.tokan</string>
+		</array>
+	</dict>
+</plist>

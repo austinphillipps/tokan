@@ -1,0 +1,130 @@
+# ------------------------
+# Miscellaneous
+# ------------------------
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+**/._*            # Fichiers AppleDouble
+*.tmp
+*.lock
+
+# ------------------------
+# IDE / Editor
+# ------------------------
+# IntelliJ / Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code (décommente si tu veux versionner tes config VS Code)
+#.vscode/
+
+# ------------------------
+# Flutter / Dart / Pub
+# ------------------------
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+.flutter-plugins
+.flutter-plugins-dependencies
+.flutter_export_environment.sh
+
+# Generated API docs
+**/doc/api/
+
+# Flutter build outputs
+build/
+**/build/
+
+# iOS / macOS Flutter glue
+**/ios/Flutter/.last_build_id
+**/macos/Flutter/ephemeral/
+
+# Pod artifacts
+**/ios/Pods/
+**/macos/Pods/
+
+# CocoaPods self-generated files
+**/ios/Podfile.lock
+**/macos/Podfile.lock
+
+# Xcode
+*.xcworkspace
+*.xcodeproj/project.xcworkspace
+**/*.xcuserstate
+**/xcuserdata/
+
+# Entitlements & signing
+**/*.entitlements
+
+# ------------------------
+# macOS
+# ------------------------
+# Release DMG output
+release/
+
+# App temporary bundles
+**/macos/Runner/DebugProfile.entitlements
+**/macos/Runner/Release.entitlements
+
+# ------------------------
+# Android
+# ------------------------
+# Android Studio build artifacts
+**/android/app/debug
+**/android/app/profile
+**/android/app/release
+
+# Gradle
+.gradle/
+**/android/.gradle/
+**/android/local.properties
+
+# ------------------------
+# Windows
+# ------------------------
+windows/Flutter/ephemeral/
+windows/runner/Debug/
+windows/runner/Release/
+
+# Windows build artifacts
+**/windows/runner/obj/
+**/windows/runner/bin/
+
+# ------------------------
+# Linux
+# ------------------------
+linux/flutter/ephemeral/
+linux/runner/Debug/
+linux/runner/Release/
+
+# CMake
+**/linux/CMakeFiles/
+**/linux/Makefile
+**/linux/*.cmake
+
+# ------------------------
+# Distribution
+# ------------------------
+# Native installers & archives
+*.dmg
+*.zip
+*.exe
+*.msi
+
+# ------------------------
+# Tests & Coverage
+# ------------------------
+coverage/
+*.lcov
+
+# ------------------------
+# Others
+# ------------------------
+.idea/
+*.bak
+*.orig
