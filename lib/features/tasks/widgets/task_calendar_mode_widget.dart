@@ -24,7 +24,7 @@ class TasksCalendarView extends StatelessWidget {
     // On enveloppe CalendarPage dans un Container « verre sombre »
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: isDark ? AppColors.glassBackground : Colors.white,
+      color: isDark ? AppColors.glassBackground : Colors.transparent,
       child: CalendarPage(
         refreshNotifier: refreshNotifier,
         projectId: projectId,
