@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../main.dart'; // Pour accéder à AppColors
+import 'dart:ui';
 
 import '../../tasks/models/custom_task_model.dart';
 
@@ -221,20 +222,29 @@ class TasksListView extends StatelessWidget {
               ],
             ),
           ),
-        ],
+          ],
+        ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      decoration: BoxDecoration(
-        color: AppColors.glassHeader,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        children: [
+    final bool isLight = themeNotifier.value == AppTheme.light;
+    final Color headerColor =
+        isLight ? AppColors.whiteGlassHeader : AppColors.glassHeader;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(4),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          decoration: BoxDecoration(
+            color: headerColor,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Row(
+            children: [
           const SizedBox(width: 40), // Pour la colonne statut (cercle)
           _vDiv(context),
           Expanded(
@@ -377,7 +387,9 @@ class TasksListView extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _vDiv(BuildContext context) => Container(
@@ -738,7 +750,7 @@ class _TaskRowState extends State<_TaskRow> {
         decoration: BoxDecoration(
           color: isDark
               ? (_hoverRow ? AppColors.glassHeader : AppColors.glassBackground)
-              : (_hoverRow ? Colors.white70 : Colors.white),
+              : (_hoverRow ? AppColors.whiteGlassBackground : Colors.transparent),
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
