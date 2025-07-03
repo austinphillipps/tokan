@@ -232,13 +232,18 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(builder: (ctx, setSt) {
+        final isLight = Theme.of(ctx).brightness == Brightness.light;
+        final textColor = isLight ? Colors.white : Theme.of(ctx).colorScheme.onSurface;
+        final borderColor = isLight
+            ? Colors.white
+            : Theme.of(ctx).colorScheme.onSurface.withOpacity(0.3);
         return AlertDialog(
           title: const Text('Ajouter un collaborateur'),
           backgroundColor: Theme.of(ctx).colorScheme.surface,
           titleTextStyle: Theme.of(ctx)
               .textTheme
               .titleLarge
-              ?.copyWith(color: Theme.of(ctx).colorScheme.onSurface),
+              ?.copyWith(color: textColor),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -249,7 +254,7 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                   hintText: 'Chercher par nom ou username',
                   prefixIcon: const Icon(Icons.search),
                   hintStyle: TextStyle(
-                    color: Theme.of(ctx).colorScheme.onSurface.withOpacity(0.6),
+                    color: textColor.withOpacity(0.6),
                   ),
                   filled: true,
                   fillColor: Theme.of(ctx).colorScheme.background,
@@ -258,15 +263,13 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color:
-                      Theme.of(ctx).colorScheme.onSurface.withOpacity(0.3),
+                      color: borderColor,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color:
-                      Theme.of(ctx).colorScheme.onSurface.withOpacity(0.3),
+                      color: borderColor,
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
@@ -277,8 +280,7 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                 onChanged: (v) => setSt(() {
                   addSearch = v.trim().toLowerCase();
                 }),
-                style:
-                TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
+                style: TextStyle(color: textColor),
               ),
               const SizedBox(height: 12),
               SizedBox(
@@ -314,7 +316,7 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                       return Center(
                         child: Text(
                           'Tapez un nom ou username…',
-                          style: TextStyle(color: Colors.black54),
+                          style: TextStyle(color: textColor.withOpacity(0.7)),
                         ),
                       );
                     }
@@ -322,7 +324,7 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                       return Center(
                         child: Text(
                           'Aucun résultat',
-                          style: TextStyle(color: Colors.black54),
+                          style: TextStyle(color: textColor.withOpacity(0.7)),
                         ),
                       );
                     }
@@ -374,16 +376,11 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                         return ListTile(
                           title: Text(
                             name,
-                            style: TextStyle(
-                                color: Theme.of(ctx).colorScheme.onSurface),
+                            style: TextStyle(color: textColor),
                           ),
                           subtitle: Text(
                             '@$username',
-                            style: TextStyle(
-                                color: Theme.of(ctx)
-                                    .colorScheme
-                                    .onSurface
-                                    .withOpacity(0.7)),
+                            style: TextStyle(color: textColor.withOpacity(0.7)),
                           ),
                           trailing: trailing,
                         );
@@ -399,8 +396,7 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
               onPressed: () => Navigator.of(ctx).pop(),
               child: Text(
                 'Fermer',
-                style:
-                TextStyle(color: Theme.of(ctx).colorScheme.onSurface),
+                style: TextStyle(color: textColor),
               ),
             ),
           ],
@@ -416,9 +412,11 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
       return const Center(child: Text('Non connecté'));
     }
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final isLight = theme.brightness == Brightness.light;
     // Couleur des labels non sélectionnés
-    final unselectedColor = isDark ? Colors.white70 : Colors.black54;
+    final unselectedColor = isLight ? Colors.white : (isDark ? Colors.white70 : Colors.black54);
     // Couleur des labels sélectionnés
     final selectedColor = AppColors.blue;
 
@@ -476,10 +474,12 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                             hintText: 'Rechercher parmi vos amis',
                             prefixIcon: Icon(
                               Icons.search,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onBackground
-                                  .withOpacity(0.7),
+                              color: isLight
+                                  ? Colors.white.withOpacity(0.7)
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .onBackground
+                                      .withOpacity(0.7),
                             ),
                             filled: true,
                             fillColor: AppColors.glassBackground,
@@ -488,19 +488,23 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onBackground
-                                    .withOpacity(0.3),
+                                color: isLight
+                                    ? Colors.white
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onBackground
+                                        .withOpacity(0.3),
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onBackground
-                                    .withOpacity(0.3),
+                                color: isLight
+                                    ? Colors.white
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onBackground
+                                        .withOpacity(0.3),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
@@ -509,7 +513,9 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                             ),
                           ),
                           style: TextStyle(
-                              color: Theme.of(context).colorScheme.onBackground),
+                              color: isLight
+                                  ? Colors.white
+                                  : Theme.of(context).colorScheme.onBackground),
                           onChanged: (v) => setState(
                                   () => friendsSearch = v.trim().toLowerCase()),
                         ),
@@ -604,10 +610,12 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                             hintText: 'Rechercher amis en ligne',
                             prefixIcon: Icon(
                               Icons.search,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onBackground
-                                  .withOpacity(0.7),
+                              color: isLight
+                                  ? Colors.white.withOpacity(0.7)
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .onBackground
+                                      .withOpacity(0.7),
                             ),
                             filled: true,
                             fillColor: AppColors.glassBackground,
@@ -616,19 +624,23 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onBackground
-                                    .withOpacity(0.3),
+                                color: isLight
+                                    ? Colors.white
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onBackground
+                                        .withOpacity(0.3),
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onBackground
-                                    .withOpacity(0.3),
+                                color: isLight
+                                    ? Colors.white
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onBackground
+                                        .withOpacity(0.3),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
@@ -637,7 +649,9 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                             ),
                           ),
                           style: TextStyle(
-                              color: Theme.of(context).colorScheme.onBackground),
+                              color: isLight
+                                  ? Colors.white
+                                  : Theme.of(context).colorScheme.onBackground),
                           onChanged: (v) => setState(
                                   () => friendsSearch = v.trim().toLowerCase()),
                         ),
@@ -730,10 +744,12 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                             hintText: 'Rechercher tous les utilisateurs',
                             prefixIcon: Icon(
                               Icons.search,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onBackground
-                                  .withOpacity(0.7),
+                              color: isLight
+                                  ? Colors.white.withOpacity(0.7)
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .onBackground
+                                      .withOpacity(0.7),
                             ),
                             filled: true,
                             fillColor: AppColors.glassBackground,
@@ -742,19 +758,23 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onBackground
-                                    .withOpacity(0.3),
+                                color: isLight
+                                    ? Colors.white
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onBackground
+                                        .withOpacity(0.3),
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onBackground
-                                    .withOpacity(0.3),
+                                color: isLight
+                                    ? Colors.white
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onBackground
+                                        .withOpacity(0.3),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
@@ -763,7 +783,9 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                             ),
                           ),
                           style: TextStyle(
-                              color: Theme.of(context).colorScheme.onBackground),
+                              color: isLight
+                                  ? Colors.white
+                                  : Theme.of(context).colorScheme.onBackground),
                           onChanged: (v) =>
                               setState(() => allSearch = v.trim().toLowerCase()),
                         ),
@@ -783,10 +805,12 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                             hintText: 'Rechercher demandes en attente',
                             prefixIcon: Icon(
                               Icons.search,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onBackground
-                                  .withOpacity(0.7),
+                              color: isLight
+                                  ? Colors.white.withOpacity(0.7)
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .onBackground
+                                      .withOpacity(0.7),
                             ),
                             filled: true,
                             fillColor: AppColors.glassBackground,
@@ -795,19 +819,23 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onBackground
-                                    .withOpacity(0.3),
+                                color: isLight
+                                    ? Colors.white
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onBackground
+                                        .withOpacity(0.3),
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onBackground
-                                    .withOpacity(0.3),
+                                color: isLight
+                                    ? Colors.white
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onBackground
+                                        .withOpacity(0.3),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
@@ -816,7 +844,9 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                             ),
                           ),
                           style: TextStyle(
-                              color: Theme.of(context).colorScheme.onBackground),
+                              color: isLight
+                                  ? Colors.white
+                                  : Theme.of(context).colorScheme.onBackground),
                           onChanged: (v) =>
                               setState(() => pendingSearch = v.trim().toLowerCase()),
                         ),
@@ -849,9 +879,11 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
   }
 
   Widget _buildAllUsersList(String uid) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final unselectedTxtColor = isDark ? Colors.white70 : Colors.black54;
-    final onBgColor = Theme.of(context).colorScheme.onBackground;
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final unselectedTxtColor = isLight ? Colors.white : Colors.black54;
+    final onBgColor = isLight
+        ? Colors.white
+        : Theme.of(context).colorScheme.onBackground;
 
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -874,7 +906,7 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
           return Center(
             child: Text(
               'Aucun utilisateur trouvé',
-              style: TextStyle(color: unselectedTxtColor),
+              style: TextStyle(color: unselectedTxtColor.withOpacity(0.7)),
             ),
           );
         }
@@ -929,7 +961,7 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
                 ),
                 subtitle: Text(
                   '@$username',
-                  style: TextStyle(color: unselectedTxtColor),
+                  style: TextStyle(color: unselectedTxtColor.withOpacity(0.7)),
                 ),
                 trailing: trailing,
                 onTap: () => setState(() {
@@ -945,9 +977,11 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
   }
 
   Widget _buildPendingList(String uid) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final unselectedTxtColor = isDark ? Colors.white70 : Colors.black54;
-    final onBgColor = Theme.of(context).colorScheme.onBackground;
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final unselectedTxtColor = isLight ? Colors.white : Colors.black54;
+    final onBgColor = isLight
+        ? Colors.white
+        : Theme.of(context).colorScheme.onBackground;
 
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -962,7 +996,7 @@ class _CollaboratorsPageState extends State<CollaboratorsPage> {
           return Center(
             child: Text(
               'Aucune demande en attente',
-              style: TextStyle(color: unselectedTxtColor),
+              style: TextStyle(color: unselectedTxtColor.withOpacity(0.7)),
             ),
           );
         }
