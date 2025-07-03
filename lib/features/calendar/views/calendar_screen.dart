@@ -637,8 +637,10 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildHourColumn(BuildContext context) {
-    final textColor =
-    Theme.of(context).colorScheme.onBackground.withOpacity(0.7);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark
+        ? Theme.of(context).colorScheme.onBackground.withOpacity(0.7)
+        : Colors.white;
     final hourColColor = AppColors.glassBackground;
     return Container(
       width: _hourColumnWidth,
@@ -665,9 +667,11 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget _buildHeaderRow(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final headerBg = AppColors.glassHeader;
-    final borderColor =
-    Theme.of(context).colorScheme.onBackground.withOpacity(0.3);
-    final textColor = Theme.of(context).colorScheme.onBackground;
+    final borderColor = isDark
+        ? Theme.of(context).colorScheme.onBackground.withOpacity(0.3)
+        : Colors.white;
+    final textColor =
+        isDark ? Theme.of(context).colorScheme.onBackground : Colors.white;
 
     List<Widget> dayHeaders = [];
     for (int i = 0; i < 7; i++) {
@@ -710,8 +714,10 @@ class _CalendarPageState extends State<CalendarPage> {
       final dayHeight = 24 * _cellHeight;
       final layout = _getLayoutForDay(day);
       final background = AppColors.glassBackground;
-      final borderColor =
-      Theme.of(ctx).colorScheme.onBackground.withOpacity(0.3);
+      final isDark = Theme.of(ctx).brightness == Brightness.dark;
+      final borderColor = isDark
+          ? Theme.of(ctx).colorScheme.onBackground.withOpacity(0.3)
+          : Colors.white;
 
       return Stack(
         children: [
@@ -847,9 +853,12 @@ class _CalendarPageState extends State<CalendarPage> {
 
     if (isMobile) {
       final headerBg = AppColors.glassHeader;
-      final borderColor =
-      Theme.of(context).colorScheme.onBackground.withOpacity(0.3);
-      final textColor = Theme.of(context).colorScheme.onBackground;
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final borderColor = isDark
+          ? Theme.of(context).colorScheme.onBackground.withOpacity(0.3)
+          : Colors.white;
+      final textColor =
+          isDark ? Theme.of(context).colorScheme.onBackground : Colors.white;
 
       final List<Widget> dayWidgets = [];
       for (int i = 0; i < 7; i++) {
@@ -901,8 +910,10 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
             ),
             Builder(builder: (ctx) {
-              final borderColor =
-              Theme.of(ctx).colorScheme.onBackground.withOpacity(0.3);
+              final isDark = Theme.of(ctx).brightness == Brightness.dark;
+              final borderColor = isDark
+                  ? Theme.of(ctx).colorScheme.onBackground.withOpacity(0.3)
+                  : Colors.white;
               return Container(height: 1, color: borderColor);
             }),
             const SizedBox(height: 20),
