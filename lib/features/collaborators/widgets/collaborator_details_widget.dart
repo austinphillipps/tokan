@@ -126,12 +126,12 @@ class _CollaboratorDetailPanelState extends State<CollaboratorDetailPanel> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isLight = theme.brightness == Brightness.light;
 
     // Couleurs dynamiques
     final backgroundColor = AppColors.glassBackground;
-    final onBackground = theme.colorScheme.onBackground;
-    final onSurface = theme.colorScheme.onSurface;
+    final onBackground = isLight ? Colors.white : theme.colorScheme.onBackground;
+    final onSurface = isLight ? Colors.white : theme.colorScheme.onSurface;
     final dividerColor = onBackground.withOpacity(0.24);
     final iconColor = onBackground.withOpacity(0.7);
     final buttonColor = theme.colorScheme.error; // couleur d’erreur pour bouton
