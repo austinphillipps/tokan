@@ -89,7 +89,8 @@ class _TasksPageState extends State<TasksPage> {
                 children: [
                   // Menu horizontal avec fond "glass header"
                   Container(
-                    color: AppColors.glassHeader,
+                    color:
+                        isLight ? Colors.transparent : AppColors.glassHeader,
                     child: _buildHorizontalMenu(tasks),
                   ),
                   Expanded(child: _buildView(tasks)),
