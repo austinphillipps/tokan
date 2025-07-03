@@ -122,7 +122,10 @@ class _ProjectProgressWidgetState extends State<ProjectProgressWidget> {
     }
 
     return Container(
-      color: glassBg,
+      decoration: BoxDecoration(
+        color: glassBg,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,7 +133,12 @@ class _ProjectProgressWidgetState extends State<ProjectProgressWidget> {
           // Entête "PROJETS EN COURS"
           Container(
             width: double.infinity,
-            color: headerBg,
+            decoration: BoxDecoration(
+              color: headerBg,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Text(
               'PROJETS EN COURS',
