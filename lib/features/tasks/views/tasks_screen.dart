@@ -44,12 +44,9 @@ class _TasksPageState extends State<TasksPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isLight = themeNotifier.value == AppTheme.light;
 
     return Scaffold(
-      backgroundColor: isLight
-          ? AppColors.whiteGlassBackground
-          : theme.scaffoldBackgroundColor,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
           if (_multiSelectMode)
